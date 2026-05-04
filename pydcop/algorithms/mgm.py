@@ -105,7 +105,12 @@ def computation_memory(computation: VariableComputationNode) -> float:
 
     """
     neighbors = set(
-        (n for l in computation.links for n in l.nodes if n not in computation.name)
+        (
+            n
+            for link in computation.links
+            for n in link.nodes
+            if n not in computation.name
+        )
     )
     return len(neighbors) * UNIT_SIZE
 
@@ -160,7 +165,7 @@ class MgmValueMessage(Message):
         return "MgmValueMessage({})".format(self.value)
 
     def __eq__(self, other):
-        if type(other) != MgmValueMessage:
+        if type(other) is not MgmValueMessage:
             return False
         if self.value == other.value:
             return True
@@ -200,7 +205,7 @@ class MgmGainMessage(Message):
         return "MgmGainMessage({})".format(self.value)
 
     def __eq__(self, other):
-        if type(other) != MgmGainMessage:
+        if type(other) is not MgmGainMessage:
             return False
         if self.value == other.value:
             return True
