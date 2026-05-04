@@ -92,7 +92,12 @@ def computation_memory(computation: VariableComputationNode) -> float:
 
     """
     neighbors = set(
-        (n for l in computation.neighbors for n in l.nodes if n not in computation.name)
+        (
+            n
+            for link in computation.neighbors
+            for n in link.nodes
+            if n not in computation.name
+        )
     )
     return len(neighbors) * UNIT_SIZE
 
@@ -144,7 +149,7 @@ class GdbaOkMessage(Message):
         return "GdbaOkMessage({})".format(self.value)
 
     def __eq__(self, other):
-        if type(other) != GdbaOkMessage:
+        if type(other) is not GdbaOkMessage:
             return False
         if self.value == other.value:
             return True
@@ -171,7 +176,7 @@ class GdbaImproveMessage(Message):
         return "GdbaImproveMessage({})".format(self.improve)
 
     def __eq__(self, other):
-        if type(other) != GdbaImproveMessage:
+        if type(other) is not GdbaImproveMessage:
             return False
         if self.improve == other.improve:
             return True
@@ -250,7 +255,7 @@ class GdbaComputation(VariableComputation):
         # Transform the constraints in matrices, with also the min and max
         # values recorded
         for c in constraints:
-            if type(c) != NAryMatrixRelation:
+            if type(c) is not NAryMatrixRelation:
                 rel_mat = NAryMatrixRelation.from_func_relation(c)
                 c_array = rel_mat._m.flat
                 maxi = c_array[0]
