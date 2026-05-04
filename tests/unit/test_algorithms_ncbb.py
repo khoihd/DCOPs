@@ -130,9 +130,9 @@ def toy_pb():
         [v_d, v_e],
     )
 
-    # build the pseudo-tree for this problem
+    # A and D tie for highest degree; keep A last so the root heuristic selects it.
     g = build_computation_graph(
-        None, constraints=[c1, c2, c3, c4, c5], variables=[v_a, v_b, v_c, v_d, v_e]
+        None, constraints=[c1, c2, c3, c4, c5], variables=[v_b, v_c, v_d, v_e, v_a]
     )
     return g
 
