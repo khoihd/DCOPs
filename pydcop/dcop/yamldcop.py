@@ -239,7 +239,7 @@ def _build_constraints(loaded, dcop, main_dir) -> Dict[str, RelationProtocol]:
             elif c["type"] == "extensional":
                 values_def = c["values"]
                 default = None if "default" not in c else c["default"]
-                if type(c["variables"]) != list:
+                if not isinstance(c["variables"], list):
                     # specific case for constraint with a single variable
                     v = dcop.variable(c["variables"].strip())
                     values = [default] * len(v.domain)
