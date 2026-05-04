@@ -145,6 +145,7 @@ Example output::
 import logging
 import threading
 import traceback
+from inspect import signature
 from importlib import import_module
 import sys
 import time
@@ -286,13 +287,18 @@ def run_cmd(args, timer=None, timeout=None):
         if not timeout:
             timeout = 3600
         # Warning: some methods may not honor the timeout parameter
+        distribute_kwargs = {
+            "hints": dcop.dist_hints,
+            "computation_memory": computation_memory,
+            "communication_load": communication_load
+        }
+        if "timeout" in signature(dist_module.distribute).parameters:
+            distribute_kwargs["timeout"] = timeout
+
         distribution = dist_module.distribute(
             cg,
             dcop.agents.values(),
-            hints=dcop.dist_hints,
-            computation_memory=computation_memory,
-            communication_load=communication_load,
-            timeout=timeout
+            **distribute_kwargs
         )
         duration = time.time() - start_t
         dist = distribution.mapping()

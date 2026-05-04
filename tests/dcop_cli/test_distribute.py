@@ -30,6 +30,8 @@
 
 
 import unittest
+import sys
+from os import path
 from subprocess import check_output, STDOUT, CalledProcessError
 
 import yaml
@@ -135,13 +137,13 @@ class GraphColoring1(unittest.TestCase):
 
     def test_ilp_compref_factorgraph(self):
         # When using ilp-compref, we must also provide the algorithm
-        result = run_distribute('graph_coloring1.yaml', 'ilp_compref',
-                                'factor_graph', algo='maxsum')
+        run_distribute('graph_coloring1.yaml', 'ilp_compref',
+                       'factor_graph', algo='maxsum')
         # lame: we do not check the result, we just ensure we do not crash
 
     def test_ilp_compref_constraints_hypergraph(self):
-        result = run_distribute('graph_coloring1.yaml', 'ilp_compref',
-                                'constraints_hypergraph', algo='dsa')
+        run_distribute('graph_coloring1.yaml', 'ilp_compref',
+                       'constraints_hypergraph', algo='dsa')
         # lame: we do not check the result, we just ensure we do not crash
 
 
@@ -174,8 +176,10 @@ def run_distribute(filename, distribution, graph=None, algo=None):
     filename = instance_path(filename)
     algo_opt = '' if algo is None else '-a ' + algo
     graph_opt = '' if graph is None else '-g ' + graph
-    cmd = 'pydcop distribute -d {distribution} {graph_opt} ' \
+    pydcop_bin = path.join(path.dirname(sys.executable), "pydcop")
+    cmd = '{pydcop_bin} distribute -d {distribution} {graph_opt} ' \
           '{algo_opt} {file}'.format(distribution=distribution,
+                                     pydcop_bin=pydcop_bin,
                                      graph_opt=graph_opt,
                                      algo_opt=algo_opt,
                                      file=filename)

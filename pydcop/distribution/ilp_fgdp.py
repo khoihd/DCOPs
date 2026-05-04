@@ -38,14 +38,12 @@ from pulp import LpMinimize, LpVariable, LpProblem, LpBinary, lpSum, \
     GLPK_CMD, value, LpStatusOptimal
 
 from pydcop.computations_graph.factor_graph import ComputationsFactorGraph
-from pydcop.dcop.objects import AgentDef
-
-logger = logging.getLogger('distribution.ilpfgdp')
-
 from pydcop.computations_graph.objects import ComputationGraph, ComputationNode
+from pydcop.dcop.objects import AgentDef
 from pydcop.distribution.objects import Distribution, DistributionHints, \
     ImpossibleDistributionException
 
+logger = logging.getLogger('distribution.ilpfgdp')
 
 """
 IL-FGDP distribution
@@ -87,12 +85,12 @@ def distribute(computation_graph: ComputationGraph,
 
     agents = list(agentsdef)
 
-    # In order to remove (latter on) distribution hints, we interpret
-    # hosting costs of 0 as a "must host" relationship
     must_host = defaultdict(lambda : [])
-    for agent in agentsdef:
+    for agent in agents:
+        if hints:
+            must_host[agent.name].extend(hints.must_host(agent.name))
         for comp in computation_graph.node_names():
-            if agent.hosting_cost(comp) == 0:
+            if agent.hosting_costs.get(comp) == 0 and comp not in must_host[agent.name]:
                 must_host[agent.name].append(comp)
     logger.debug(f"Must host: {must_host}")
 
@@ -130,10 +128,9 @@ def distribution_cost(distribution: Distribution,
 
 
     comm = 0
-    agt_names = [a.name for a in agentsdef]
-    for l in computation_graph.links:
+    for link in computation_graph.links:
         # As we support hypergraph, we may have more than 2 ends to a link
-        for c1, c2 in combinations(l.nodes, 2):
+        for c1, c2 in combinations(link.nodes, 2):
             if distribution.agent_for(c1) != distribution.agent_for(c2):
                 edge_cost = communication_load(computation_graph.computation(c1), c2)
                 logger.debug(f"edge cost between {c1} and {c2} :  {edge_cost}")
@@ -336,5 +333,4 @@ def _objective_function(cg: ComputationGraph, communication_load,
 def _computation_memory_in_cg(computation_name: str,
                               cg: ComputationGraph, computation_memory):
     computation = cg.computation(computation_name)
-    l = computation_memory(computation)
-    return l
+    return computation_memory(computation)
