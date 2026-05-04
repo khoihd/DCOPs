@@ -69,16 +69,16 @@ def test_on_start_is_a_cycle_no_message_during_startup():
     # Only c1 is started, all computations stays in cycle 0 until all
     # computations have started
     c1.start()
-    assert c1.current_cycle == 0 and c1.started == True
-    assert c2.current_cycle == 0 and c2.started == False
+    assert c1.current_cycle == 0 and c1.started
+    assert c2.current_cycle == 0 and not c2.started
     c1.on_new_cycle.assert_not_called()
     c2.on_new_cycle.assert_not_called()
     # C1 did not send any algo-level message during startup: a sync message is sent instead:
     c1.message_sender.assert_any_call("t1", "t2", SynchronizationMsg(), None, None)
 
     c2.start()
-    assert c1.current_cycle == 0 and c1.started == True
-    assert c2.current_cycle == 0 and c2.started == True
+    assert c1.current_cycle == 0 and c1.started
+    assert c2.current_cycle == 0 and c2.started
     # c2 did not send any algo-level message during startup: a sync message is sent instead:
     c2.message_sender.assert_any_call("t2", "t1", SynchronizationMsg(), None, None)
 
@@ -120,8 +120,8 @@ def test_on_start_is_a_cycle_both_message_during_startup():
     # Only C1 is started, all computations stays in cycle 0 until all
     # computations have started
     c1.start()
-    assert c1.current_cycle == 0 and c1.started == True
-    assert c2.current_cycle == 0 and c2.started == False
+    assert c1.current_cycle == 0 and c1.started
+    assert c2.current_cycle == 0 and not c2.started
     c1.on_new_cycle.assert_not_called()
     c2.on_new_cycle.assert_not_called()
     # Check the startup message to c2 has been sent:
@@ -164,8 +164,8 @@ def test_on_start_is_a_cycle_some_message_during_startup():
     # Only C1 is started, all computations stays in cycle 0 until all
     # computations have started
     c1.start()
-    assert c1.current_cycle == 0 and c1.started == True
-    assert c2.current_cycle == 0 and c2.started == False
+    assert c1.current_cycle == 0 and c1.started
+    assert c2.current_cycle == 0 and not c2.started
     c1.on_new_cycle.assert_not_called()
     c2.on_new_cycle.assert_not_called()
     # Check the startup message to c2 has been sent:
