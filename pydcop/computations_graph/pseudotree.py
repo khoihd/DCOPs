@@ -163,7 +163,7 @@ class PseudoTreeNode(ComputationNode):
         return "PseudoTreeNode({},{})".format(self._variable, self._constraints)
 
     def __eq__(self, other):
-        if type(other) != PseudoTreeNode:
+        if type(other) is not PseudoTreeNode:
             return False
         if self.variable == other.variable and self.constraints == other.constraints:
             return True
@@ -192,15 +192,15 @@ def get_dfs_relations(tree_node: PseudoTreeNode):
     children = []
     pseudo_children = []
 
-    for l in tree_node.links:
-        if l.type == "parent" and l.source == tree_node.name:
-            parent = l.target
-        if l.type == "children" and l.source == tree_node.name:
-            children.append(l.target)
-        if l.type == "pseudo_children" and l.source == tree_node.name:
-            pseudo_children.append(l.target)
-        if l.type == "pseudo_parent" and l.source == tree_node.name:
-            pseudo_parents.append(l.target)
+    for link in tree_node.links:
+        if link.type == "parent" and link.source == tree_node.name:
+            parent = link.target
+        if link.type == "children" and link.source == tree_node.name:
+            children.append(link.target)
+        if link.type == "pseudo_children" and link.source == tree_node.name:
+            pseudo_children.append(link.target)
+        if link.type == "pseudo_parent" and link.source == tree_node.name:
+            pseudo_parents.append(link.target)
 
     return parent, pseudo_parents, children, pseudo_children
 
@@ -444,7 +444,7 @@ class ComputationPseudoTree(ComputationGraph):
 
     def __str__(self):
         return f"PseudoTree nodes={ [n.name for n in self.nodes]} " \
-               f"links={[l for l in self.links]}"
+               f"links={[link for link in self.links]}"
 
 
 def _filter_relation_to_lowest_node(dfs_root):
