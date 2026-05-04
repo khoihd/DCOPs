@@ -284,7 +284,7 @@ return math.pi + a""")
     import math
     assert exp(a=2) == math.pi + 2
 
-    with pytest.raises(TypeError) as exception:
+    with pytest.raises(TypeError):
         exp(2)
 
 
@@ -295,5 +295,5 @@ return pi + a""")
     import math
     assert exp(a=2) == math.pi + 2
 
-    with pytest.raises(TypeError) as exception:
+    with pytest.raises(TypeError):
         exp(2)
