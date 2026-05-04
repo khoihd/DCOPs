@@ -45,6 +45,11 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
   across HTTP serialization.
 - Made the 10-variable graph-coloring solve fixture deterministic with valid
   initial values for MGM.
+- Replaced deprecated `numpy.matrix` usage in the GDBA unit test with
+  `numpy.array`, removing the NumPy pending deprecation warning.
+- Stabilized the NCBB toy pseudotree fixture by ordering variables so the
+  current highest-degree root heuristic selects the intended root in an A/D tie.
+- Ignored generated PuLP `.out` artifacts with the existing PuLP ignore rules.
 - Installed Ruff in the local venv (`./.venv/bin/ruff`).
 - Added an architecture/search map to `AGENTS.md` to speed up future targeted
   inspection.
@@ -58,8 +63,8 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
   - algorithm implementations
   - agent/distribution logic
   - communication/simulation layer
-- Decide whether generated solver artifacts such as `ilp_compref-pulp.out`
-  should be ignored.
+- Continue separating stale test assumptions from algorithm bugs, especially in
+  older pseudotree/NCBB/DPOP-related tests.
 
 ## Known Issues
 - Original codebase targeted older Python versions (README says >=3.6); current
@@ -67,8 +72,6 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - CI (Travis) is outdated
 - Dependencies may be outdated or unpinned
 - Documentation may reference deprecated tooling or workflows
-- `ilp_compref-pulp.out` is currently an untracked generated file and has been
-  intentionally left untouched.
 
 ## Important Files
 - README.md — original project description (needs adaptation)
