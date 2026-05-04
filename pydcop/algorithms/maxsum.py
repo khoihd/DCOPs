@@ -241,7 +241,7 @@ class MaxSumMessage(Message):
         return "MaxSumMessage({})".format(self._costs)
 
     def __eq__(self, other):
-        if type(other) != MaxSumMessage:
+        if type(other) is not MaxSumMessage:
             return False
         if self.costs == other.costs:
             return True
