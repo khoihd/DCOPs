@@ -854,7 +854,7 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
                 values.append(var_values[v.name])
             _, s = self._slice_matrix([v.name for v in self._variables], values)
             matrix = np.copy(self._m)
-            matrix.itemset(s, rel_value)
+            matrix[s] = rel_value
             return NAryMatrixRelation(self._variables, matrix, name=self.name)
         raise ValueError("Could not set value, must be list or dict")
 
