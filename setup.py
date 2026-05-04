@@ -28,18 +28,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from os import path
+from setuptools import find_packages, setup
 
 
 # Basic dependencies, required to run pyDCOP:
 deps = [
-        'pulp',
-        'numpy',
-        'networkx',
-        'pyyaml',
-        'requests',
-        'websocket-server',
-        'tqdm',
-    ]
+    'pulp',
+    'numpy',
+    'networkx',
+    'pyyaml',
+    'requests',
+    'websocket-server',
+    'tqdm',
+]
 
 # Extra dependencies, used to run tests
 test_deps = [
@@ -62,25 +64,22 @@ extras = {
     'doc': doc_deps
 }
 
-
-from setuptools import setup, find_packages
-from os import path
-
 here = path.abspath(path.dirname(__file__))
 # Get the long description from the README file
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+version_info = {}
 with open(path.join(here, 'pydcop', 'version.py'), encoding='utf-8') as f:
-    exec(f.read())
+    exec(f.read(), version_info)
 
 setup(
     name='pydcop',
-    version=__version__,
+    version=version_info['__version__'],
     description='Several dcop algo implementation',
 
     long_description=long_description,
-    long_description_content_type='text/markdown', 
+    long_description_content_type='text/markdown',
 
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -88,7 +87,7 @@ setup(
         "License :: OSI Approved :: BSD License",
 
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.5",    
+        "Programming Language :: Python :: 3.5",
 
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
@@ -106,11 +105,11 @@ setup(
         'pydcop/dcop_cli.py'
     ],
 
-    packages =find_packages(),
+    packages=find_packages(),
 
     project_urls={
-        'Documentation':  'http://pydcop.readthedocs.io',
+        'Documentation': 'http://pydcop.readthedocs.io',
         'Source': 'https://github.com/Orange-OpenSource/pyDcop',
         'Bug Reports': 'https://github.com/Orange-OpenSource/pyDcop/issues'
-    }    
+    }
 )
