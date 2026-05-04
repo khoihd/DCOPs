@@ -81,7 +81,8 @@ class FuncArgsTests(unittest.TestCase):
         self.assertEqual(var_list, ['c'])
 
     def test_lambda(self):
-        f = lambda a, b: a + b
+        def f(a, b):
+            return a + b
 
         var_list = func_args(f)
 
