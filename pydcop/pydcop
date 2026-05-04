@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-dcop_cli.py "$@"
+script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+exec "$script_dir/dcop_cli.py" "$@"

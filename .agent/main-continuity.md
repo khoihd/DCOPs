@@ -28,6 +28,8 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - No new dependencies without approval
 - Avoid touching multiple modules in one change
 - Maintain compatibility with existing code until upgrade plan is defined
+- Prefer the project-local virtualenv (`./.venv/bin/python`, `./.venv/bin/pip`,
+  `./.venv/bin/pydcop`) over Conda or commands resolved from ambient `PATH`.
 
 ## Recent Changes
 - Cloned original pyDcop repository
