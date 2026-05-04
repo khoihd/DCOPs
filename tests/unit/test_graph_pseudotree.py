@@ -34,7 +34,7 @@ import unittest
 from pydcop.computations_graph.pseudotree import _find_neighbors_relations, \
     _BuildingNode, \
     _generate_dfs_tree, _visit_tree, build_computation_graph, \
-    _filter_relation_to_lowest_node, PseudoTreeLink
+    _filter_relation_to_lowest_node, PseudoTreeLink, PseudoTreeNode
 from pydcop.dcop.objects import Variable, VariableDomain
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.relations import NAryFunctionRelation, relation_from_str
@@ -224,7 +224,9 @@ class DfsTreeGenerationTests(unittest.TestCase):
         x4 = Variable('x4', domain)
         variables = [x1, x2, x3, x4]
 
-        binary_func = lambda x, y: x + y
+        def binary_func(x, y):
+            return x + y
+
         r1 = NAryFunctionRelation(binary_func, [x1, x2], name='r1')
         r2 = NAryFunctionRelation(binary_func, [x1, x3], name='r2')
         r3 = NAryFunctionRelation(binary_func, [x2, x3], name='r3')
@@ -248,7 +250,9 @@ class DfsTreeGenerationTests(unittest.TestCase):
         x4 = Variable('x4', domain)
         variables = [x1, x2, x3, x4]
 
-        binary_func = lambda x, y: x + y
+        def binary_func(x, y):
+            return x + y
+
         r1 = NAryFunctionRelation(binary_func, [x1, x2], name='r1')
         r2 = NAryFunctionRelation(binary_func, [x1, x3], name='r2')
         r3 = NAryFunctionRelation(binary_func, [x2, x3], name='r3')
@@ -459,7 +463,18 @@ class TestPseudoTreeSimpleRepr(unittest.TestCase):
 
     def test_node(self):
         v1 = Variable('v1', [1, 2, 3])
-        node = _BuildingNode(v1)
+        link = PseudoTreeLink('parent', 'v1', 'v2')
+        node = PseudoTreeNode(v1, [], [link])
+
+        r = simple_repr(node)
+        node2 = from_repr(r)
+
+        self.assertEqual(node, node2)
+        self.assertEqual(node2.name, 'v1')
+        self.assertEqual(node2.variable, v1)
+        self.assertEqual(node2.constraints, ())
+        self.assertEqual(node2.links, [link])
+        self.assertEqual(node2.neighbors, ['v2'])
 
     def test_link_simple_repr(self):
 
@@ -467,12 +482,21 @@ class TestPseudoTreeSimpleRepr(unittest.TestCase):
 
         r = simple_repr(l1)
 
+        self.assertEqual(r['__module__'], 'pydcop.computations_graph.pseudotree')
+        self.assertEqual(r['__qualname__'], 'PseudoTreeLink')
+        self.assertEqual(r['type'], 'parent')
+        self.assertEqual(r['source'], 'v1')
+        self.assertEqual(r['target'], 'v2')
+
     def test_link_from_repr(self):
         l1 = PseudoTreeLink('parent', 'v1', 'v2')
 
         r = simple_repr(l1)
         l2 = from_repr(r)
         self.assertEqual(l1, l2)
+        self.assertEqual(l2.type, 'parent')
+        self.assertEqual(l2.source, 'v1')
+        self.assertEqual(l2.target, 'v2')
 
 
 class TestMetrics(unittest.TestCase):
