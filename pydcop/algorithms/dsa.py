@@ -155,7 +155,12 @@ def computation_memory(computation: VariableComputationNode) -> float:
 
     """
     neighbors = set(
-        (n for l in computation.links for n in l.nodes if n not in computation.name)
+        (
+            n
+            for link in computation.links
+            for n in link.nodes
+            if n not in computation.name
+        )
     )
     return len(neighbors) * UNIT_SIZE
 
@@ -204,7 +209,7 @@ class DsaMessage(Message):
         return "DsaMessage({})".format(self.value)
 
     def __eq__(self, other):
-        if type(other) != DsaMessage:
+        if type(other) is not DsaMessage:
             return False
         if self.value == other.value:
             return True
