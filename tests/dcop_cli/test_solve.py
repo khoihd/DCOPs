@@ -30,7 +30,9 @@
 
 
 import json
+import sys
 import unittest
+from os import path
 from subprocess import STDOUT, check_output, CalledProcessError
 
 from tests.dcop_cli.utils import instance_path
@@ -87,12 +89,12 @@ class SimpleSecpDCOP1(unittest.TestCase):
         self.check_results(result)
 
     def test_dsa_adhoc(self):
-        result = run_solve('dsa', 'adhoc', 'secp_simple1.yaml', 5)
+        run_solve('dsa', 'adhoc', 'secp_simple1.yaml', 5)
         # Do not really check the results, dsa performs poorly on this pb
         # self.check_results(result)
 
     def test_dsa_adhoc_process(self):
-        result = run_solve('dsa', 'adhoc', 'secp_simple1.yaml', 5, 'process')
+        run_solve('dsa', 'adhoc', 'secp_simple1.yaml', 5, 'process')
         # Do not really check the results, dsa performs poorly on this pb
         # self.check_results(result)
 
@@ -159,27 +161,27 @@ class GraphColoring1(unittest.TestCase):
                           'dpop', 'ilp_fgdp', 'graph_coloring1.yaml', 1)
 
     def test_dsa_adhoc(self):
-        result = run_solve('dsa', 'adhoc', 'graph_coloring1.yaml', 1)
+        run_solve('dsa', 'adhoc', 'graph_coloring1.yaml', 1)
         # Do not really check the results, dsa often don't find the best
         # solution this pb
         # self.check_results(result)
 
     def test_dsa_adhoc_process(self):
-        result = run_solve('dsa', 'adhoc', 'graph_coloring1.yaml', 3,
-                           'process')
+        run_solve('dsa', 'adhoc', 'graph_coloring1.yaml', 3,
+                  'process')
         # Do not really check the results, dsa often don't find the best
         # solution this pb
         # self.check_results(result)
 
     def test_dsa_oneagent(self):
-        result = run_solve('dsa', 'oneagent', 'graph_coloring1.yaml', 1)
+        run_solve('dsa', 'oneagent', 'graph_coloring1.yaml', 1)
         # Do not really check the results, dsa often don't find the best
         # solution this pb
         # self.check_results(result)
 
     def test_dsa_oneagent_process(self):
-        result = run_solve('dsa', 'oneagent', 'graph_coloring1.yaml', 3,
-                           'process')
+        run_solve('dsa', 'oneagent', 'graph_coloring1.yaml', 3,
+                  'process')
         # Do not really check the results, dsa often don't find the best
         # solution this pb
         # self.check_results(result)
@@ -195,7 +197,6 @@ class GraphColoring10(unittest.TestCase):
     def check_results(self, results):
         # No convergence detection for now, always stop on timeout
         self.assertEqual(results['status'], 'TIMEOUT')
-        assignment = results['assignment']
         self.assertEqual(results['cost'], 0)
 
     def test_mgm_adhoc(self):
@@ -206,7 +207,6 @@ class GraphColoring10(unittest.TestCase):
         results = run_solve('dpop', 'oneagent', 'graph_coloring_10_4_15_0.1.yml', 3)
         self.assertEqual(results['status'], 'FINISHED')
 
-        assignment = results['assignment']
         self.assertEqual(results['cost'], 0)
 
 class GraphColoringCsp(unittest.TestCase):
@@ -214,7 +214,6 @@ class GraphColoringCsp(unittest.TestCase):
     def check_results(self, results):
         # No convergence detection for now, always stop on timeout
         self.assertEqual(results['status'], 'FINISHED')
-        assignment = results['assignment']
         self.assertEqual(results['cost'], 0)
 
     def test_dba_adhoc(self):
@@ -248,10 +247,12 @@ def run_solve(algo, distribution, filename, timeout: int, mode='thread',
     param_str = ''
     for p in algo_params:
         param_str += ' --algo_param '+ p
-    cmd = 'pydcop -v 0 -t {timeout} solve -a {algo} {params} -d {' \
+    pydcop_bin = path.join(path.dirname(sys.executable), "pydcop")
+    cmd = '{pydcop_bin} -v 0 -t {timeout} solve -a {algo} {params} -d {' \
           'distribution} ' \
           '-m {mode} ' \
-          '{file}'.format(timeout=timeout,
+          '{file}'.format(pydcop_bin=pydcop_bin,
+                          timeout=timeout,
                           algo=algo,
                           params=param_str,
                           distribution=distribution,

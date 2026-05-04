@@ -9,24 +9,34 @@ domains:
 variables:
   v0:
     domain: colors
+    initial_value: 0
   v1:
     domain: colors
+    initial_value: 1
   v2:
     domain: colors
+    initial_value: 0
   v3:
     domain: colors
+    initial_value: 0
   v4:
     domain: colors
+    initial_value: 1
   v5:
     domain: colors
+    initial_value: 2
   v6:
     domain: colors
+    initial_value: 1
   v7:
     domain: colors
+    initial_value: 0
   v8:
     domain: colors
+    initial_value: 1
   v9:
     domain: colors
+    initial_value: 2
 
 constraints:
   c0:
@@ -97,4 +107,3 @@ agents:
     capacity: 30
   a9:
     capacity: 30
-

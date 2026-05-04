@@ -303,7 +303,7 @@ def find_local_ip():
         # doesn't even have to be reachable
         s.connect(("10.255.255.255", 1))
         IP = s.getsockname()[0]
-    except:
+    except OSError:
         IP = "127.0.0.1"
     finally:
         s.close()
@@ -412,6 +412,8 @@ class HttpCommunicationLayer(CommunicationLayer):
 
         dest_address = "http://{}:{}/pydcop".format(server, port)
         msg_repr = simple_repr(msg.msg)
+        if hasattr(msg.msg, "cycle_id"):
+            msg_repr["__cycle_id__"] = msg.msg.cycle_id
         try:
             r = requests.post(
                 dest_address,
@@ -469,8 +471,15 @@ class MPCHttpHandler(BaseHTTPRequestHandler):
             print(post_data)
             raise jde
 
+        cycle_id = None
+        if isinstance(content, dict) and "__cycle_id__" in content:
+            cycle_id = content.pop("__cycle_id__")
+        msg = from_repr(content)
+        if cycle_id is not None:
+            msg.cycle_id = cycle_id
+
         comp_msg = ComputationMessage(
-            src_comp, dest_comp, from_repr(content), int(type)
+            src_comp, dest_comp, msg, int(type)
         )
         try:
             self.server.comm.on_post_message(self.path, sender, dest, comp_msg)
