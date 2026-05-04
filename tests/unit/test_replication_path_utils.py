@@ -362,8 +362,3 @@ def test_bench_affordable_path_from(benchmark):
     benchmark(to_bench)
 
     assert True
-
-
-def test_2():
-
-    roots = ["a2", "a5"]
