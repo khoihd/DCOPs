@@ -35,7 +35,7 @@ where pseudo-parent and pseudo-children links are added to the tree.
  
  This model is typically used for the dpop algorithm.
 """
-from typing import Iterable
+from typing import Dict, Iterable, List
 
 from collections import defaultdict
 
@@ -408,7 +408,7 @@ class ComputationPseudoTree(ComputationGraph):
         self._roots = list(roots)
 
         # build the list of links
-        links = defaultdict(lambda: [])  # type: Dict[str, List]
+        links: Dict[str, List] = defaultdict(lambda: [])
         _nodes = {}
         for root in self._roots:
             for n in _visit_tree(root):
