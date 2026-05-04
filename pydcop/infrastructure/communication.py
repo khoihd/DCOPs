@@ -38,7 +38,7 @@ from json import JSONDecodeError
 from queue import Empty, PriorityQueue
 from threading import Thread
 from time import perf_counter, sleep
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Optional
 
 import requests
 from requests.exceptions import ConnectionError

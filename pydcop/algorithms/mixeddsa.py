@@ -29,12 +29,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import logging
 import operator
 import random
 
 import functools
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 from pydcop.dcop.relations import RelationProtocol, generate_assignment_as_dict, \
     filter_assignment_dict

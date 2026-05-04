@@ -33,7 +33,7 @@
 import unittest
 
 from pydcop.computations_graph.factor_graph import ComputationsFactorGraph, \
-    VariableComputationNode, FactorComputationNode, FactorGraphLink
+    VariableComputationNode, FactorComputationNode
 from pydcop.computations_graph.factor_graph import build_computation_graph
 from pydcop.dcop.objects import Variable, Domain
 from pydcop.dcop.dcop import DCOP

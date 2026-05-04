@@ -31,8 +31,6 @@
 
 from itertools import chain
 from typing import Iterable, Union
-from typing import List
-from typing import Set
 
 from pydcop.computations_graph.objects import ComputationNode, Link,\
     ComputationGraph

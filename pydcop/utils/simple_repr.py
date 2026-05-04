@@ -32,7 +32,6 @@
 import importlib
 import types
 from numbers import Number
-from typing import Callable
 
 from pydcop.utils.various import func_args
 

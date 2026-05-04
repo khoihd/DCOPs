@@ -29,7 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from typing import Iterable, Optional, Tuple, List, Set
+from typing import Optional, Tuple, List, Set
 
 Node = str
 Path = Tuple[Node, ...]

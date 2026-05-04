@@ -36,7 +36,7 @@ from pydcop.algorithms import amaxsum as ms
 from pydcop.algorithms.amaxsum import communication_load, computation_memory
 from pydcop.algorithms.maxsum import VARIABLE_UNIT_SIZE
 from pydcop.computations_graph.factor_graph import ComputationsFactorGraph, \
-    VariableComputationNode, FactorComputationNode, FactorGraphLink
+    VariableComputationNode, FactorComputationNode
 from pydcop.dcop.objects import Variable, VariableDomain, AgentDef
 from pydcop.dcop.relations import relation_from_str
 from pydcop.distribution.ilp_fgdp import distribute, _build_alphaijk_binvars, \

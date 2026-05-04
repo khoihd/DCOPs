@@ -33,10 +33,8 @@ import time
 import types
 import unittest
 from unittest.case import skip
-from unittest.mock import MagicMock
 
-from pydcop.infrastructure.communication import InProcessCommunicationLayer, \
-    Messaging
+from pydcop.infrastructure.communication import InProcessCommunicationLayer
 from pydcop import infrastructure
 
 

@@ -29,7 +29,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import logging
 
 from pydcop.infrastructure.computations import Message, register
 from pydcop.algorithms.amaxsum import MaxSumFactorComputation, MaxSumVariableComputation

@@ -42,8 +42,6 @@ from pydcop.infrastructure.computations import Message
 from pydcop.dcop.objects import VariableDomain, Variable, VariableWithCostFunc
 from pydcop.dcop.relations import (
     UnaryFunctionRelation,
-    constraint_from_str,
-    assignment_cost,
     find_optimal,
     AsNAryFunctionRelation,
     optimal_cost_value,

@@ -53,7 +53,7 @@ Functions
 
 """
 
-from typing import List, Dict, Iterable, Callable
+from typing import Iterable, Callable
 from collections import defaultdict
 
 from pydcop.computations_graph.objects import ComputationGraph, ComputationNode

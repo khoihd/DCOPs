@@ -28,7 +28,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import csv
-import json
 import logging
 import os
 import traceback
@@ -37,7 +36,6 @@ from importlib import import_module
 
 import sys
 from queue import Queue, Empty
-from types import FunctionType
 from typing import List
 
 from pydcop.algorithms import AlgorithmDef, prepare_algo_params, load_algorithm_module

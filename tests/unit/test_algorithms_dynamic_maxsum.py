@@ -36,7 +36,6 @@ from unittest.mock import MagicMock
 from pydcop.algorithms.maxsum_dynamic import DynamicFunctionFactorComputation
 from pydcop.dcop.objects import Variable
 from pydcop.dcop.relations import AsNAryFunctionRelation
-from pydcop.infrastructure.communication import InProcessCommunicationLayer, Messaging
 
 #
 class DynamicFunctionFactorComputationTest(unittest.TestCase):

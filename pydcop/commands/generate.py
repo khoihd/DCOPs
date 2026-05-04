@@ -94,7 +94,7 @@ import os
 from pydcop.commands.generators import graphcoloring, meetingscheduling, ising, agents, \
     scenario
 from pydcop.commands.generators.iot import generate_iot
-from pydcop.commands.generators.secp import generate_secp, parser_secp
+from pydcop.commands.generators.secp import parser_secp
 from pydcop.commands.generators.smallworld import generate_small_world
 from pydcop.dcop.objects import VariableDomain, Variable, AgentDef
 from pydcop.dcop.dcop import DCOP

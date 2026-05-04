@@ -11,7 +11,7 @@ with regard to the requested model.
 
 from subprocess import check_output, STDOUT
 
-from pydcop.dcop.yamldcop import load_dcop_from_file, load_dcop
+from pydcop.dcop.yamldcop import load_dcop
 
 
 def test_random_soft():

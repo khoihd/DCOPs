@@ -31,7 +31,7 @@
 
 """Api tests for oneagent distribution method.
 """
-from pydcop.dcop.objects import Domain, create_variables, create_agents
+from pydcop.dcop.objects import create_agents
 from tests.api.instances_and_utils import dcop_graphcoloring_3
 
 

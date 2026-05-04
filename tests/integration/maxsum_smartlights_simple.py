@@ -32,7 +32,6 @@
 import logging
 import sys
 
-import pydcop.infrastructure.communication
 from pydcop import infrastructure
 from pydcop.algorithms import amaxsum
 from pydcop.dcop import relations

@@ -29,7 +29,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import logging, os
+import logging
+import os
 from importlib import import_module
 
 import networkx as nx
@@ -39,7 +40,6 @@ from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Variable, Domain, AgentDef
 from pydcop.dcop.relations import (
     NAryMatrixRelation,
-    assignment_matrix,
     random_assignment_matrix,
 )
 from pydcop.dcop.yamldcop import dcop_yaml

@@ -29,7 +29,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import unittest
 
 from pydcop.computations_graph.constraints_hypergraph import \
     VariableComputationNode, ConstraintLink, build_computation_graph

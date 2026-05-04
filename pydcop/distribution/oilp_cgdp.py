@@ -63,7 +63,7 @@ from pulp import (
     LpAffineExpression,
     LpStatusUndefined, PulpSolverError)
 
-from pydcop.computations_graph.objects import ComputationGraph, ComputationNode, Link
+from pydcop.computations_graph.objects import ComputationGraph, ComputationNode
 from pydcop.dcop.objects import AgentDef
 from pydcop.distribution.objects import (
     DistributionHints,

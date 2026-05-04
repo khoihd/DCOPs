@@ -45,7 +45,6 @@ from pydcop.dcop.objects import (
 from pydcop.dcop.scenario import EventAction, DcopEvent, Scenario
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.relations import (
-    relation_from_str,
     RelationProtocol,
     NAryMatrixRelation,
     assignment_matrix,

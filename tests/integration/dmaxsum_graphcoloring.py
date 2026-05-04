@@ -34,7 +34,6 @@ import time
 
 from pydcop.algorithms.maxsum_dynamic import DynamicFactorComputation, \
     DynamicFactorVariableComputation
-from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import VariableNoisyCostFunc
 from pydcop.dcop.relations import find_dependent_relations, \
     NAryFunctionRelation

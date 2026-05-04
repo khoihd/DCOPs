@@ -37,7 +37,7 @@ import numpy
 from pydcop.algorithms.gdba import GdbaComputation
 from pydcop.dcop.objects import Variable
 from pydcop.dcop.relations import AsNAryFunctionRelation, NAryMatrixRelation, \
-    UnaryFunctionRelation, NAryFunctionRelation, generate_assignment_as_dict
+    UnaryFunctionRelation, NAryFunctionRelation
 
 
 class GdbaAlgoTest(unittest.TestCase):

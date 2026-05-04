@@ -92,7 +92,7 @@ Generating a DCOP for a SECP with 10 lights, 3 models and 2 rules.::
 """
 import logging
 import os
-from random import randint, sample, choice, random
+from random import randint, sample
 
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Domain, Variable, AgentDef

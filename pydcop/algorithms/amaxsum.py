@@ -70,12 +70,10 @@ Max-Sum.
 import logging
 
 from collections import defaultdict
-from typing import Dict, Any, List
 
-from pydcop.dcop.objects import VariableNoisyCostFunc, Variable
-from pydcop.algorithms import AlgoParameterDef, ComputationDef
+from pydcop.dcop.objects import VariableNoisyCostFunc
+from pydcop.algorithms import ComputationDef
 from pydcop.algorithms import maxsum
-from pydcop.dcop.relations import generate_assignment_as_dict
 from pydcop.infrastructure.computations import (
     DcopComputation,
     VariableComputation,

@@ -31,7 +31,6 @@ import json
 
 from pydcop.replication.dist_ucs_hostingcosts import UCSReplicateMessage
 from pydcop.replication.dist_ucs_hostingcosts import ReplicationTracker
-from pydcop.replication.path_utils import Path, PathsTable
 from pydcop.utils.simple_repr import simple_repr, from_repr
 
 

@@ -57,12 +57,12 @@ the DCOP:
 
 """
 import logging
-from typing import Iterable, Callable, List, Dict
+from typing import Iterable, Callable, Dict
 from collections import defaultdict
 
 from pydcop.computations_graph.objects import ComputationGraph, ComputationNode
 from pydcop.dcop.objects import AgentDef
-from pydcop.distribution import oilp_secp_fgdp, oilp_secp_cgdp
+from pydcop.distribution import oilp_secp_cgdp
 from pydcop.distribution.objects import (
     DistributionHints,
     Distribution,

@@ -102,7 +102,6 @@ import yaml
 
 from pydcop.dcop.yamldcop import load_dcop_from_file
 from pydcop.utils.graphs import (
-    as_networkx_graph,
     display_graph,
     display_bipartite_graph,
 )

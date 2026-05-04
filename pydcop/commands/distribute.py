@@ -143,7 +143,6 @@ Example output::
 """
 
 import logging
-import os
 import threading
 import traceback
 from importlib import import_module
@@ -332,7 +331,7 @@ def run_cmd(args, timer=None, timeout=None):
         print(yaml.dump(result))
         sys.exit(0)
 
-    except TimeoutError as e:
+    except TimeoutError:
         if timer:
             timer.cancel()
         duration = time.time() - start_t

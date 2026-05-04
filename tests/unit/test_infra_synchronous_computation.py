@@ -410,7 +410,7 @@ def test_receiving_message_from_unknown_computation_fails():
     # Receiving a message for an unexpected cycle: error.
     with pytest.raises(ComputationException) as comp_exception:
         c.on_message("wrong", msgbar2, 42)
-    assert f"a message from wrong" in str(comp_exception.value)
+    assert "a message from wrong" in str(comp_exception.value)
 
 
 def test_cycle_id_is_added_when_using_post_msg():

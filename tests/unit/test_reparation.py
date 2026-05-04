@@ -29,7 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from pydcop.dcop.objects import create_binary_variables, BinaryVariable
+from pydcop.dcop.objects import create_binary_variables
 from pydcop.reparation import create_computation_hosted_constraint, \
     create_agent_capacity_constraint, create_agent_hosting_constraint, \
     create_agent_comp_comm_constraint

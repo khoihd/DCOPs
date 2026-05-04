@@ -168,8 +168,7 @@ import logging
 import multiprocessing
 import threading
 import traceback
-from functools import partial
-from queue import Queue, Empty
+from queue import Queue
 from threading import Thread
 import numpy as np
 
@@ -188,7 +187,6 @@ from pydcop.dcop.dcop import filter_dcop
 from pydcop.dcop.yamldcop import load_dcop_from_file, load_scenario_from_file
 from pydcop.distribution.yamlformat import load_dist_from_file
 from pydcop.infrastructure.run import run_local_thread_dcop, run_local_process_dcop
-from pydcop.replication.yamlformat import load_replica_dist, load_replica_dist_from_file
 
 logger = logging.getLogger("pydcop.cli.run")
 
@@ -437,7 +435,6 @@ def _orchestrator_error(e):
     print("Error in orchestrator: \n ", e)
     sys.exit(2)
 
-import numpy as np
 
 
 class NumpyEncoder(json.JSONEncoder):

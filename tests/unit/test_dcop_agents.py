@@ -30,7 +30,6 @@
 
 
 from pydcop.dcop.objects import AgentDef, create_agents
-from pydcop.utils.simple_repr import from_repr, simple_repr
 
 
 def test_name_only():

@@ -51,8 +51,6 @@ import functools
 import logging
 import operator
 import random
-from typing import Any
-from typing import Dict
 from typing import Iterable, Set
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef

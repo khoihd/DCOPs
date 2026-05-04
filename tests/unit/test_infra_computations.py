@@ -30,13 +30,13 @@
 
 from importlib import import_module
 from time import sleep
-from unittest.mock import MagicMock, ANY
+from unittest.mock import MagicMock
 
 import pytest
 
 from pydcop.algorithms import AlgorithmDef, ComputationDef, load_algorithm_module
 from pydcop.computations_graph.constraints_hypergraph import VariableComputationNode
-from pydcop.dcop.objects import Variable, AgentDef
+from pydcop.dcop.objects import Variable
 from pydcop.infrastructure.agents import Agent
 from pydcop.infrastructure.communication import InProcessCommunicationLayer
 from pydcop.infrastructure.computations import (
@@ -45,8 +45,6 @@ from pydcop.infrastructure.computations import (
     MessagePassingComputation,
     register,
 )
-from pydcop.infrastructure.orchestratedagents import OrchestratedAgent
-from pydcop.infrastructure.orchestrator import RunAgentMessage, Orchestrator
 from pydcop.utils.simple_repr import simple_repr
 from pydcop.utils.simple_repr import from_repr
 

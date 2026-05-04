@@ -29,7 +29,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import unittest
 from http.server import HTTPServer
 from threading import Thread
 from time import sleep
@@ -90,7 +89,7 @@ class TestMessaging(object):
         # Register c2 : the message will now be delivered to the queue
         local_messaging.discovery.register_computation('c2', 'a1')
         (src, dest, full_msg, type), _ = local_messaging.next_msg()
-        assert full_msg is 'a msg'
+        assert full_msg == 'a msg'
 
     def test_raise_when_posting_msg_from_unknown_computation(
             self, local_messaging):

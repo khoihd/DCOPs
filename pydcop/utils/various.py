@@ -29,7 +29,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from typing import Iterable
 
 def func_args(f):
     """

@@ -168,7 +168,6 @@ from functools import partial
 from queue import Queue, Empty
 from threading import Thread
 
-import multiprocessing
 from importlib import import_module
 from time import time
 
@@ -492,9 +491,9 @@ def run_cmd(args, timer=None, timeout=None):
 
     try:
         start_time = time()
-        logger.debug(f"Starting Orchestrator")
+        logger.debug("Starting Orchestrator")
         orchestrator.start()
-        logger.debug(f"Deploying computations")
+        logger.debug("Deploying computations")
         orchestrator.deploy_computations()
         if scenario:
             logger.debug(f"Starting Replication, targert {ktarget}")

@@ -35,7 +35,8 @@ This generator generates both a dcop and its initial distribution.
 """
 
 
-import logging, os
+import logging
+import os
 from importlib import import_module
 from random import randint
 from typing import List, Tuple, Dict, Callable
@@ -58,7 +59,6 @@ from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Variable, Domain, AgentDef
 from pydcop.dcop.relations import (
     NAryMatrixRelation,
-    assignment_matrix,
     random_assignment_matrix,
     Constraint,
 )

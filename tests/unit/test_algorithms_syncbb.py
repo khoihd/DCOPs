@@ -47,7 +47,6 @@ from pydcop.computations_graph.ordered_graph import build_computation_graph
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Domain, Variable, create_agents
 from pydcop.dcop.relations import constraint_from_str
-from pydcop.dcop.yamldcop import load_dcop_from_file
 from pydcop.infrastructure.run import solve
 
 
@@ -196,7 +195,7 @@ def test_computations_message_at_start(toy_pb_computation_graph):
     # A is the first var in the ordering, it should start selecting a value:
     comp_a = get_computation_instance(toy_pb_computation_graph, "vA")
     assert comp_a.previous_var is None
-    assert comp_a.next_var is "vB"
+    assert comp_a.next_var == "vB"
     comp_a.start()
     comp_a._msg_sender.assert_any_call(
         "vA", "vB", SyncBBForwardMessage([("vA", "R", 0)], float("inf")), None, None

@@ -1,13 +1,11 @@
 from pydcop.commands.generators.agents import (
     find_corresponding_variables,
-    generate_agents_names,
     generate_hosting_costs,
     generate_agents_from_variables,
     find_prefix,
     generate_agents_from_count,
     find_corresponding_variables_start_with,
 )
-from pydcop.dcop.objects import create_variables, Domain
 
 
 def test_find_vars_agts_mapping():

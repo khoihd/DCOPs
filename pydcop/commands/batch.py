@@ -77,7 +77,6 @@ import signal
 import pathlib
 
 from subprocess import (
-    check_output,
     STDOUT,
     CalledProcessError,
     TimeoutExpired,
@@ -484,7 +483,7 @@ def run_batch(
                     timeout = None
                 try:
                     run_cli_command(cli_command, command_dir, timeout)
-                except TimeoutExpired as te:
+                except TimeoutExpired:
                     global progress_file
                     if progress_file:
                         with open(progress_file, encoding="utf-8", mode="a") as f:

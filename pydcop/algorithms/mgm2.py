@@ -52,7 +52,6 @@ from pydcop.dcop.relations import (
     find_dependent_relations,
     generate_assignment_as_dict,
     assignment_cost,
-    optimal_cost_value,
 )
 
 __author__ = "Pierre Nagellen, Pierre Rust"
@@ -346,10 +345,10 @@ class Mgm2ResponseMessage(Message):
         return 3
 
     def __str__(self):
-        return "Mgm2ResponseMessage({},{})".format(self.accept, self.value, self._gain)
+        return "Mgm2ResponseMessage({},{})".format(self.accept, self.value, )
 
     def __repr__(self):
-        return "Mgm2ResponseMessage({},{})".format(self.accept, self.value, self._gain)
+        return "Mgm2ResponseMessage({},{})".format(self.accept, self.value, )
 
     def __eq__(self, other):
         if type(other) != Mgm2ResponseMessage:
@@ -833,7 +832,7 @@ class Mgm2Computation(VariableComputation):
                 self._partner = self._neighbor_var(partner_name)
             else:
                 if self.logger.isEnabledFor(logging.INFO):
-                    self.logger.info(f"No accepted offer")
+                    self.logger.info("No accepted offer")
 
             # send accept / reject messages to all offerers
             for sender, offer_msg in self._offers:
@@ -895,7 +894,7 @@ class Mgm2Computation(VariableComputation):
         if self._potential_gain == 0:
             if self.logger.isEnabledFor(logging.INFO):
                 self.logger.info(
-                    f"Potential gain is 0: no reason to change local value"
+                    "Potential gain is 0: no reason to change local value"
                 )
             self._clear_agent()
             self._send_value()

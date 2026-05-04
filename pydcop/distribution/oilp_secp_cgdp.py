@@ -71,7 +71,6 @@ from pydcop.computations_graph.objects import ComputationNode
 from pydcop.dcop.objects import AgentDef
 from pydcop.distribution.objects import Distribution, ImpossibleDistributionException
 from pydcop.distribution.oilp_secp_fgdp import (
-    secp_dist_objective_function,
     secp_computation_memory_in_cg,
 )
 

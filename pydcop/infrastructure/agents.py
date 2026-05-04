@@ -50,14 +50,12 @@ from functools import partial
 from importlib import import_module
 from threading import Thread
 from time import perf_counter, sleep
-from typing import Dict, List, Optional, Union, Callable, Tuple
+from typing import Dict, List, Optional, Union, Callable
 
 from collections import defaultdict
 
 from pydcop.algorithms import AlgorithmDef, ComputationDef, load_algorithm_module
 from pydcop.dcop.objects import AgentDef, create_binary_variables
-from pydcop.dcop.objects import BinaryVariable
-from pydcop.dcop.relations import Constraint
 from pydcop.infrastructure.Events import event_bus
 from pydcop.infrastructure.communication import Messaging, \
     CommunicationLayer, UnreachableAgent

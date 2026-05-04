@@ -44,7 +44,7 @@ import logging
 import time
 from collections import defaultdict
 from itertools import combinations
-from typing import Iterable, List, Dict, Callable
+from typing import Iterable, List, Callable
 
 from pulp import (
     LpVariable,

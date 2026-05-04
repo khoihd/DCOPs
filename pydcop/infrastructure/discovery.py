@@ -65,7 +65,7 @@ use of Discovery mechanism.
 
 """
 import logging
-from typing import Callable, List, Optional, Any, Dict, Tuple, Union
+from typing import Callable, List, Optional, Any, Tuple, Union
 
 from collections import defaultdict
 from typing import Set

@@ -107,7 +107,7 @@ class ExpressionFunction(Callable, SimpleRepr):
             if v not in self.exp_vars:
                 raise ValueError('Cannot fix variable "{}" which is not '
                                  'present in the expression ""'
-                                 .format(v, expression))
+                                 .format(v, ))
 
     @property
     def expression(self):

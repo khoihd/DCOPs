@@ -35,7 +35,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from pydcop.infrastructure.computations import MessagePassingComputation, \
-    Message, message_type
+    message_type
 from pydcop.infrastructure.communication import InProcessCommunicationLayer
 from pydcop.infrastructure.agents import Agent, AgentException
 from pydcop.infrastructure.discovery import Directory, UnknownComputation

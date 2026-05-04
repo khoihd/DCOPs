@@ -30,13 +30,11 @@
 
 
 import unittest
-from unittest.case import TestCase
-from unittest.mock import Mock
 
 from pydcop.computations_graph.constraints_hypergraph import \
-    ComputationConstraintsHyperGraph, ConstraintLink, VariableComputationNode
+    ComputationConstraintsHyperGraph, VariableComputationNode
 from pydcop.computations_graph.objects import ComputationGraph, \
-    ComputationNode, Link
+    ComputationNode
 from pydcop.dcop.objects import AgentDef, create_variables, Domain
 from pydcop.dcop.relations import constraint_from_str
 

@@ -30,12 +30,10 @@
 
 
 import random
-from numbers import Real
 from typing import Callable, Sized
 from typing import Iterable, Any, Dict, Union, Tuple
 
 import itertools
-from typing import List
 
 from pydcop.utils.expressionfunction import ExpressionFunction
 from pydcop.utils.simple_repr import SimpleRepr, SimpleReprException

@@ -62,7 +62,7 @@ class RelationProtocol(object):
 
     @property
     def name(self) -> str:
-        raise NotImplemented("name not implemented")
+        raise NotImplementedError("name not implemented")
 
     @property
     def dimensions(self) -> List[Variable]:
@@ -70,7 +70,7 @@ class RelationProtocol(object):
         The Dimensions of a relation is the list of variables it depends on.
         :return: a list of Variables objects this Relation depends on.
         """
-        raise NotImplemented("dimensions not implemented")
+        raise NotImplementedError("dimensions not implemented")
 
     @property
     def scope_names(self) -> List[str]:
@@ -89,7 +89,7 @@ class RelationProtocol(object):
         The arity of the relation is the number of variables it depends on.
         :return:
         """
-        raise NotImplemented("arity not implemented")
+        raise NotImplementedError("arity not implemented")
 
     @property
     def shape(self) -> Tuple:
@@ -99,7 +99,7 @@ class RelationProtocol(object):
 
         :return a tuple representing the shape of the relation
         """
-        raise NotImplemented("shape not implemented")
+        raise NotImplementedError("shape not implemented")
 
     def slice(self, partial_assignment: Dict[str, object]) -> "RelationProtocol":
         """
@@ -112,7 +112,7 @@ class RelationProtocol(object):
         the same variable(s) than the original relation, minus the sliced
         variables.
         """
-        raise NotImplemented("slice not implemented")
+        raise NotImplementedError("slice not implemented")
 
     def set_value_for_assignment(
         self, assignment: Dict[str, Any], relation_value
@@ -134,7 +134,7 @@ class RelationProtocol(object):
         :return a new Relation object
         """
 
-        raise NotImplemented("set_value_for_assignment not implemented")
+        raise NotImplementedError("set_value_for_assignment not implemented")
 
     def get_value_for_assignment(self, assignment):
         """
@@ -159,7 +159,7 @@ class RelationProtocol(object):
         -------
         the value of the relation for this assignment.
         """
-        raise NotImplemented("get_value_for_assignment not implemented")
+        raise NotImplementedError("get_value_for_assignment not implemented")
 
     def __call__(self, *args, **kwargs):
         """
@@ -180,7 +180,7 @@ class RelationProtocol(object):
         the keyword is the name of the variable.
 
         """
-        raise NotImplemented("slice not implemented")
+        raise NotImplementedError("slice not implemented")
 
 
 Constraint = RelationProtocol

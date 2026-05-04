@@ -38,7 +38,6 @@ from pydcop.dcop import relations
 from pydcop.dcop.objects import Variable
 from pydcop.dcop.relations import UnaryFunctionRelation
 from pydcop.infrastructure.run import synchronous_single_run
-from pydcop.infrastructure.communication import InProcessCommunicationLayer
 
 logging.basicConfig(level=logging.DEBUG)
 logging.info('MaxSum smart coloring test')

@@ -30,7 +30,7 @@
 
 
 import unittest
-from subprocess import check_output, STDOUT, CalledProcessError
+from subprocess import check_output, STDOUT
 
 import yaml
 

@@ -40,7 +40,7 @@ your own DCOP algorithm.
 import logging
 from functools import wraps
 from importlib import import_module
-from typing import List, Tuple, Any, Callable, Dict, Optional
+from typing import List, Tuple, Callable, Dict, Optional
 
 from numpy import random
 
@@ -627,7 +627,7 @@ class SynchronizationMsg(Message):
         self.cycle_id = None
 
     def __repr__(self):
-        return f"SynchronizationMsg()"
+        return "SynchronizationMsg()"
 
 
 class SynchronousComputationMixin:

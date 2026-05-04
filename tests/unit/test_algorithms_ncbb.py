@@ -33,7 +33,7 @@ import pytest
 
 from pydcop.algorithms import ComputationDef, AlgorithmDef
 from pydcop.algorithms.ncbb import NcbbAlgo, ValueMessage, CostMessage
-from pydcop.computations_graph.pseudotree import PseudoTreeNode, build_computation_graph
+from pydcop.computations_graph.pseudotree import build_computation_graph
 from pydcop.dcop.objects import Variable, Domain
 from pydcop.dcop.relations import constraint_from_str
 from pydcop.infrastructure.computations import ComputationException

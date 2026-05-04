@@ -96,10 +96,9 @@ Computation
 
 
 """
-import logging
 import random
 
-from typing import Iterable, Dict
+from typing import Iterable
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef
 from pydcop.infrastructure.computations import Message, VariableComputation, \

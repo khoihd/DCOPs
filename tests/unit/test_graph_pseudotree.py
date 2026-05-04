@@ -34,7 +34,7 @@ import unittest
 from pydcop.computations_graph.pseudotree import _find_neighbors_relations, \
     _BuildingNode, \
     _generate_dfs_tree, _visit_tree, build_computation_graph, \
-    _filter_relation_to_lowest_node, PseudoTreeNode, PseudoTreeLink
+    _filter_relation_to_lowest_node, PseudoTreeLink
 from pydcop.dcop.objects import Variable, VariableDomain
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.relations import NAryFunctionRelation, relation_from_str

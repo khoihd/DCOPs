@@ -33,8 +33,6 @@ from typing import Dict, List
 
 from collections import defaultdict
 
-from pydcop.algorithms import ComputationDef
-from pydcop.infrastructure.computations import Message
 
 
 class ReplicaDistribution(object):

@@ -32,8 +32,7 @@
 import collections
 from typing import List, Tuple, Dict, Iterable, Union, Mapping
 
-from pydcop.dcop.objects import AgentDef, Variable, VariableDomain, \
-    ExternalVariable, Domain
+from pydcop.dcop.objects import AgentDef, Variable, ExternalVariable, Domain
 from pydcop.dcop.relations import RelationProtocol, constraint_from_str, \
     Constraint, filter_assignment_dict
 

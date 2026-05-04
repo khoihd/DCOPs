@@ -54,14 +54,11 @@ Example
 
 """
 from random import choice
-from typing import Iterable
 
 from pydcop.computations_graph.pseudotree import get_dfs_relations
 from pydcop.infrastructure.computations import Message, VariableComputation, register
-from pydcop.dcop.objects import Variable
 from pydcop.dcop.relations import (
     NAryMatrixRelation,
-    Constraint,
     find_arg_optimal,
     join,
     projection,
