@@ -32,7 +32,7 @@
 from typing import Callable, Tuple, Dict, List
 
 from pydcop.dcop.objects import BinaryVariable
-from pydcop.dcop.relations import NAryFunctionRelation, RelationProtocol, \
+from pydcop.dcop.relations import NAryFunctionRelation, RelationProtocol as RelationProtocol, \
     Constraint
 
 

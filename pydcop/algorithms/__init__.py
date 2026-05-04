@@ -324,7 +324,7 @@ class AlgorithmDef(SimpleRepr):
         return 'AlgorithmDef({}, {}, {})'.format(self.algo, self.mode, self._params)
 
     def __eq__(self, other):
-        if type(other) != AlgorithmDef:
+        if type(other) is not AlgorithmDef:
             return False
         if self.algo != other.algo or self.mode != other.mode:
             return False
@@ -373,7 +373,7 @@ class ComputationDef(SimpleRepr):
         return 'ComputationDef({}, {})'.format(self.node, self.algo)
 
     def __eq__(self, other):
-        if type(other) != ComputationDef:
+        if type(other) is not ComputationDef:
             return False
         if self.node == other.node and self.algo == other.algo:
             return True
