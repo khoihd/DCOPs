@@ -5,6 +5,9 @@ You are assisting development in VSCode on a Python project derived from pyDcop.
 
 Work conservatively. The human developer remains in control of decisions, architecture, and final changes.
 
+## Session continuity
+- When a session starts, read `.agent/main-continuity.md` if it exists; if it is large, read only the latest/current-session-relevant section first.
+
 ## Core principles
 - Make small, targeted changes.
 - Do not rewrite entire files unless explicitly asked.
@@ -16,8 +19,9 @@ Work conservatively. The human developer remains in control of decisions, archit
 
 ## Token efficiency
 - Read only files directly relevant to the task.
+- Prefer targeted `rg`, `sed -n`, and `git diff -- path` commands over broad file reads.
 - Avoid scanning the whole repository unless requested.
-- Summarize findings briefly instead of pasting large code blocks.
+- Summarize findings briefly; do not paste long command output unless asked.
 - When proposing changes, reference file paths and line/function names.
 - Use diffs or focused snippets, not full-file rewrites.
 - Ask before analyzing large directories, generated files, logs, or vendored code.
