@@ -12,3 +12,7 @@ pyDCOP runs on python >= 3.6.
 Documentation is hosted on 
 [ReadTheDoc](https://pydcop.readthedocs.io)
  
+## Acknowledgment
+
+This project is derived from the original pyDcop repository by Orange-OpenSource:
+https://github.com/Orange-OpenSource/pyDcop.
