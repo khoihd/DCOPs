@@ -145,7 +145,7 @@ def computation_memory(computation: VariableComputationNode) -> float:
         the memory footprint of the computation.
 
     """
-    neighbors = set((n for l in computation.links for n in l.nodes
+    neighbors = set((n for link in computation.links for n in link.nodes
                      if n not in computation.name))
     return len(neighbors) * UNIT_SIZE
 
@@ -196,7 +196,7 @@ class DbaOkMessage(Message):
         return 'DbaOkMessage({})'.format(self.value)
 
     def __eq__(self, other):
-        if type(other) != DbaOkMessage:
+        if type(other) is not DbaOkMessage:
             return False
         if self.value == other.value:
             return True
@@ -235,7 +235,7 @@ class DbaImproveMessage(Message):
                                                   self.current_eval)
 
     def __eq__(self, other):
-        if type(other) != DbaImproveMessage:
+        if type(other) is not DbaImproveMessage:
             return False
         if (self.improve == other.improve) and \
                 (self.current_eval == other.current_eval):
@@ -258,7 +258,7 @@ class DbaEndMessage(Message):
         return 'DbaEndMessage()'
 
     def __eq__(self, other):
-        return type(other) == DbaEndMessage
+        return type(other) is DbaEndMessage
 
 
 algo_params = [
