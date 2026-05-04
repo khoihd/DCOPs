@@ -249,16 +249,18 @@ def test_unsubscribe_one_cb(directory_discovery):
     agt1.discovery.register_agent('agt_new', 'addr_new')
 
     cb = agt2.discovery.subscribe_agent('agt_new', MagicMock())
-    agt2.discovery.subscribe_agent('agt_new', MagicMock())
+    cb2 = agt2.discovery.subscribe_agent('agt_new', MagicMock())
 
     wait_run()
     cb.reset_mock()
+    cb2.reset_mock()
 
     removed = agt2.discovery.unsubscribe_agent('agt_new', cb)
     assert removed == 1
     agt1.discovery.unregister_agent('agt_new', 'addr_new')
     wait_run()
     cb.assert_not_called()
+    cb2.assert_called_with('agent_removed', 'agt_new', None)
 
 
 def test_subscribe_all_agents(directory_discovery):
