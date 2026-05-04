@@ -31,7 +31,7 @@
 
 import pytest
 
-from pydcop.computations_graph.objects import ComputationNode, Link
+from pydcop.computations_graph.objects import ComputationGraph, ComputationNode, Link
 from pydcop.utils.simple_repr import from_repr, simple_repr
 
 
@@ -42,56 +42,122 @@ def test_node_creation_minimal():
     assert not n.type
     assert not n.links
     assert not n.neighbors
+    assert repr(n) == 'ComputationNode(n1)'
+
 
 def test_node_creation_with_links():
 
-    n1 = ComputationNode('n1', links=[Link(['n2'])])
+    link = Link(['n1', 'n2'])
+    n1 = ComputationNode('n1', node_type='test', links=[link])
 
-    assert 'n2' in n1.neighbors
-    assert list(n1.links)[0].has_node('n2')
+    assert n1.type == 'test'
+    assert n1.neighbors == ['n2']
+    assert n1.links == [link]
+    assert n1.links[0].has_node('n2')
+    assert repr(n1) == 'ComputationNode(n1, test)'
+
 
 def test_node_creation_with_hyperlinks():
 
-    n1 = ComputationNode('n1', links=[Link(['n2', 'n3']),
-                                      Link(['n4'])])
+    links = [Link(['n1', 'n2', 'n3']), Link(['n1', 'n4'])]
+    n1 = ComputationNode('n1', links=links)
 
-    assert 'n2' in n1.neighbors
-    assert 'n3' in n1.neighbors
-    assert 'n4' in n1.neighbors
+    assert set(n1.neighbors) == {'n2', 'n3', 'n4'}
+    assert n1.links == links
+
 
 def test_node_creation_with_one_neighbor():
 
     n1 = ComputationNode('n1', neighbors=['n2'])
 
-    assert 'n2' in n1.neighbors
+    assert n1.neighbors == ['n2']
     assert len(n1.links) == 1
-    assert list(n1.links)[0].has_node('n2')
+    assert n1.links[0] == Link(['n1', 'n2'])
+
 
 def test_node_creation_with_several_neighbors():
 
     n1 = ComputationNode('n1', neighbors=['n2', 'n3', 'n4'])
 
-    assert 'n2' in n1.neighbors
-    assert 'n3' in n1.neighbors
-    assert 'n4' in n1.neighbors
+    assert n1.neighbors == ['n2', 'n3', 'n4']
     assert len(n1.links) == 3
+    assert set(n1.links) == {
+        Link(['n1', 'n2']),
+        Link(['n1', 'n3']),
+        Link(['n1', 'n4']),
+    }
 
 
 def test_node_creation_raises_when_giving_links_neighbors():
 
     with pytest.raises(ValueError):
-        n1 = ComputationNode('n1', links=[Link(['n2'])], neighbors=['n2'])
+        ComputationNode('n1', links=[Link(['n2'])], neighbors=['n2'])
 
 
 def test_node_simplerepr():
-    n1 = ComputationNode('n1', neighbors=['n2', 'n3', 'n4'])
+    n1 = ComputationNode('n1', 'test', neighbors=['n2', 'n3', 'n4'])
 
     r1 = simple_repr(n1)
-
     obtained = from_repr(r1)
 
+    assert r1['__module__'] == 'pydcop.computations_graph.objects'
+    assert r1['__qualname__'] == 'ComputationNode'
+    assert r1['name'] == 'n1'
+    assert r1['node_type'] == 'test'
+    assert 'neighbors' not in r1
+    assert set(from_repr(r1['links'])) == {
+        Link(['n1', 'n2']),
+        Link(['n1', 'n3']),
+        Link(['n1', 'n4']),
+    }
     assert n1 == obtained
-    assert 'n2' in n1.neighbors
-    assert 'n3' in n1.neighbors
-    assert 'n4' in n1.neighbors
-    assert len(n1.links) == 3
+    assert set(obtained.neighbors) == {'n2', 'n3', 'n4'}
+    assert set(obtained.links) == set(n1.links)
+
+
+def test_link_creation_and_simple_repr():
+    link = Link(['n1', 'n2'], link_type='neighbor')
+
+    r = simple_repr(link)
+    obtained = from_repr(r)
+
+    assert link.type == 'neighbor'
+    assert link.nodes == frozenset({'n1', 'n2'})
+    assert link.has_node('n1')
+    assert not link.has_node('n3')
+    assert repr(link).startswith('Link(neighbor, frozenset({')
+    assert r['link_type'] == 'neighbor'
+    assert set(r['nodes']) == {'n1', 'n2'}
+    assert obtained == link
+
+
+def test_computation_graph_accessors():
+    n1 = ComputationNode('n1', neighbors=['n2'])
+    n2 = ComputationNode('n2', neighbors=['n1'])
+    graph = ComputationGraph('test', nodes=[n1, n2])
+
+    assert graph.type == 'test'
+    assert graph.nodes == [n1, n2]
+    assert graph.node_names() == ['n1', 'n2']
+    assert graph.computation('n1') is n1
+    assert graph.links == {Link(['n1', 'n2'])}
+    assert graph.links_for_node('n1') == n1.links
+    assert graph.neighbors('n1') == ['n2']
+
+
+def test_computation_graph_accessors_raise_for_unknown_node():
+    graph = ComputationGraph(nodes=[ComputationNode('n1')])
+
+    with pytest.raises(KeyError, match='no computation named missing found'):
+        graph.computation('missing')
+    with pytest.raises(KeyError, match='No node named missing'):
+        graph.links_for_node('missing')
+    with pytest.raises(KeyError, match='No node named missing'):
+        graph.neighbors('missing')
+
+
+def test_base_computation_graph_density_is_abstract():
+    graph = ComputationGraph()
+
+    with pytest.raises(NotImplementedError, match='Abstract class'):
+        graph.density()
