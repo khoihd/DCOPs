@@ -29,7 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import collections
+import collections.abc
 from typing import List, Tuple, Dict, Iterable, Union, Mapping
 
 from pydcop.dcop.objects import AgentDef, Variable, ExternalVariable, Domain
@@ -234,7 +234,7 @@ class DCOP(object):
         """
         if isinstance(agents, AgentDef):
             self._agents_def[agents.name] = agents
-        elif isinstance(agents, collections.Mapping):
+        elif isinstance(agents, collections.abc.Mapping):
             self._agents_def.update(agents)
         else:
             for agt in agents:
@@ -418,4 +418,3 @@ def filter_dcop(dcop: DCOP, accept_unary=False):
                  keep_constraints,
                  dcop.agents)
     return filtered
-
