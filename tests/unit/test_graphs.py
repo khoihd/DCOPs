@@ -191,8 +191,8 @@ class GraphDiameterTests(unittest.TestCase):
 
         nodes = [n1, n2, n3, n4, n5]
 
-        # FIXME: cycles count only works on trees !!
-        # self.assertEqual(calc_diameter(nodes), 3)
+        diameter = max(find_furthest_node(n, nodes)[1] for n in nodes)
+        self.assertEqual(diameter, 3)
 
 
 class NetworkXTests(unittest.TestCase):
@@ -325,8 +325,6 @@ class NetworkXTests(unittest.TestCase):
         l2 = Variable('l2', [])
         l3 = Variable('l3', [])
         r1 = NAryFunctionRelation(lambda x, y: 0, [l1, l2], name='r1')
-
-        g = as_networkx_graph([l1, l2, l3], [r1])
 
         d = graph_diameter([l1, l2, l3], [r1])
         self.assertListEqual(sorted(d), [0, 1])
