@@ -268,54 +268,6 @@ def test_pathtable_unserialize():
     assert obtained == table
 
 
-@pytest.mark.skip
-def test_bench_dict_vs_list(benchmark):
-    def iterations_dict():
-        paths = {
-            ("a2", "a9", "a4", "a8"): 3,
-            ("a2", "a3"): 2,
-            ("a2", "a3", "a4"): 3,
-            ("a5", "a3", "a4"): 6,
-            ("a2", "a3", "a4", "a12"): 4,
-            ("a2", "a4", "a4"): 9,
-            ("a2", "a4", "a4", "a8"): 3,
-            ("a2", "a5", "a4", "a8"): 3,
-            ("a2", "a3", "a4", "a8"): 3,
-            ("a1", "a3", "a4"): 3,
-            ("a2", "a3", "a4", "a1", "a5"): 4,
-        }
-
-        i, foo = 0, None
-        for p, c in paths.items():
-            i += 1
-            foo = (p[:4], c + 1)
-
-    def iterations_list():
-        paths = [
-            (("a2", "a9", "a4", "a8"), 3),
-            (("a2", "a3"), 2),
-            (("a2", "a3", "a4"), 3),
-            (("a5", "a3", "a4"), 6),
-            (("a2", "a3", "a4", "a12"), 4),
-            (("a2", "a4", "a4"), 9),
-            (("a2", "a4", "a4", "a8"), 3),
-            (("a2", "a5", "a4", "a8"), 3),
-            (("a2", "a3", "a4", "a8"), 3),
-            (("a1", "a3", "a4"), 3),
-            (("a2", "a3", "a4", "a1", "a5"), 4),
-        ]
-
-        i, foo = 0, None
-        for p, c in paths:
-            i += 1
-            foo = (p[:4], c + 1)
-
-    benchmark(iterations_dict)
-    # benchmark(iterations_list)
-
-    assert True
-
-
 def test_affordable_path_from():
     table = [
         (3, ("a2", "a9", "a4", "a8")),
