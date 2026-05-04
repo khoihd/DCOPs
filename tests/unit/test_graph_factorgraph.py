@@ -33,7 +33,7 @@
 import unittest
 
 from pydcop.computations_graph.factor_graph import ComputationsFactorGraph, \
-    VariableComputationNode, FactorComputationNode
+    VariableComputationNode, FactorComputationNode, FactorGraphLink
 from pydcop.computations_graph.factor_graph import build_computation_graph
 from pydcop.dcop.objects import Variable, Domain
 from pydcop.dcop.dcop import DCOP
@@ -87,9 +87,26 @@ class TestFactorGraphComputation(unittest.TestCase):
         v1 = Variable('v1', d1)
         f1 = constraint_from_str('f1', 'v1 * 0.5', [v1])
 
-        cv1 = VariableComputationNode(v1, [f1])
+        cv1 = VariableComputationNode(v1, ['f1'])
         cf1 = FactorComputationNode(f1)
         cg = ComputationsFactorGraph([cv1], [cf1])
+
+        self.assertEqual(cg.type, 'FactorGraph')
+        self.assertEqual(cg.nodes, [cv1, cf1])
+        self.assertEqual(cg.node_names(), ['v1', 'f1'])
+        self.assertIs(cg.computation('v1'), cv1)
+        self.assertIs(cg.computation('f1'), cf1)
+        self.assertEqual(cg.density(), 1)
+
+        self.assertEqual(cv1.type, 'VariableComputation')
+        self.assertEqual(cv1.variable, v1)
+        self.assertEqual(cv1.constraints_names, ['f1'])
+
+        self.assertEqual(cf1.type, 'FactorComputation')
+        self.assertEqual(cf1.factor, f1)
+        self.assertEqual(cf1.variables, [v1])
+
+        self.assertEqual(cg.links, {FactorGraphLink('f1', 'v1')})
 
     def test_raise_when_duplicate_computation_name(self):
         d1 = Domain('d1', '', [1, 2, 3, 5])
@@ -99,20 +116,19 @@ class TestFactorGraphComputation(unittest.TestCase):
 
         cv1 = VariableComputationNode(v1, ['f1'])
         cf1 = FactorComputationNode(f1)
-        self.assertRaises(KeyError, ComputationsFactorGraph, [cv1],
-                          [cf1])
+        with self.assertRaises(KeyError) as error:
+            ComputationsFactorGraph([cv1], [cf1])
 
-
+        self.assertIn('duplicate computation names: v1', str(error.exception))
 
 def test_factornode_simple_repr():
     d1 = Domain('d1', '', [1, 2, 3, 5])
     v1 = Variable('v1', d1)
     f1 = constraint_from_str('f1', 'v1 * 0.5', [v1])
 
-    cv1 = VariableComputationNode(v1, ['f1'])
     cf1 = FactorComputationNode(f1, )
 
-    r= simple_repr(cf1)
+    r = simple_repr(cf1)
     obtained = from_repr(r)
 
     assert obtained == cf1
@@ -122,15 +138,11 @@ def test_factornode_simple_repr():
 def test_variablenode_simple_repr():
     d1 = Domain('d1', '', [1, 2, 3, 5])
     v1 = Variable('v1', d1)
-    f1 = constraint_from_str('f1', 'v1 * 0.5', [v1])
 
     cv1 = VariableComputationNode(v1, ['f1'])
-    cf1 = FactorComputationNode(f1, )
 
-    r= simple_repr(cv1)
+    r = simple_repr(cv1)
     obtained = from_repr(r)
 
     assert obtained == cv1
     assert cv1.variable == obtained.variable
-
-
