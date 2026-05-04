@@ -57,3 +57,17 @@ Prefer targeted tests first.
 Use:
 ```bash
 pytest path/to/test_file.py
+```
+
+## Python linting
+Use Ruff as the preferred Python linter.
+
+Prefer targeted lint checks first:
+```bash
+ruff check path/to/file.py
+```
+
+For broader checks, use:
+```bash
+ruff check .
+```
