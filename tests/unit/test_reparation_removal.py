@@ -59,7 +59,7 @@ class ReparationMessagesTests(unittest.TestCase):
             name = 'c'+str(i)
             nodes[name] = ComputationNode(
                 name, 'test',
-                links=[l for l in self.links if l.has_node(name)])
+                links=[link for link in self.links if link.has_node(name)])
 
         self.cg = ComputationGraph('test',
                                    nodes=nodes.values())
