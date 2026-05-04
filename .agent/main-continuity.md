@@ -46,6 +46,8 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - Made the 10-variable graph-coloring solve fixture deterministic with valid
   initial values for MGM.
 - Installed Ruff in the local venv (`./.venv/bin/ruff`).
+- Added an architecture/search map to `AGENTS.md` to speed up future targeted
+  inspection.
 
 ## Next Steps
 - Continue targeted CLI/API test stabilization with `./.venv/bin/python`.
@@ -74,6 +76,7 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - pydcop/ (main package) — core logic
 - tests/ — validation and behavior reference
 - docs/ — may contain useful architecture insights
+- AGENTS.md — repo instructions plus compact project map and search hints
 
 ## Open Questions
 - What is the primary execution path? (CLI vs library usage)
