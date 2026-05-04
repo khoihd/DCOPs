@@ -11,9 +11,9 @@ Stabilize and understand the existing codebase before making structural changes.
 Prepare for incremental modernization (Python version, dependencies, tooling).
 
 ## Current Focus Area
-- Core DCOP algorithms and execution flow
-- Project structure and module responsibilities
-- Identifying entry points and main APIs
+- Python 3.11 / modern dependency compatibility
+- CLI end-to-end tests and local virtualenv execution
+- Core DCOP algorithms and process/thread execution flow
 
 ## Key Decisions
 - Work conservatively: no large refactors without explicit approval
@@ -32,26 +32,41 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
   `./.venv/bin/pydcop`) over Conda or commands resolved from ambient `PATH`.
 
 ## Recent Changes
-- Cloned original pyDcop repository
-- Renamed local project folder to DCOP
-- Set private repo as origin (removed upstream reference)
-- Planning AGENTS.md and continuity workflow
+- Stabilized several Python 3.11 / dependency compatibility issues:
+  - `collections.Mapping` -> `collections.abc.Mapping`
+  - NumPy 2 `ndarray.itemset` removal
+  - PuLP / GLPK command import compatibility
+  - Iterable / YAML variable list checks
+- Updated CLI test helpers to use the active local venv instead of Conda or
+  ambient `PATH`.
+- Fixed distribute CLI compatibility with distribution algorithms that do not
+  accept a `timeout` keyword.
+- Fixed process-mode solve tests by preserving synchronous message `cycle_id`
+  across HTTP serialization.
+- Made the 10-variable graph-coloring solve fixture deterministic with valid
+  initial values for MGM.
+- Installed Ruff in the local venv (`./.venv/bin/ruff`).
 
 ## Next Steps
-- Identify main entry points (CLI / API usage)
-- Run project locally and verify baseline behavior
-- Review dependency list and Python version compatibility
+- Continue targeted CLI/API test stabilization with `./.venv/bin/python`.
+- Review remaining CLI helpers for bare `pydcop` usage before running those
+  suites broadly.
+- Review dependency list and decide supported Python/dependency versions.
 - Identify critical modules:
   - algorithm implementations
   - agent/distribution logic
   - communication/simulation layer
-- Decide initial small improvement task (low-risk)
+- Decide whether generated solver artifacts such as `ilp_compref-pulp.out`
+  should be ignored.
 
 ## Known Issues
-- Codebase likely targets older Python versions (>=3.6)
+- Original codebase targeted older Python versions (README says >=3.6); current
+  local stabilization is on Python 3.11 with modern dependencies.
 - CI (Travis) is outdated
 - Dependencies may be outdated or unpinned
 - Documentation may reference deprecated tooling or workflows
+- `ilp_compref-pulp.out` is currently an untracked generated file and has been
+  intentionally left untouched.
 
 ## Important Files
 - README.md — original project description (needs adaptation)
@@ -69,6 +84,8 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 
 ## Notes for Agent
 - Always read this file before starting work
+- Use local venv commands explicitly: `./.venv/bin/python`, `./.venv/bin/pydcop`,
+  `./.venv/bin/ruff`, and `./.venv/bin/python -m pip`.
 - Only modify explicitly mentioned files
 - Ask before touching core modules (e.g., algorithm logic, messaging)
 - Prefer inspection and explanation before modification
