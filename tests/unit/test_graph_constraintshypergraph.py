@@ -45,9 +45,14 @@ def test_create_node_no_neigbors():
 
     n1 = VariableComputationNode(v1, [c1])
 
+    link = ConstraintLink('c1', {'v1'})
     assert v1 == n1.variable
+    assert n1.name == 'v1'
+    assert n1.type == 'VariableComputationNode'
     assert c1 in n1.constraints
+    assert n1.constraints == [c1]
     assert len(n1.links) == 1  # link to our-self
+    assert link in n1.links
     assert not n1.neighbors
 
 
@@ -60,6 +65,9 @@ def test_create_node_with_custom_name():
 
     assert v1 == n1.variable
     assert n1.name == 'foo'
+    assert n1.type == 'VariableComputationNode'
+    assert n1.constraints == [c1]
+    assert ConstraintLink('c1', {'v1'}) in n1.links
 
 
 def test_create_node_with_binary_constraint():
@@ -72,8 +80,10 @@ def test_create_node_with_binary_constraint():
 
     assert v1 == n1.variable
     assert c1 in n1.constraints
-    assert list(n1.links)[0].has_node('v2')
-    assert 'v2' in n1.neighbors
+    assert n1.constraints == [c1]
+    assert len(n1.links) == 1
+    assert ConstraintLink('c1', {'v1', 'v2'}) in n1.links
+    assert set(n1.neighbors) == {'v2'}
 
 
 def test_create_node_with_nary_constraint():
@@ -87,11 +97,10 @@ def test_create_node_with_nary_constraint():
 
     assert v1 == n1.variable
     assert c1 in n1.constraints
-    assert len(list(n1.links)) ==1
-    assert list(n1.links)[0].has_node('v2')
-    assert list(n1.links)[0].has_node('v3')
-    assert 'v2' in n1.neighbors
-    assert 'v3' in n1.neighbors
+    assert n1.constraints == [c1]
+    assert len(n1.links) == 1
+    assert ConstraintLink('c1', {'v1', 'v2', 'v3'}) in n1.links
+    assert set(n1.neighbors) == {'v2', 'v3'}
 
 
 def test_var_node_simple_repr():
@@ -105,25 +114,26 @@ def test_var_node_simple_repr():
     cv1_obtained = from_repr(r)
 
     assert cv1 == cv1_obtained
+    assert cv1_obtained.variable == v1
+    assert cv1_obtained.constraints == [c1]
+    assert cv1_obtained.links == [ConstraintLink('c1', {'v1'})]
+    assert cv1_obtained.neighbors == []
 
 
 def test_link_simple_repr():
-    d = Domain('d', 'test', [1, 2, 3])
-    v1 = Variable('v1', d)
-    v2 = Variable('v2', d)
-    v3 = Variable('v3', d)
-    c1 = constraint_from_str('c1', 'v1 * 0.5 + v2 - v3', [v1, v2, v3])
-
-    cv1 = VariableComputationNode(v1, [c1])
-    cv2 = VariableComputationNode(v2, [c1])
-    cv3 = VariableComputationNode(v3, [c1])
-
-    link = ConstraintLink(c1.name, ['c1', 'c2', 'c3'])
+    link = ConstraintLink('c1', ['c1', 'c2', 'c3'])
 
     r = simple_repr(link)
     link_obtained = from_repr(r)
 
+    assert r['__module__'] == 'pydcop.computations_graph.constraints_hypergraph'
+    assert r['__qualname__'] == 'ConstraintLink'
+    assert r['name'] == 'c1'
+    assert set(r['nodes']) == {'c1', 'c2', 'c3'}
     assert link == link_obtained
+    assert link_obtained.name == 'c1'
+    assert link_obtained.type == 'constraint_link'
+    assert link_obtained.nodes == frozenset({'c1', 'c2', 'c3'})
 
 
 def test_build_graph_from_dcop():
@@ -137,6 +147,7 @@ def test_build_graph_from_dcop():
 
     graph = build_computation_graph(dcop)
 
+    assert graph.type == 'ConstraintHyperGraph'
     links = list(graph.links)
     assert 1 == len(links)
     assert ConstraintLink(c1.name, {'v1', 'v2', 'v3'}) in links
@@ -146,6 +157,10 @@ def test_build_graph_from_dcop():
     assert VariableComputationNode(v1, [c1]) in nodes
     assert VariableComputationNode(v2, [c1]) in nodes
     assert VariableComputationNode(v3, [c1]) in nodes
+    assert set(graph.node_names()) == {'v1', 'v2', 'v3'}
+    assert graph.computation('v1') == VariableComputationNode(v1, [c1])
+    assert graph.computation('v2') == VariableComputationNode(v2, [c1])
+    assert graph.computation('v3') == VariableComputationNode(v3, [c1])
 
 
 def test_build_graph_from_variables_constraints():
@@ -158,6 +173,12 @@ def test_build_graph_from_variables_constraints():
     graph = build_computation_graph(variables=[v1, v2, v3],
                                     constraints=[c1])
 
+    assert graph.type == 'ConstraintHyperGraph'
+    assert graph.links == {ConstraintLink(c1.name, {'v1', 'v2', 'v3'})}
+    assert set(graph.node_names()) == {'v1', 'v2', 'v3'}
+    assert graph.computation('v1') == VariableComputationNode(v1, [c1])
+    assert graph.computation('v2') == VariableComputationNode(v2, [c1])
+    assert graph.computation('v3') == VariableComputationNode(v3, [c1])
 
 
 def test_graph_density():
@@ -172,5 +193,7 @@ def test_graph_density():
 
     graph = build_computation_graph(dcop)
 
+    assert len(graph.nodes) == 3
+    assert graph.links == {ConstraintLink(c1.name, {'v1', 'v2', 'v3'})}
     density = graph.density()
     assert density == 1/3
