@@ -249,7 +249,7 @@ def test_unsubscribe_one_cb(directory_discovery):
     agt1.discovery.register_agent('agt_new', 'addr_new')
 
     cb = agt2.discovery.subscribe_agent('agt_new', MagicMock())
-    cb2 = agt2.discovery.subscribe_agent('agt_new', MagicMock())
+    agt2.discovery.subscribe_agent('agt_new', MagicMock())
 
     wait_run()
     cb.reset_mock()
