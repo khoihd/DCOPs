@@ -60,19 +60,19 @@ class VariableComputationNode(ComputationNode):
         return self._constraints
 
     def get_previous(self):
-        for l in self.links:
-            if l.type == "previous":
-                return l.target
+        for link in self.links:
+            if link.type == "previous":
+                return link.target
         return None
 
     def get_next(self):
-        for l in self.links:
-            if l.type == "next":
-                return l.target
+        for link in self.links:
+            if link.type == "next":
+                return link.target
         return None
 
     def __eq__(self, other):
-        if type(other) != VariableComputationNode:
+        if type(other) is not VariableComputationNode:
             return False
         if self.variable == other.variable and self.constraints == other.constraints:
             return True
