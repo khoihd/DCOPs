@@ -1699,6 +1699,16 @@ def join(u1: Constraint, u2: Constraint) -> Constraint:
         if d2 not in dims:
             dims.append(d2)
 
+    if isinstance(u1, NAryMatrixRelation) and isinstance(
+        u2, NAryMatrixRelation
+    ):
+        u1_matrix = _matrix_expanded_to_join_dims(u1, dims)
+        u2_matrix = _matrix_expanded_to_join_dims(u2, dims)
+        matrix = np.asarray(u1_matrix, dtype=np.float64) + np.asarray(
+            u2_matrix, dtype=np.float64
+        )
+        return NAryMatrixRelation(dims, matrix, name="joined_utils")
+
     matrix = np.empty(tuple(len(v.domain) for v in dims), dtype=np.float64)
     for ass in generate_assignment_as_dict(dims):
         u1_ass = filter_assignment_dict(ass, u1.dimensions)
@@ -1707,6 +1717,25 @@ def join(u1: Constraint, u2: Constraint) -> Constraint:
         matrix[matrix_index] = u1(**u1_ass) + u2(**u2_ass)
 
     return NAryMatrixRelation(dims, matrix, name="joined_utils")
+
+
+def _matrix_expanded_to_join_dims(relation: NAryMatrixRelation, dims):
+    relation_dims = relation.dimensions
+    ordered_relation_axes = [
+        relation_dims.index(join_dim)
+        for join_dim in dims
+        if join_dim in relation_dims
+    ]
+
+    matrix = relation._m
+    if ordered_relation_axes != list(range(len(relation_dims))):
+        matrix = np.transpose(matrix, axes=ordered_relation_axes)
+
+    for axis, join_dim in enumerate(dims):
+        if join_dim not in relation_dims:
+            matrix = np.expand_dims(matrix, axis=axis)
+
+    return matrix
 
 
 def projection(a_rel: Constraint, a_var: Variable, mode="max") -> Constraint:

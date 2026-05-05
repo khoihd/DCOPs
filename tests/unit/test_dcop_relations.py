@@ -1929,6 +1929,21 @@ class JoinRelationsTestCase:
         assert j(x1=1, x2=2) == 4
 
 
+def test_join_matrix_relations_different_order():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+    u1 = NAryMatrixRelation([x1, x2], np.array([[1, 2], [3, 4]], np.int8))
+    u2 = NAryMatrixRelation([x2, x1], np.array([[10, 20], [30, 40]], np.int8))
+
+    joined = pydcop.dcop.relations.join(u1, u2)
+
+    assert joined.dimensions == [x1, x2]
+    assert joined(x1=0, x2=0) == 11
+    assert joined(x1=1, x2=0) == 23
+    assert joined(x1=0, x2=1) == 32
+    assert joined(x1=1, x2=1) == 44
+
+
 class ProjectionTestCase(unittest.TestCase):
     def test_projection_oneVarRel(self):
 
