@@ -631,7 +631,7 @@ class ExternalVariable(Variable):
         self, name: str, domain: Union[VariableDomain, Iterable[Any]], value=None
     ) -> None:
         super().__init__(name, domain)
-        self._cb = []  # type: List[Callable[[Any], Any]]
+        self._cb: list[Callable[[Any], Any]] = []
         self._value = list(domain.values)[0]
         self.value = value
 
