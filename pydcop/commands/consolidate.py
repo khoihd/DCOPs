@@ -178,7 +178,7 @@ def distribution_cost(
 
             csv_writer = csv.writer(target)
             csv_writer.writerow([dcop_files[0], distribution_file, cost, hosting, comm])
-        except:
+        except Exception:
             pass
     return target
 
