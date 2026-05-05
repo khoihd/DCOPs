@@ -90,7 +90,7 @@ class VariableComputationNode(ComputationNode):
         return self._constraints
 
     def __eq__(self, other):
-        if type(other) != VariableComputationNode:
+        if type(other) is not VariableComputationNode:
             return False
         if self.variable == other.variable and self.constraints == other.constraints:
             return True
