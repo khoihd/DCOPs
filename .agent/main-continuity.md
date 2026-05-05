@@ -12,7 +12,7 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 
 ## Current Focus Area
 - Python 3.11 / modern dependency compatibility
-- CLI end-to-end tests and local virtualenv execution
+- CLI end-to-end tests and explicit Conda `khoihd` execution
 - Core DCOP algorithms and process/thread execution flow
 - Targeted Ruff cleanup and unit-test modernization in legacy modules
 - Focused cleanup in distribution, infrastructure, and replication modules
@@ -108,10 +108,27 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
   pytest, Ruff, coverage, PuLP, and websocket-server. Updated `Makefile`,
   `AGENTS.md`, and dependency constraints to use or document
   `conda run -n khoihd ...`.
+- Added README attribution clarifying that this continuation is derived from
+  Orange-OpenSource pyDcop, whose original code is copyright 2017 Orange and
+  BSD 3-Clause licensed.
+- Fixed the legacy callback list type comment in `pydcop/dcop/objects.py` by
+  replacing an undefined `List[...]` type comment with a modern
+  `list[Callable[[Any], Any]]` annotation.
+- Investigated DPOP correctness coverage. Existing tests include small
+  hand-built DPOP message-flow tests in `tests/unit/test_algorithms_dpop.py`,
+  API and CLI graph-coloring solves that assert known DPOP optima, and a
+  brute-force optimum helper in the dynamic Max-Sum integration tests. There
+  is not yet a test that independently solves a DCOP with a centralized oracle
+  or solver and compares that result directly against a DCOP algorithm output.
 
 ## Next Steps
 - Continue targeted CLI/API test stabilization with
   `conda run -n khoihd python`.
+- Add oracle-style algorithm correctness tests: solve a small DCOP with an
+  independent centralized method (likely brute-force enumeration first, before
+  considering PuLP/ILP), solve the same DCOP with a DCOP algorithm such as
+  DPOP, and compare costs/assignments. This is especially useful before
+  optimizing core relation operations such as `join`.
 - Continue improving remaining legacy unit tests one file at a time, with
   targeted Ruff and pytest checks before each commit.
 - Continue one-file Ruff cleanup only when explicitly requested, keeping each
