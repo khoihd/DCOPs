@@ -1699,15 +1699,14 @@ def join(u1: Constraint, u2: Constraint) -> Constraint:
         if d2 not in dims:
             dims.append(d2)
 
-    u_j = NAryMatrixRelation(dims, name="joined_utils")
+    matrix = np.empty(tuple(len(v.domain) for v in dims), dtype=np.float64)
     for ass in generate_assignment_as_dict(dims):
-
         u1_ass = filter_assignment_dict(ass, u1.dimensions)
         u2_ass = filter_assignment_dict(ass, u2.dimensions)
-        s = u1(**u1_ass) + u2(**u2_ass)
-        u_j = u_j.set_value_for_assignment(ass, s)
+        matrix_index = tuple(v.domain.index(ass[v.name]) for v in dims)
+        matrix[matrix_index] = u1(**u1_ass) + u2(**u2_ass)
 
-    return u_j
+    return NAryMatrixRelation(dims, matrix, name="joined_utils")
 
 
 def projection(a_rel: Constraint, a_var: Variable, mode="max") -> Constraint:
