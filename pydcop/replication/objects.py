@@ -31,9 +31,6 @@
 
 from typing import Dict, List
 
-from collections import defaultdict
-
-
 
 class ReplicaDistribution(object):
     """
@@ -47,25 +44,25 @@ class ReplicaDistribution(object):
         :param mapping: map computation -> list of agents hosting a replica
         for this computation.
         """
-        self._mapping = mapping  # type: Dict[str, List[str]]
-        self._agent_replicas = \
-            defaultdict(lambda: [])  # type: Dict[str, List[str]]
+        self._mapping = {
+            computation: list(agents) for computation, agents in mapping.items()
+        }  # type: Dict[str, List[str]]
+        self._agent_replicas = {}  # type: Dict[str, List[str]]
 
-        for c in self._mapping:
-            for a in self._mapping[a]:
-
-                if c in self._agent_replicas[a]:
+        for computation, agents in self._mapping.items():
+            for agent in agents:
+                replicas = self._agent_replicas.setdefault(agent, [])
+                if computation in replicas:
                     raise ValueError('Agent {} is hosting several replica '
-                                     'for {}'.format(a, c))
-                self._agent_replicas[a].append(c)
+                                     'for {}'.format(agent, computation))
+                replicas.append(computation)
 
     def replicas_on(self, agt: str, raise_on_unknown=False):
-        try:
-            return list(self._agent_replicas[agt])
-        except KeyError as ke:
+        if agt not in self._agent_replicas:
             if raise_on_unknown:
-                raise ke
+                raise KeyError(agt)
             return []
+        return list(self._agent_replicas[agt])
 
     def agents_for_computation(self, computation: str):
         return list(self._mapping[computation])
