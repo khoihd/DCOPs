@@ -191,7 +191,6 @@ class UCSReplicateMessage(Message):
 
     @property
     def size(self):
-        table_size = sum(len(p) for _, p in self._paths)
         return len(self.hosts) + len(self._visited) + len(self._rq_path)
 
     def __str__(self):
@@ -213,7 +212,7 @@ class UCSReplicateMessage(Message):
         )
 
     def __eq__(self, other):
-        if type(other) != UCSReplicateMessage:
+        if type(other) is not UCSReplicateMessage:
             return True
         if (
             self.computation_def == other.computation_def
@@ -446,7 +445,7 @@ class UCSReplication(MessagePassingComputation):
             self.logger.info(f"No computation to replicate for {self.name} ")
             self.replication_done(dict(deepcopy(self._replica_hosts)))
             return
-        elif type(computations) == ComputationName:
+        elif type(computations) is ComputationName:
             if computations not in self.computations:
                 msg = "Requesting replication of unknown computation {}".format(
                     computations
