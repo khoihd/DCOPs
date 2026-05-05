@@ -36,24 +36,31 @@ from tests.utils.dcop_oracle import solve_dcop_with_pulp
 from tests.utils.known_instances import KNOWN_INSTANCE_SOLUTIONS
 
 
-DPOP_ORACLE_CASES = tuple(
-    known_case
-    for known_case in KNOWN_INSTANCE_SOLUTIONS
-    if known_case.name == "api_graphcoloring_3"
-)
+def ensure_one_agent_per_variable(dcop):
+    missing_agents = len(dcop.variables) - len(dcop.agents)
+    if missing_agents > 0:
+        first_index = len(dcop.agents) + 1
+        dcop.add_agents(
+            create_agents(
+                "dpop_a",
+                range(first_index, first_index + missing_agents),
+                capacity=50,
+            )
+        )
 
 
 @pytest.mark.parametrize(
     "known_case",
-    DPOP_ORACLE_CASES,
-    ids=[known_case.name for known_case in DPOP_ORACLE_CASES],
+    KNOWN_INSTANCE_SOLUTIONS,
+    ids=[known_case.name for known_case in KNOWN_INSTANCE_SOLUTIONS],
 )
 def test_api_solve_dpop_matches_lp_oracle_cost(known_case):
     dcop = known_case.dcop_factory()
     _, oracle_cost = solve_dcop_with_pulp(dcop)
-    dcop.add_agents(create_agents("a", [1, 2, 3], capacity=50))
+    ensure_one_agent_per_variable(dcop)
 
     assignment = solve(dcop, "dpop", "oneagent", timeout=3)
+    assert assignment is not None
     hard_cost, soft_cost = dcop.solution_cost(assignment, INFINITY)
 
     assert hard_cost == 0
