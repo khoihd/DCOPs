@@ -251,8 +251,8 @@ def candidate_hosts(
         # compute cost of assigning computation to agt
         hosting_cost = agt.hosting_cost(computation.name)
         comm_cost = 0
-        for l in computation.links:
-            for n in l.nodes:
+        for link in computation.links:
+            for n in link.nodes:
                 if n in mapping:
                     comm_cost += communication_load(computation, n) * agt.route(
                         mapping[n]
