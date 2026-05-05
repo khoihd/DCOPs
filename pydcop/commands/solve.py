@@ -213,6 +213,8 @@ from functools import partial
 from queue import Queue, Empty
 from threading import Thread
 
+import numpy as np
+
 from pydcop.algorithms import list_available_algorithms
 from pydcop.commands._utils import build_algo_def, _error, _load_modules
 from pydcop.dcop.yamldcop import load_dcop_from_file
@@ -594,10 +596,6 @@ def on_force_exit(sig, frame):
     orchestrator.stop()
     _results("STOPPED")
     os._exit(2)
-
-
-import numpy as np
-
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
