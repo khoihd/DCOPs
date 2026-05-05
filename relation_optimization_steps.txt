@@ -9,28 +9,85 @@ changing public behavior.
 
 Priority 1: projection() matrix fast path
 -----------------------------------------
-[ ] Step 1 complete
+[x] Step 1 complete
 
 Why:
 - DPOP calls projection() when computing UTIL messages.
-- projection() currently fills a result relation through repeated
+- projection() previously filled a result relation through repeated
   set_value_for_assignment() calls, which copies the full matrix each time.
+- projection() now dispatches to projection_fast() for NAryMatrixRelation and
+  projection_slow() for generic relation implementations.
 
 Implementation:
-[ ] Keep the existing generic projection() behavior as fallback.
-[ ] Add a fast path for isinstance(a_rel, NAryMatrixRelation).
-[ ] Find the projected axis with a_rel.dimensions.index(a_var).
-[ ] Build remaining_vars exactly as today.
-[ ] Use np.max(a_rel._m, axis=axis) for mode == "max".
-[ ] Use np.min(a_rel._m, axis=axis) for mode == "min".
-[ ] Return NAryMatrixRelation(remaining_vars, matrix).
-[ ] Preserve existing error behavior for invalid mode where practical.
+[x] Keep the existing generic projection() behavior as fallback.
+[x] Add a fast path for isinstance(a_rel, NAryMatrixRelation).
+[x] Move the matrix path into projection_fast().
+[x] Move the generic path into projection_slow().
+[x] Find the projected axis with a_rel.dimensions.index(a_var).
+[x] Build remaining_vars exactly as today.
+[x] Use np.max(a_rel._m, axis=axis) for mode == "max".
+[x] Use np.min(a_rel._m, axis=axis) for mode == "min".
+[x] Return NAryMatrixRelation(remaining_vars, matrix).
+[x] Preserve existing error behavior for invalid mode where practical.
+[x] Avoid repeated result-matrix copies in projection_slow().
 
 Tests:
-[ ] Add or confirm projection tests for projecting the first axis.
-[ ] Add or confirm projection tests for projecting a middle axis.
-[ ] Add or confirm projection tests for projecting the last axis.
-[ ] Add or confirm min and max modes.
+[x] Add or confirm projection tests for projecting the first axis.
+[x] Add or confirm projection tests for projecting a middle axis.
+[x] Add or confirm projection tests for projecting the last axis.
+[x] Add or confirm min and max modes.
+[x] Add direct correctness tests for projection_fast().
+[x] Add direct correctness tests for projection_slow().
+[x] Add a benchmark-style test comparing projection_fast() and projection_slow().
+
+Verify:
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve_dpop.py tests/api/test_api_solve.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+
+
+Priority 2: projection_slow() direct generic evaluation
+-------------------------------------------------------
+[ ] Step 2 complete
+
+Why:
+- projection_slow() is now the generic fallback used by projection() for
+  non-NAryMatrixRelation relations.
+- projection_slow() already avoids repeated result-matrix copies.
+- It still creates one sliced relation per partial assignment and then calls
+  find_arg_optimal() on that slice.
+- Avoiding the slice object creation could reduce overhead for function-backed
+  relations while keeping projection() behavior unchanged.
+
+Risk:
+- This is more behavior-sensitive than the matrix fast path because
+  projection_slow() handles all non-matrix relation implementations.
+- Preserve current mode validation and relation error behavior where practical.
+- Keep the current slice() + find_arg_optimal() path available as a fallback if
+  direct relation evaluation is not safe for a relation type.
+
+Implementation:
+[ ] Keep projection() as the main dispatcher.
+[ ] Keep projection_fast() unchanged.
+[ ] In projection_slow(), keep remaining_vars exactly as today.
+[ ] Pre-validate mode or preserve find_arg_optimal() invalid-mode behavior.
+[ ] For each partial assignment, evaluate candidate assignments directly when
+    practical: set a_var.name to each domain value and call the relation with
+    keyword arguments.
+[ ] Track the best projected value without creating a sliced relation.
+[ ] Write the best value directly into the raw result matrix.
+[ ] Fall back to the current slice() + find_arg_optimal() behavior if direct
+    evaluation would change compatibility.
+
+Tests:
+[ ] Keep projection_slow() correctness tests for function relations.
+[ ] Add or confirm projection_slow() tests for min and max modes.
+[ ] Add or confirm projection_slow() tests for one-variable/scalar projection.
+[ ] Add or confirm projection_slow() result parity with projection_fast() on a
+    matrix relation used directly in tests.
+[ ] Add or update benchmark-style coverage for projection_slow().
 
 Verify:
 [ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
@@ -40,9 +97,9 @@ Verify:
 [ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 
-Priority 2: NAryMatrixRelation.from_func_relation()
+Priority 3: NAryMatrixRelation.from_func_relation()
 ---------------------------------------------------
-[ ] Step 2 complete
+[ ] Step 3 complete
 
 Why:
 - from_func_relation() currently creates an empty NAryMatrixRelation and fills
@@ -66,9 +123,9 @@ Verify:
 [ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 
-Priority 3: scalar lookup in NAryMatrixRelation.get_value_for_assignment()
+Priority 4: scalar lookup in NAryMatrixRelation.get_value_for_assignment()
 -------------------------------------------------------------------------
-[ ] Step 3 complete
+[ ] Step 4 complete
 
 Why:
 - get_value_for_assignment() currently calls slice() and constructs a temporary
@@ -76,7 +133,7 @@ Why:
 - Direct matrix indexing would reduce overhead in generic relation code paths.
 
 Risk:
-- This is more behavior-sensitive than Priority 1 and 2 because scalar lookup,
+- This is more behavior-sensitive than Priority 1-3 because scalar lookup,
   list assignment lookup, dict assignment lookup, zero-arity lookup, and error
   handling all need to remain compatible.
 
@@ -102,5 +159,6 @@ Verify:
 Do not optimize yet
 -------------------
 [ ] Leave filter_assignment_dict() alone unless profiling shows it matters.
-[ ] Leave generate_assignment_as_dict() alone until matrix fast paths are done.
+[ ] Leave generate_assignment_as_dict() alone until projection_slow() direct
+    evaluation is done and profiling shows it still matters.
 [ ] Avoid broad refactors of relation classes while optimizing these hotspots.
