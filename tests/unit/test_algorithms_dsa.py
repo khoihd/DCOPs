@@ -43,8 +43,9 @@ from pydcop.dcop.relations import UnaryFunctionRelation, \
 def test_communication_load():
     v = Variable('v1', list(range(10)))
     var_node = VariableComputationNode(v, [])
-    assert dsa.UNIT_SIZE + dsa.HEADER_SIZE == dsa.communication_load(
-        var_node, 'f1')
+    expected = dsa.UNIT_SIZE + dsa.HEADER_SIZE
+    assert dsa.communication_load(var_node, 'f1') == expected
+    assert dsa.communication_load(var_node, 'another_neighbor') == expected
 
 
 def test_computation_memory_one_constraint():
@@ -55,6 +56,7 @@ def test_computation_memory_one_constraint():
     v1_node = VariableComputationNode(v1, [c1])
 
     # here, we have an hyper-edges with 3 vertices
+    assert set(v1_node.neighbors) == {'v2', 'v3'}
     assert dsa.computation_memory(v1_node) == dsa.UNIT_SIZE * 2
 
 
@@ -69,22 +71,22 @@ def test_computation_memory_two_constraints():
     v1_node = VariableComputationNode(v1, [c1, c2, c3])
 
     # here, we have 3 edges , one for each constraint
+    assert set(v1_node.neighbors) == {'v2', 'v3', 'v4'}
     assert dsa.computation_memory(v1_node) == dsa.UNIT_SIZE * 3
 
 
-def test_footprint_on_computation_object():
+def test_footprint_on_computation_object(monkeypatch):
     v1 = Variable('v1', [0, 1, 2, 3, 4])
     v2 = Variable('v2', [0, 1, 2, 3, 4])
     c1 = relation_from_str('c1', '0 if v1 == v2 else  1', [v1, v2])
     n1 = VariableComputationNode(v1, [c1])
-    n2 = VariableComputationNode(v2, [c1])
     comp_def = ComputationDef(
         n1, AlgorithmDef.build_with_default_param('dsa', mode='min'))
     c = DsaComputation(comp_def)
 
     # Must fix unit size otherwise the tests fails when we change the default
     # value
-    dsa.UNIT_SIZE = 1
+    monkeypatch.setattr(dsa, 'UNIT_SIZE', 1)
 
     footprint = c.footprint()
     assert footprint == 1
@@ -100,6 +102,10 @@ def test_build_computation_default_params():
     assert c.variant == 'B'
     assert c.stop_cycle == 0
     assert c.probability == 0.7
+    assert c.constraints == []
+    assert c.current_cycle == {}
+    assert c.next_cycle == {}
+    assert c.best_constraints_costs == {}
 
 
 def test_build_computation_max_mode():
@@ -109,6 +115,9 @@ def test_build_computation_max_mode():
         n1, AlgorithmDef.build_with_default_param('dsa', mode='max'))
     c = DsaComputation(comp_def)
     assert c.mode == 'max'
+    assert c.variant == 'B'
+    assert c.stop_cycle == 0
+    assert c.probability == 0.7
 
 
 def test_build_computation_with_params():
@@ -123,6 +132,7 @@ def test_build_computation_with_params():
     assert c.variant == 'C'
     assert c.stop_cycle == 10
     assert c.probability == 0.5
+    assert c.constraints == []
 
 
 def test_1_unary_constraint_means_no_neighbors():
@@ -134,7 +144,8 @@ def test_1_unary_constraint_means_no_neighbors():
                               AlgorithmDef.build_with_default_param('dsa'))
 
     computation = DsaComputation(comp_def=comp_def)
-    assert len(computation.neighbors) == 0
+    assert computation.neighbors == []
+    assert computation.constraints == [c1]
 
 
 def test_2_unary_constraint_means_no_neighbors():
@@ -147,7 +158,8 @@ def test_2_unary_constraint_means_no_neighbors():
                               AlgorithmDef.build_with_default_param('dsa'))
 
     computation = DsaComputation(comp_def=comp_def)
-    assert len(computation.neighbors) == 0
+    assert computation.neighbors == []
+    assert computation.constraints == [c1, c2]
 
 
 def test_one_binary_constraint_one_neighbors():
@@ -164,7 +176,8 @@ def test_one_binary_constraint_one_neighbors():
                               AlgorithmDef.build_with_default_param('dsa'))
 
     computation = DsaComputation(comp_def=comp_def)
-    assert len(computation.neighbors) == 1
+    assert set(computation.neighbors) == {'v2'}
+    assert computation.constraints == [c1]
 
 
 def test_2_binary_constraint_one_neighbors():
@@ -184,7 +197,8 @@ def test_2_binary_constraint_one_neighbors():
                               AlgorithmDef.build_with_default_param('dsa'))
 
     computation = DsaComputation(comp_def=comp_def)
-    assert len(computation.neighbors) == 1
+    assert set(computation.neighbors) == {'v2'}
+    assert computation.constraints == [c1, c2]
 
 
 def test_3ary_constraint_2_neighbors():
@@ -201,7 +215,21 @@ def test_3ary_constraint_2_neighbors():
                               AlgorithmDef.build_with_default_param('dsa'))
 
     computation = DsaComputation(comp_def=comp_def)
-    assert len(computation.neighbors) == 2
+    assert set(computation.neighbors) == {'v2', 'v3'}
+    assert computation.constraints == [c1]
+
+
+def test_dsa_message_properties():
+    message = DsaMessage(3)
+
+    assert message.type == 'dsa_value'
+    assert message.value == 3
+    assert message.size == 1
+    assert str(message) == 'DsaMessage(3)'
+    assert repr(message) == 'DsaMessage(3)'
+    assert message == DsaMessage(3)
+    assert message != DsaMessage(4)
+    assert message != object()
 
 ################################################################################
 
@@ -229,7 +257,7 @@ def test_select_and_send_random_value_when_starting():
 
     assert computation.current_value in v1.domain
     expected_message = DsaMessage(computation.current_value)
-    print("message_sender.mock_calls", message_sender.mock_calls)
+    assert message_sender.call_count == 2
     message_sender.assert_has_calls(
         [call('v1', 'v2', expected_message, None, None),
          call('v1', 'v3', expected_message, None, None)],
