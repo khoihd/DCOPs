@@ -129,8 +129,8 @@ class ExpressionFunction(Callable, SimpleRepr):
 
     def __call__(self, **kwargs):
         # Note that we only accept named arguments !
-        l = kwargs.copy()
-        l.update(self._fixed_vars)
+        call_args = kwargs.copy()
+        call_args.update(self._fixed_vars)
 
         received = set(kwargs.keys())
         expected = set(self.variable_names)
@@ -143,11 +143,11 @@ class ExpressionFunction(Callable, SimpleRepr):
             raise TypeError(
                 "Unexpected argument(s) " + str(unexpected))
 
-        res = self.exp_func(**l)
+        res = self.exp_func(**call_args)
         return res
 
     def __eq__(self, other):
-        if type(self) != type(other):
+        if type(self) is not type(other):
             return False
         if self._expression == other._expression and \
                 self._source_file == other._source_file:
