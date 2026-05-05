@@ -150,7 +150,7 @@ def from_repr(r):
             module = importlib.import_module(r['__module__'])
             qual = getattr(module, r['__qualname__'])
 
-            if type(qual) == types.FunctionType:
+            if isinstance(qual, types.FunctionType):
                 args = {k: from_repr(v) for k, v in r.items()
                         if k not in ['__qualname__', '__module__', '__type__']}
                 M = qual(r['__type__'], args)
