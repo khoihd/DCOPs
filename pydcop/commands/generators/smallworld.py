@@ -103,7 +103,6 @@ def generate_small_world(args):
     small_capa, avg_capa, big_capa = 40, 200, 1000
     avg_agents = [agt_name(i) for i in range(75, 95)]
     big_agents = [agt_name(i) for i in range(95, 100)]
-    hosting_factor = 10
 
     for a in small_agents:
         # communication costs with all other agents
