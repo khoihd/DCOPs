@@ -1766,15 +1766,43 @@ def projection(a_rel: Constraint, a_var: Variable, mode="max") -> Constraint:
         the new relation resulting from the projection
     """
 
+    if isinstance(a_rel, NAryMatrixRelation):
+        return projection_fast(a_rel, a_var, mode)
+    return projection_slow(a_rel, a_var, mode)
+
+
+def projection_fast(
+    a_rel: NAryMatrixRelation, a_var: Variable, mode="max"
+) -> Constraint:
+    """
+    Project matrix-backed relations with a direct numpy reduction.
+    """
+
     remaining_vars = a_rel.dimensions.copy()
     remaining_vars.remove(a_var)
 
-    # the new relation resulting from the projection
-    proj_rel = NAryMatrixRelation(remaining_vars)
+    axis = a_rel.dimensions.index(a_var)
+    if mode == "max":
+        matrix = np.max(a_rel._m, axis=axis)
+    elif mode == "min":
+        matrix = np.min(a_rel._m, axis=axis)
+    else:
+        raise ValueError("Invalid optimization mode: " + mode)
+    return NAryMatrixRelation(remaining_vars, np.asarray(matrix, dtype=np.float64))
 
+
+def projection_slow(a_rel: Constraint, a_var: Variable, mode="max") -> Constraint:
+    """
+    Generic projection implementation for relation types without matrix access.
+    """
+
+    remaining_vars = a_rel.dimensions.copy()
+    remaining_vars.remove(a_var)
+
+    matrix = np.empty(tuple(len(v.domain) for v in remaining_vars), dtype=np.float64)
     for partial in generate_assignment_as_dict(remaining_vars):
-
         _, rel_val = find_arg_optimal(a_var, a_rel.slice(partial), mode)
-        proj_rel = proj_rel.set_value_for_assignment(partial, rel_val)
+        matrix_index = tuple(v.domain.index(partial[v.name]) for v in remaining_vars)
+        matrix[matrix_index] = rel_val
 
-    return proj_rel
+    return NAryMatrixRelation(remaining_vars, matrix)

@@ -29,6 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import time
 import unittest
 
 import numpy as np
@@ -2018,3 +2019,143 @@ class ProjectionTestCase(unittest.TestCase):
 
         # the min of u1 when setting x2<-2 is 16
         assert p.get_value_for_assignment(["2"]) == 16
+
+    def test_projection_fast_matrix_project_first_axis_max(self):
+        x1 = Variable("x1", ["a", "b"])
+        x2 = Variable("x2", ["1", "2"])
+        x3 = Variable("x3", ["u", "v"])
+        u1 = NAryMatrixRelation(
+            [x1, x2, x3],
+            np.array([[[1, 2], [3, 4]], [[10, 20], [30, 40]]], np.int8),
+        )
+
+        p = pydcop.dcop.relations.projection_fast(u1, x1)
+
+        assert p.dimensions == [x2, x3]
+        assert p.get_value_for_assignment(["1", "u"]) == 10
+        assert p.get_value_for_assignment(["1", "v"]) == 20
+        assert p.get_value_for_assignment(["2", "u"]) == 30
+        assert p.get_value_for_assignment(["2", "v"]) == 40
+
+    def test_projection_fast_matrix_one_var_min_max(self):
+        x1 = Variable("x1", ["a", "b", "c"])
+        u1 = NAryMatrixRelation([x1], np.array([2, 4, 8], np.int8))
+
+        p_max = pydcop.dcop.relations.projection_fast(u1, x1)
+        p_min = pydcop.dcop.relations.projection_fast(u1, x1, mode="min")
+
+        assert p_max.arity == 0
+        assert p_max.get_value_for_assignment() == 8
+        assert p_min.arity == 0
+        assert p_min.get_value_for_assignment() == 2
+
+    def test_projection_fast_matrix_project_middle_axis_min(self):
+        x1 = Variable("x1", ["a", "b"])
+        x2 = Variable("x2", ["1", "2"])
+        x3 = Variable("x3", ["u", "v"])
+        u1 = NAryMatrixRelation(
+            [x1, x2, x3],
+            np.array([[[1, 8], [3, 4]], [[10, 20], [30, 12]]], np.int8),
+        )
+
+        p = pydcop.dcop.relations.projection_fast(u1, x2, mode="min")
+
+        assert p.dimensions == [x1, x3]
+        assert p.get_value_for_assignment(["a", "u"]) == 1
+        assert p.get_value_for_assignment(["a", "v"]) == 4
+        assert p.get_value_for_assignment(["b", "u"]) == 10
+        assert p.get_value_for_assignment(["b", "v"]) == 12
+
+    def test_projection_fast_matrix_project_last_axis_max(self):
+        x1 = Variable("x1", ["a", "b"])
+        x2 = Variable("x2", ["1", "2"])
+        x3 = Variable("x3", ["u", "v"])
+        u1 = NAryMatrixRelation(
+            [x1, x2, x3],
+            np.array([[[1, 8], [3, 4]], [[10, 20], [30, 12]]], np.int8),
+        )
+
+        p = pydcop.dcop.relations.projection_fast(u1, x3)
+
+        assert p.dimensions == [x1, x2]
+        assert p.get_value_for_assignment(["a", "1"]) == 8
+        assert p.get_value_for_assignment(["a", "2"]) == 4
+        assert p.get_value_for_assignment(["b", "1"]) == 20
+        assert p.get_value_for_assignment(["b", "2"]) == 30
+
+    def test_projection_slow_function_relation_uses_generic_path(self):
+        x1 = Variable("x1", ["a", "b", "c"])
+        x2 = Variable("x2", ["1", "2"])
+
+        @AsNAryFunctionRelation(x1, x2)
+        def u1(x, y):
+            costs = {
+                ("a", "1"): 2,
+                ("b", "1"): 4,
+                ("c", "1"): 8,
+                ("a", "2"): 16,
+                ("b", "2"): 32,
+                ("c", "2"): 64,
+            }
+            return costs[(x, y)]
+
+        p = pydcop.dcop.relations.projection_slow(u1, x1)
+
+        assert p.dimensions == [x2]
+        assert p.get_value_for_assignment(["1"]) == 8
+        assert p.get_value_for_assignment(["2"]) == 64
+
+    def test_projection_slow_matrix_matches_projection_fast(self):
+        x1 = Variable("x1", ["a", "b"])
+        x2 = Variable("x2", ["1", "2"])
+        x3 = Variable("x3", ["u", "v"])
+        u1 = NAryMatrixRelation(
+            [x1, x2, x3],
+            np.array([[[1, 8], [3, 4]], [[10, 20], [30, 12]]], np.int8),
+        )
+
+        p_fast = pydcop.dcop.relations.projection_fast(u1, x2, mode="min")
+        p_slow = pydcop.dcop.relations.projection_slow(u1, x2, mode="min")
+
+        assert p_slow.dimensions == p_fast.dimensions
+        assert p_slow.get_value_for_assignment(["a", "u"]) == 1
+        assert p_slow.get_value_for_assignment(["a", "v"]) == 4
+        assert p_slow.get_value_for_assignment(["b", "u"]) == 10
+        assert p_slow.get_value_for_assignment(["b", "v"]) == 12
+
+    def test_benchmark_projection_fast_against_projection_slow(self):
+        domain = list(range(7))
+        x1 = Variable("x1", domain)
+        x2 = Variable("x2", domain)
+        x3 = Variable("x3", domain)
+        x4 = Variable("x4", domain)
+        matrix = np.arange(len(domain) ** 4, dtype=np.float64).reshape(
+            (len(domain),) * 4
+        )
+        u1 = NAryMatrixRelation([x1, x2, x3, x4], matrix)
+
+        p_fast = pydcop.dcop.relations.projection_fast(u1, x2)
+        p_slow = pydcop.dcop.relations.projection_slow(u1, x2)
+        assert p_fast.dimensions == p_slow.dimensions
+        for assignment in generate_assignment_as_dict(p_fast.dimensions):
+            assert p_fast(**assignment) == p_slow(**assignment)
+
+        def best_time(func, repeat):
+            best = float("inf")
+            for _ in range(repeat):
+                start = time.perf_counter()
+                func()
+                best = min(best, time.perf_counter() - start)
+            return best
+
+        fast_time = best_time(
+            lambda: pydcop.dcop.relations.projection_fast(u1, x2), repeat=10
+        )
+        slow_time = best_time(
+            lambda: pydcop.dcop.relations.projection_slow(u1, x2), repeat=2
+        )
+
+        assert fast_time < slow_time, (
+            "projection_fast should be faster than projection_slow "
+            f"(fast={fast_time:.6f}s, slow={slow_time:.6f}s)"
+        )
