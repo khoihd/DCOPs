@@ -1092,7 +1092,6 @@ class AgentsMgt(MessagePassingComputation):
                 self.logger.info('Repair done on agent %s, waiting for %s',
                                  msg.agent, waited)
             else:
-                done_time = perf_counter() - self.start_time
                 repair_duration = time.perf_counter() - self.repair_start
                 # Restore all repair agents to running state
                 for a in self._agts_state:
