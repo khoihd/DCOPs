@@ -84,7 +84,9 @@ class Distribution(object):
             A list containing the names of the computations distributed in this
             distribution.
         """
-        return [c for l in self._mapping.values() for c in l]
+        return [
+            c for computations in self._mapping.values() for c in computations
+        ]
 
     def mapping(self) -> Dict[str, List[str]]:
         """
@@ -213,7 +215,7 @@ class Distribution(object):
         return 'Distribution({})'.format(self.mapping())
 
     def __eq__(self, other):
-        if type(other) != Distribution:
+        if type(other) is not Distribution:
             return False
         if self.mapping() == other.mapping():
             return True
