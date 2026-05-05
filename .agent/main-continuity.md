@@ -32,8 +32,10 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - No new dependencies without approval
 - Avoid touching multiple modules in one change
 - Maintain compatibility with existing code until upgrade plan is defined
-- Prefer the project-local virtualenv (`./.venv/bin/python`, `./.venv/bin/pip`,
-  `./.venv/bin/pydcop`) over Conda or commands resolved from ambient `PATH`.
+- Prefer the `khoihd` Conda environment explicitly (`conda run -n khoihd
+  python`, `conda run -n khoihd python -m pip`, `conda run -n khoihd
+  pydcop`) over the project-local virtualenv or commands resolved from
+  ambient `PATH`.
 
 ## Recent Changes
 - Stabilized several Python 3.11 / dependency compatibility issues:
@@ -101,9 +103,15 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - Recent local history before this continuity update included 17 commits ahead
   of `origin/main`, from `e6fdbfa Fix adhoc distribution Ruff issue` through
   `eea8507 Fix IoT generator Ruff issue`.
+- Switched the local development default from `.venv` to the `khoihd` Conda
+  environment. Installed the project editable in that environment along with
+  pytest, Ruff, coverage, PuLP, and websocket-server. Updated `Makefile`,
+  `AGENTS.md`, and dependency constraints to use or document
+  `conda run -n khoihd ...`.
 
 ## Next Steps
-- Continue targeted CLI/API test stabilization with `./.venv/bin/python`.
+- Continue targeted CLI/API test stabilization with
+  `conda run -n khoihd python`.
 - Continue improving remaining legacy unit tests one file at a time, with
   targeted Ruff and pytest checks before each commit.
 - Continue one-file Ruff cleanup only when explicitly requested, keeping each
@@ -142,8 +150,9 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 
 ## Notes for Agent
 - Always read this file before starting work
-- Use local venv commands explicitly: `./.venv/bin/python`, `./.venv/bin/pydcop`,
-  `./.venv/bin/ruff`, and `./.venv/bin/python -m pip`.
+- Use the `khoihd` Conda environment explicitly: `conda run -n khoihd python`,
+  `conda run -n khoihd pydcop`, `conda run -n khoihd ruff`, and
+  `conda run -n khoihd python -m pip`.
 - Only modify explicitly mentioned files
 - Ask before touching core modules (e.g., algorithm logic, messaging)
 - Prefer inspection and explanation before modification

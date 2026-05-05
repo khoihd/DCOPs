@@ -1,31 +1,39 @@
 
+CONDA_ENV ?= khoihd
+PYTHON ?= conda run -n $(CONDA_ENV) python
+PYTEST ?= $(PYTHON) -m pytest
+RUFF ?= conda run -n $(CONDA_ENV) ruff
+MYPY ?= $(PYTHON) -m mypy
+COVERAGE ?= $(PYTHON) -m coverage
+
 all: test integ
 
 test:
-	pytest ./tests/unit
-	pytest --doctest-modules ./pydcop
-	pytest ./tests/dcop_cli
-	pytest ./tests/api
+	$(PYTEST) ./tests/unit
+	$(PYTEST) --doctest-modules ./pydcop
+	$(PYTEST) ./tests/dcop_cli
+	$(PYTEST) ./tests/api
 
 test_cli:
-	pytest ./tests/dcop_cli
+	$(PYTEST) ./tests/dcop_cli
 
 test_unit:
-	pytest ./tests/unit
-	pytest --doctest-modules ./pydcop
+	$(PYTEST) ./tests/unit
+	$(PYTEST) --doctest-modules ./pydcop
 
 
 test_api:
-	pytest ./tests/api
+	$(PYTEST) ./tests/api
 
 mypy:
-	 mypy --ignore-missing-imports  pydcop
+	$(MYPY) --ignore-missing-imports pydcop
 
+lint:
+	$(RUFF) check .
 
 coverage: 
-	coverage run --source=. -m unittest discover ./tests/unit
-	coverage report
+	$(COVERAGE) run --source=. -m unittest discover ./tests/unit
+	$(COVERAGE) report
 
 doc: 
-	python -m sphinx ./docs ./docs/_build/
-
+	$(PYTHON) -m sphinx ./docs ./docs/_build/

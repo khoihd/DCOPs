@@ -1,0 +1,50 @@
+# Known-good versions from the khoihd Conda Python 3.11 environment,
+# plus documentation packages resolved by a pip dry-run.
+#
+# Install with:
+#   python -m pip install -r requirements.txt -c constraints.txt
+
+alabaster==1.0.0
+babel==2.18.0
+certifi==2026.2.25
+charset-normalizer==3.4.4
+coverage==7.13.5
+docutils==0.22.4
+idna==3.11
+imagesize==2.0.0
+iniconfig==2.3.0
+Jinja2==3.1.6
+latexcodec==3.0.1
+librt==0.7.5
+MarkupSafe==3.0.3
+mypy==1.19.1
+mypy_extensions==1.1.0
+networkx==3.6.1
+numpy==1.26.2
+packaging==25.0
+pathspec==0.12.1
+pluggy==1.6.0
+PuLP==3.3.0
+pybtex==0.26.1
+pybtex-docutils==1.0.3
+Pygments==2.19.2
+pytest==9.0.3
+PyYAML==6.0.3
+requests==2.32.5
+roman-numerals==4.1.0
+ruff==0.15.12
+snowballstemmer==3.0.1
+Sphinx==9.0.4
+sphinx-rtd-theme==3.1.0
+sphinxcontrib-applehelp==2.0.0
+sphinxcontrib-bibtex==2.6.5
+sphinxcontrib-devhelp==2.0.0
+sphinxcontrib-htmlhelp==2.1.0
+sphinxcontrib-jquery==4.1
+sphinxcontrib-jsmath==1.0.1
+sphinxcontrib-qthelp==2.0.0
+sphinxcontrib-serializinghtml==2.0.0
+tqdm==4.67.1
+typing_extensions==4.15.0
+urllib3==2.6.2
+websocket-server==0.6.4
