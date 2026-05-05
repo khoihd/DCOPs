@@ -29,82 +29,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
-from pulp import GLPK_CMD, LpBinary, LpMaximize, LpMinimize, LpProblem, LpStatus
-from pulp import LpStatusOptimal, LpVariable, lpSum, value
 
-from pydcop.dcop.relations import generate_assignment_as_dict
+from tests.utils.dcop_oracle import solve_dcop_with_pulp
 from tests.utils.known_instances import KNOWN_INSTANCE_COSTS, KNOWN_INSTANCE_SOLUTIONS
-
-
-def solve_dcop_with_pulp(dcop):
-    sense = LpMinimize if dcop.objective == "min" else LpMaximize
-    problem_name = f"{dcop.name}_oracle".replace(" ", "_")
-    problem = LpProblem(problem_name, sense=sense)
-
-    variable_choices = {}
-    for variable in dcop.variables.values():
-        choices = []
-        for value_index, variable_value in enumerate(variable.domain):
-            choice = LpVariable(
-                f"assign_{variable.name}_{value_index}",
-                cat=LpBinary,
-            )
-            variable_choices[(variable.name, variable_value)] = choice
-            choices.append(choice)
-        problem += lpSum(choices) == 1
-
-    relation_choices = {}
-    objective_terms = []
-    for relation in dcop.constraints.values():
-        tuples = list(generate_assignment_as_dict(relation.dimensions))
-        tuple_choices = []
-
-        for tuple_index, assignment in enumerate(tuples):
-            choice = LpVariable(
-                f"tuple_{relation.name}_{tuple_index}",
-                cat=LpBinary,
-            )
-            relation_choices[(relation.name, tuple_index)] = (choice, assignment)
-            tuple_choices.append(choice)
-            objective_terms.append(relation(**assignment) * choice)
-
-        problem += lpSum(tuple_choices) == 1
-
-        for variable in relation.dimensions:
-            for variable_value in variable.domain:
-                matching_tuples = [
-                    relation_choices[(relation.name, tuple_index)][0]
-                    for tuple_index, assignment in enumerate(tuples)
-                    if assignment[variable.name] == variable_value
-                ]
-                problem += (
-                    lpSum(matching_tuples)
-                    == variable_choices[(variable.name, variable_value)]
-                )
-
-    for variable in dcop.variables.values():
-        for variable_value in variable.domain:
-            objective_terms.append(
-                variable.cost_for_val(variable_value)
-                * variable_choices[(variable.name, variable_value)]
-            )
-
-    problem += lpSum(objective_terms)
-
-    status = problem.solve(GLPK_CMD(msg=False))
-    assert status == LpStatusOptimal, LpStatus[status]
-
-    assignment = {}
-    for variable in dcop.variables.values():
-        selected_values = [
-            variable_value
-            for variable_value in variable.domain
-            if value(variable_choices[(variable.name, variable_value)]) == 1
-        ]
-        assert len(selected_values) == 1
-        assignment[variable.name] = selected_values[0]
-
-    return assignment, value(problem.objective)
 
 
 class TestPulpDcopOracle:
