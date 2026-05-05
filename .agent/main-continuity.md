@@ -16,6 +16,8 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - Core DCOP algorithms and process/thread execution flow
 - Targeted Ruff cleanup and unit-test modernization in legacy modules
 - Focused cleanup in distribution, infrastructure, and replication modules
+- One-file-at-a-time Ruff cleanup across DCOP core, computation graphs,
+  algorithms, commands, and generators
 
 ## Key Decisions
 - Work conservatively: no large refactors without explicit approval
@@ -75,9 +77,30 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
   `orchestrator.py`, `computations.py`, `agents.py`, `oilp_secp_cgdp.py`,
   `oilp_secp_fgdp.py`, `oilp_cgdp.py`, distribution `objects.py`,
   `ilp_compref_fg.py`, `ilp_compref.py`, `heur_comhost.py`, and `gh_cgdp.py`.
-- Recent local history before this continuity update included 18 commits ahead
-  of `origin/main`, from `88ac27a Improve DBA algorithm tests` through
-  `702f5a6 Fix gh cgdp Ruff issue`.
+- Continued the isolated Ruff cleanup series with 17 additional commits, each
+  limited to one requested file:
+  `pydcop/distribution/adhoc.py`, `pydcop/dcop/relations.py`,
+  `pydcop/dcop/objects.py`, `pydcop/computations_graph/ordered_graph.py`,
+  `pydcop/computations_graph/objects.py`,
+  `pydcop/computations_graph/factor_graph.py`,
+  `pydcop/computations_graph/constraints_hypergraph.py`,
+  `pydcop/commands/solve.py`, `pydcop/algorithms/mgm2.py`,
+  `pydcop/commands/orchestrator.py`, `pydcop/algorithms/mixeddsa.py`,
+  `pydcop/commands/generators/smallworld.py`,
+  `pydcop/commands/consolidate.py`,
+  `pydcop/commands/generators/agents.py`, `pydcop/commands/generate.py`,
+  `pydcop/commands/generators/secp.py`, and
+  `pydcop/commands/generators/iot.py`.
+- These Ruff fixes were mostly mechanical `E721`, `E741`, `E402`, `F841`,
+  and `E722` cleanups. Equality checks were kept as exact-class comparisons
+  using `type(...) is not ...` where that preserved existing semantics.
+- Targeted verification was run for each file when a focused suite existed,
+  including relation/object tests, computation graph tests, solve CLI tests,
+  MGM2 tests, generator tests, and smoke checks for files without dedicated
+  tests.
+- Recent local history before this continuity update included 17 commits ahead
+  of `origin/main`, from `e6fdbfa Fix adhoc distribution Ruff issue` through
+  `eea8507 Fix IoT generator Ruff issue`.
 
 ## Next Steps
 - Continue targeted CLI/API test stabilization with `./.venv/bin/python`.
