@@ -86,7 +86,7 @@ def computation_memory(computation: VariableComputationNode) -> float :
         the memory footprint of the computation.
 
     """
-    neighbors = set((n for l in computation.links for n in l.nodes
+    neighbors = set((n for link in computation.links for n in link.nodes
                      if n not in computation.name))
     return len(neighbors) * UNIT_SIZE
 
@@ -143,7 +143,7 @@ class MixedDsaMessage(Message):
         return 'MixedDsaMessage({})'.format(self.value)
 
     def __eq__(self, other):
-        if type(other) != MixedDsaMessage:
+        if type(other) is not MixedDsaMessage:
             return False
         if self.value == other.value:
             return True
