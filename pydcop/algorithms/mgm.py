@@ -51,7 +51,7 @@ import functools
 import logging
 import operator
 import random
-from typing import Iterable, Set
+from typing import Any, Iterable, Set
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef
 from pydcop.computations_graph.constraints_hypergraph import VariableComputationNode
@@ -257,8 +257,8 @@ class MgmComputation(VariableComputation):
         )
 
         # Agent view of its neighbors resp. for values and gains state
-        self._neighbors_values = {}  # type: Dict[str, Any]
-        self._neighbors_gains = {}  # type: Dict[str, MgmGainMessage]
+        self._neighbors_values: dict[str, Any] = {}
+        self._neighbors_gains: dict[str, MgmGainMessage] = {}
         self._gain = None
         self._new_value = None
 
