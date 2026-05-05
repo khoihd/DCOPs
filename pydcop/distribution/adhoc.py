@@ -154,8 +154,8 @@ def _distribute_try(computation_graph: ComputationGraph,
         scores = []
         for capacity, a in candidates:
             count = 0
-            for l in computation_graph.links_for_node(n.name):
-                count += len([None for l_n in l.nodes
+            for link in computation_graph.links_for_node(n.name):
+                count += len([None for l_n in link.nodes
                               if l_n in mapping[a]])
             # The tuple is in this order so that we sort by score first,
             # and then by available capacity.
