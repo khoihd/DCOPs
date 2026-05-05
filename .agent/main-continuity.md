@@ -58,27 +58,41 @@
     PuLP/GLPK ILP oracle for finite DCOP instances.
   - `tests/unit/test_dcop_lp_oracle.py` validates the PuLP oracle against the
     known assignments/costs.
-  - Recent focused checks passed:
-    `conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py`
-    and `conda run -n khoihd ruff check tests/unit/test_dcop_lp_oracle.py tests/utils/dcop_oracle.py tests/utils/known_instances.py`.
-- `pydcop/dcop/relations.py::join` is a likely performance hotspot. It
-  currently fills an immutable `NAryMatrixRelation` by repeated
-  `set_value_for_assignment` calls, causing repeated full matrix copies.
-  NumPy broadcasting could optimize matrix-relation joins, but add correctness
-  tests first.
+  - `tests/api/test_api_solve_dpop.py` now runs DPOP through the public
+    `solve` API and compares costs against the PuLP oracle for both
+    `KNOWN_INSTANCE_SOLUTIONS` and `KNOWN_INSTANCE_COSTS`.
+- `pydcop/dcop/relations.py::join` was optimized in two small commits:
+  - `cbe67ed Optimize join matrix filling` removed repeated full-matrix copies
+    in the generic fallback by filling one raw NumPy matrix directly.
+  - `f86a6a7 Add matrix fast path for join` added a broadcasting fast path for
+    `NAryMatrixRelation` + `NAryMatrixRelation` joins, while preserving the
+    generic callable fallback for non-matrix relations.
+  - `tests/unit/test_dcop_relations.py::test_join_matrix_relations_different_order`
+    covers matrix-axis alignment when shared variables appear in different
+    relation orders.
+- Recent focused checks passed after the join optimization:
+  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
+  - `conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve_dpop.py tests/api/test_api_solve.py`
+  - `conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py`
+- `relation_optimization_steps.txt` now captures next possible relation
+  optimizations, starting with a matrix fast path for `projection()`.
 
 ## Next Steps
-- Continue the current testing task: use `tests/utils/known_instances.py` and
-  `tests/utils/dcop_oracle.py` to add oracle-style correctness tests for DCOP
-  algorithms.
-- Start with a small API-level test, likely `tests/api/test_api_solve_oracle.py`:
-  solve a known instance with PuLP, solve the same instance with DPOP through
-  `pydcop.infrastructure.run.solve`, and compare objective costs rather than
-  exact assignments.
-- Keep exact assignment assertions only for known unique/stable cases; compare
-  costs for algorithm checks because multiple optima can exist.
-- After oracle tests exist, consider optimizing `relations.join` carefully with
-  targeted relation, DPOP, API, and CLI tests.
+- If continuing relation performance work, start with
+  `pydcop/dcop/relations.py::projection`:
+  - add a fast path for `NAryMatrixRelation` using `np.max`/`np.min` over the
+    projected axis
+  - keep the generic fallback for non-matrix relations
+  - use `relation_optimization_steps.txt` as the checklist
+  - verify with relation, DPOP unit, DPOP API oracle, and oracle/API smoke
+    tests.
+- Consider optimizing `NAryMatrixRelation.from_func_relation` after
+  `projection`, as it still fills matrices via repeated
+  `set_value_for_assignment` calls.
+- Leave `filter_assignment_dict` and `generate_assignment_as_dict` alone unless
+  profiling shows they still matter after matrix fast paths.
 - Continue targeted CLI/API stabilization and one-file Ruff cleanup only when
   requested.
 - Review dependency/version policy later; the original project targeted older
