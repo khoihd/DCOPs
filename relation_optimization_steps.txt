@@ -156,6 +156,48 @@ Verify:
 [ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 
+Priority 5: NAryMatrixRelation._slice_matrix()
+----------------------------------------------
+[ ] Step 5 complete
+
+Why:
+- NAryMatrixRelation.slice() is used outside DPOP by MGM, DBA, Mixed DSA, and
+  Dynamic Max-Sum, so matrix-slice overhead can affect several algorithms.
+- _slice_matrix() currently rebuilds variable-name lists on every call.
+- It uses repeated list membership checks and s_vars.index(...) lookups.
+- It calls v.domain.index(val), which is linear in the variable domain size.
+
+Risk:
+- slice() has broad algorithm usage, so preserve current behavior carefully.
+- Keep ignore_extra_vars behavior compatible, including error behavior for
+  unknown variables when ignore_extra_vars is False.
+- Avoid adding persistent caches unless profiling shows the per-call dict
+  optimization is not enough.
+
+Implementation:
+[ ] Keep NAryMatrixRelation.slice() public behavior unchanged.
+[ ] Replace repeated s_vars membership/index lookups with a per-call assignment
+    dict built from sliced_vars and sliced_values.
+[ ] Preserve the returned slice_vars order.
+[ ] Preserve the returned tuple containing scalar indexes and slice(None).
+[ ] Consider per-call domain value index maps only if tests/profiling justify it.
+[ ] Do not introduce relation-level caches in this step.
+
+Tests:
+[ ] Run existing NAryMatrixRelationSliceTest.
+[ ] Add or confirm tests for unknown sliced variables with ignore_extra_vars
+    False.
+[ ] Add or confirm tests for ignore_extra_vars True.
+[ ] Add or confirm tests for slicing first, middle, and last matrix axes.
+[ ] Add benchmark-style coverage only if the change is measurable and stable.
+
+Verify:
+[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
+[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py
+[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+
+
 Do not optimize yet
 -------------------
 [ ] Leave filter_assignment_dict() alone unless profiling shows it matters.
