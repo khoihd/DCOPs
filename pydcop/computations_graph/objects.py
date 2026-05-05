@@ -90,7 +90,7 @@ class ComputationNode(SimpleRepr):
             self._links = [Link([name, n]) for n in self.neighbors]
         elif links is not None:
             self._links = list(links)
-            self._neighbors = list(set(n for l in links for n in l.nodes
+            self._neighbors = list(set(n for link in links for n in link.nodes
                                        if n != self._name))
         else:
             self._links = []
@@ -184,7 +184,7 @@ class Link(SimpleRepr):
             return 'Link({})'.format(self.nodes)
 
     def __eq__(self, other):
-        if type(other) != type(self):
+        if type(other) is not type(self):
             return False
         if self.type == other.type and self.nodes == other.nodes:
             return True
@@ -236,7 +236,7 @@ class ComputationGraph(object):
     def links(self):
         links = set()
         for n in self.nodes:
-            links.update(l for l in n.links)
+            links.update(link for link in n.links)
         return links
 
     def node_names(self):
