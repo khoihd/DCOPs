@@ -236,7 +236,7 @@ class Variable(SimpleRepr):
         return "Variable({}, {}, {})".format(self.name, self.initial_value, self.domain)
 
     def __eq__(self, other):
-        if type(self) != type(other):
+        if type(self) is not type(other):
             return False
         if (
             self.name == other.name
@@ -439,7 +439,7 @@ class VariableWithCostDict(Variable):
         )
 
     def __eq__(self, other):
-        if type(self) != type(other):
+        if type(self) is not type(other):
             return False
         if (
             self.name == other.name
@@ -509,7 +509,7 @@ class VariableWithCostFunc(Variable):
         )
 
     def __eq__(self, other):
-        if type(self) != type(other):
+        if type(self) is not type(other):
             return False
         if (
             self.name == other.name
@@ -584,7 +584,7 @@ class VariableNoisyCostFunc(VariableWithCostFunc):
         )
 
     def __eq__(self, other):
-        if type(self) != type(other):
+        if type(self) is not type(other):
             return False
         if (
             self.name == other.name
@@ -862,7 +862,7 @@ class AgentDef(SimpleRepr):
         return "AgentDef({}, {})".format(self.name, self._attr)
 
     def __eq__(self, other):
-        if type(other) != AgentDef:
+        if type(other) is not AgentDef:
             return False
         if (
             self.name == other.name
