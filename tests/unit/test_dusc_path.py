@@ -91,9 +91,9 @@ def cheapest_path_to(target: str, paths: Dict[Tuple, float])\
 
 def path_starting_with(start_path: Tuple, paths: Dict[Tuple, float]) \
         -> List[Tuple[float, Tuple]]:
-    l = len(start_path)
-    found = [(c, p[l:]) for p, c in paths.items()
-             if p[:l] == start_path]
+    prefix_len = len(start_path)
+    found = [(c, p[prefix_len:]) for p, c in paths.items()
+             if p[:prefix_len] == start_path]
     return sorted(found)
 
 
