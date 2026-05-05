@@ -34,7 +34,7 @@ def test_generate_unary_extensive_constraint():
     constraint = generate_unary_extensive_constraint(variable, k)
 
     assert isinstance(constraint, Constraint)
-    assert type(constraint) == NAryMatrixRelation
+    assert isinstance(constraint, NAryMatrixRelation)
     assert -k <= constraint(0) <= k
     assert -k <= constraint(1) <= k
     assert -constraint(1) == constraint(0)
@@ -48,7 +48,7 @@ def test_generate_unary_intentional_constraint():
     constraint = generate_unary_intentional_constraint(variable, k)
 
     assert isinstance(constraint, Constraint)
-    assert type(constraint) == NAryFunctionRelation
+    assert isinstance(constraint, NAryFunctionRelation)
     assert -k <= constraint(0) <= k
     assert -k <= constraint(1) <= k
     assert -constraint(1) == constraint(0)
@@ -62,7 +62,7 @@ def test_generate_binary_intentional_constraint():
 
     constraint = generate_binary_intentional_constraint(variable1, variable2, b)
 
-    assert type(constraint) == NAryFunctionRelation
+    assert isinstance(constraint, NAryFunctionRelation)
     check_binary_constraint(constraint, bin_range=b)
 
 def test_generate_binary_extensive_constraint():
@@ -73,7 +73,7 @@ def test_generate_binary_extensive_constraint():
 
     constraint = generate_binary_extensive_constraint(variable1, variable2, b)
 
-    assert type(constraint) == NAryMatrixRelation
+    assert isinstance(constraint, NAryMatrixRelation)
     check_binary_constraint(constraint, bin_range=b)
 
 
@@ -99,13 +99,13 @@ def test_generate_binary_constraints():
     constraints = generate_binary_constraints(grid_graph, variables, bin_range, True)
     assert len(constraints) == len(list(grid_graph.edges))
     for constraint in constraints.values():
-        assert type(constraint) == NAryMatrixRelation
+        assert isinstance(constraint, NAryMatrixRelation)
         check_binary_constraint(constraint, bin_range)
 
     constraints = generate_binary_constraints(grid_graph, variables, bin_range, False)
     assert len(constraints) == len(list(grid_graph.edges))
     for constraint in constraints.values():
-        assert type(constraint) == NAryFunctionRelation
+        assert isinstance(constraint, NAryFunctionRelation)
         check_binary_constraint(constraint, bin_range)
 
 
