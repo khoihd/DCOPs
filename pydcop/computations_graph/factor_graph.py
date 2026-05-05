@@ -85,7 +85,7 @@ class FactorComputationNode(ComputationNode):
                                                       self._variables)
 
     def __eq__(self, other):
-        if type(other) != FactorComputationNode:
+        if type(other) is not FactorComputationNode:
             return False
         if self.factor == other.factor and self.variables == other.variables:
             return True
@@ -142,7 +142,7 @@ class VariableComputationNode(ComputationNode):
         return 'VariableComputationNode({})'.format(self._variable)
 
     def __eq__(self, other):
-        if type(other) != VariableComputationNode:
+        if type(other) is not VariableComputationNode:
             return False
         if self.variable == other.variable:
             return True
