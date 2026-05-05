@@ -307,7 +307,6 @@ def generate_routes_costs(
 ) -> Dict[str, Dict[str, float]]:
     routes = {}
     if mode == "graph":
-        variables = list(dcop.variables)
         graph = constraints_hypergraph.build_computation_graph(dcop)
 
         # route = (1 + abs(degree_n - degree_v)) / (degree_n + degree_v)
@@ -402,13 +401,6 @@ def find_corresponding_variables_start_with(
         if m:
             index = m.group("index_var")
             indexed_vars[index] = variable
-
-    try:
-        int_indexed_vars = {
-            int(index_var): variable for index_var, variable in indexed_vars.items()
-        }
-    except ValueError:
-        int_indexed_vars = []
 
     for agent in agents:
         m = agt_regexp.match(agent)
