@@ -15,6 +15,7 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - CLI end-to-end tests and local virtualenv execution
 - Core DCOP algorithms and process/thread execution flow
 - Targeted Ruff cleanup and unit-test modernization in legacy modules
+- Focused cleanup in distribution, infrastructure, and replication modules
 
 ## Key Decisions
 - Work conservatively: no large refactors without explicit approval
@@ -63,11 +64,27 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - Removed stale or non-behavioral tests such as an unfinished replication-path
   test and a dict-vs-list benchmark, and tightened remaining assertions to
   check behavior rather than implementation accidents.
+- Improved DBA and AMAX-SUM unit tests, plus the dynamic Max-Sum graph coloring
+  integration test, with targeted Ruff/pytest checks and separate commits.
+- Reviewed and fixed `pydcop/replication/objects.py`, especially
+  `ReplicaDistribution` lookup/copy behavior, then committed the targeted
+  replication object cleanup.
+- Continued one-file-at-a-time Ruff cleanup and commits across utility,
+  replication, infrastructure, and distribution modules:
+  `simple_repr.py`, `expressionfunction.py`, `dist_ucs_hostingcosts.py`,
+  `orchestrator.py`, `computations.py`, `agents.py`, `oilp_secp_cgdp.py`,
+  `oilp_secp_fgdp.py`, `oilp_cgdp.py`, distribution `objects.py`,
+  `ilp_compref_fg.py`, `ilp_compref.py`, `heur_comhost.py`, and `gh_cgdp.py`.
+- Recent local history before this continuity update included 18 commits ahead
+  of `origin/main`, from `88ac27a Improve DBA algorithm tests` through
+  `702f5a6 Fix gh cgdp Ruff issue`.
 
 ## Next Steps
 - Continue targeted CLI/API test stabilization with `./.venv/bin/python`.
 - Continue improving remaining legacy unit tests one file at a time, with
   targeted Ruff and pytest checks before each commit.
+- Continue one-file Ruff cleanup only when explicitly requested, keeping each
+  cleanup isolated and committed separately.
 - Review remaining CLI helpers for bare `pydcop` usage before running those
   suites broadly.
 - Review dependency list and decide supported Python/dependency versions.
