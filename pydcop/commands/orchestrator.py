@@ -171,6 +171,8 @@ from threading import Thread
 from importlib import import_module
 from time import time
 
+import numpy as np
+
 from pydcop.algorithms import list_available_algorithms, load_algorithm_module
 from pydcop.commands._utils import build_algo_def
 from pydcop.dcop.yamldcop import load_dcop_from_file, load_scenario_from_file
@@ -578,10 +580,6 @@ def _load_modules(dist, algo):
 def _error(msg):
     print("Error: {}".format(msg))
     sys.exit(2)
-
-
-import numpy as np
-
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
