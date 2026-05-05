@@ -375,8 +375,8 @@ def msg_load_func(
     def msg_load(c1: str, c2: str) -> float:
         load = 0
         links = cg.links_for_node(c1)
-        for l in links:
-            if c2 in l.nodes:
+        for link in links:
+            if c2 in link.nodes:
                 load += communication_load(cg.computation(c1), c2)
         return load
 
