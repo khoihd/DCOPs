@@ -119,10 +119,9 @@ def distribution_cost(distribution: Distribution,
     hosting_cost = hosting_cost_func(agentsdef)
 
     comm = 0
-    agt_names = [a.name for a in agentsdef]
-    for l in computation_graph.links:
+    for link in computation_graph.links:
         # As we support hypergraph, we may have more than 2 ends to a link
-        for c1, c2 in combinations(l.nodes, 2):
+        for c1, c2 in combinations(link.nodes, 2):
             a1 = distribution.agent_for(c1)
             a2 = distribution.agent_for(c2)
             comm += route(a1, a2) * msg_load(c1, c2)
@@ -157,9 +156,9 @@ def lp_model(cg: ComputationGraph,
     for a1, a2 in combinations(agt_names, 2):
         # Only create variables for couple c1, c2 if there is an edge in the
         # graph between these two computations.
-        for l in cg.links:
+        for link in cg.links:
             # As we support hypergraph, we may have more than 2 ends to a link
-            for c1, c2 in combinations(l.nodes, 2):
+            for c1, c2 in combinations(link.nodes, 2):
                 count += 2
                 b = LpVariable('b_{}_{}_{}_{}'.format(c1, a1, c2, a2),
                                cat=LpBinary)
@@ -223,8 +222,8 @@ def msg_load_func(cg: ComputationGraph,
     def msg_load(c1: str, c2: str) -> float:
         load = 0
         links = cg.links_for_node(c1)
-        for l in links:
-            if c2 in l.nodes:
+        for link in links:
+            if c2 in link.nodes:
                 load += communication_load(cg.computation(c1), c2)
         return load
     return msg_load
