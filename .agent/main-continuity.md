@@ -76,23 +76,63 @@
   - `conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve_dpop.py tests/api/test_api_solve.py`
   - `conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py`
-- `relation_optimization_steps.txt` now captures next possible relation
-  optimizations, starting with a matrix fast path for `projection()`.
+- `pydcop/dcop/relations.py::projection` was optimized in
+  `c6a89a4 Optimize relation projection paths`:
+  - `projection()` now dispatches to `projection_fast()` for
+    `NAryMatrixRelation` and `projection_slow()` for generic relation types.
+  - `projection_fast()` uses `np.max`/`np.min` over the projected axis.
+  - `projection_slow()` preserves the generic `slice()` + `find_arg_optimal()`
+    behavior but fills one raw NumPy result matrix directly instead of using
+    repeated `set_value_for_assignment()` calls.
+  - Tests in `tests/unit/test_dcop_relations.py` cover `projection_fast()`,
+    `projection_slow()`, parity between both helpers, and a benchmark-style
+    fast-vs-slow comparison.
+- Recent projection checks passed:
+  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
+  - `conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve_dpop.py tests/api/test_api_solve.py`
+  - `conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py`
+- `relation_optimization_steps.txt` is the active checklist:
+  - Step 1 complete: projection matrix fast path and helper split.
+  - Step 2 next: optimize `projection_slow()` direct generic evaluation.
+  - Step 3 later: optimize `NAryMatrixRelation.from_func_relation()`.
+  - Step 4 later: optimize scalar lookup in
+    `NAryMatrixRelation.get_value_for_assignment()`.
+  - Step 5 later: optimize `NAryMatrixRelation._slice_matrix()`.
+- `pydcop/algorithms/mgm.py` had a small typing cleanup in
+  `692b952 Modernize MGM neighbor type annotations`: old type comments on
+  `_neighbors_values` and `_neighbors_gains` were converted to real
+  annotations. Targeted checks passed:
+  - `conda run -n khoihd ruff check pydcop/algorithms/mgm.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
+- Current local code note before this continuity update:
+  `projection_slow()` has explanatory comments for its current slow-path
+  mechanics. Ruff passed on `pydcop/dcop/relations.py`.
 
 ## Next Steps
 - If continuing relation performance work, start with
-  `pydcop/dcop/relations.py::projection`:
-  - add a fast path for `NAryMatrixRelation` using `np.max`/`np.min` over the
-    projected axis
-  - keep the generic fallback for non-matrix relations
-  - use `relation_optimization_steps.txt` as the checklist
-  - verify with relation, DPOP unit, DPOP API oracle, and oracle/API smoke
-    tests.
-- Consider optimizing `NAryMatrixRelation.from_func_relation` after
-  `projection`, as it still fills matrices via repeated
-  `set_value_for_assignment` calls.
+  `pydcop/dcop/relations.py::projection_slow`:
+  - current hot line is the loop body calling
+    `find_arg_optimal(a_var, a_rel.slice(partial), mode)`.
+  - `slice()` is necessary for the current `find_arg_optimal()`-based
+    implementation, because `find_arg_optimal()` expects a one-variable
+    relation.
+  - It is not conceptually necessary for projection; the likely next
+    optimization is to evaluate the original relation directly with a complete
+    assignment dict and `a_rel.get_value_for_assignment(assignment)`.
+  - Prefer the explicit method call over `a_rel(**assignment)` for readability.
+  - Keep a fallback to the current `slice()` + `find_arg_optimal()` behavior if
+    direct evaluation is unsafe for a relation type.
+  - Add/keep tests for min/max, one-variable/scalar projection, function
+    relations, and parity with `projection_fast()` on a matrix relation.
+  - Verify with relation, DPOP unit, DPOP API oracle, and oracle/API smoke
+    tests listed in `relation_optimization_steps.txt`.
+- After `projection_slow()`, consider `NAryMatrixRelation.from_func_relation`,
+  scalar lookup in `NAryMatrixRelation.get_value_for_assignment()`, then
+  `_slice_matrix()` per `relation_optimization_steps.txt`.
 - Leave `filter_assignment_dict` and `generate_assignment_as_dict` alone unless
-  profiling shows they still matter after matrix fast paths.
+  profiling shows they still matter after the targeted projection/slice work.
 - Continue targeted CLI/API stabilization and one-file Ruff cleanup only when
   requested.
 - Review dependency/version policy later; the original project targeted older
