@@ -55,6 +55,7 @@ from typing import Dict, List, Optional, Union, Callable
 from collections import defaultdict
 
 from pydcop.algorithms import AlgorithmDef, ComputationDef, load_algorithm_module
+from pydcop.computations_graph import constraints_hypergraph as chg
 from pydcop.dcop.objects import AgentDef, create_binary_variables
 from pydcop.infrastructure.Events import event_bus
 from pydcop.infrastructure.communication import Messaging, \
@@ -761,8 +762,8 @@ class Agent(object):
             This handle is actually the callback object itself.
 
         """
-        assert period != None
-        assert cb != None
+        assert period is not None
+        assert cb is not None
         self.logger.debug("Add periodic action %s - %s ", period, cb)
         self._periodic_cb[cb] = (period, perf_counter())
         return cb
@@ -825,7 +826,7 @@ class Agent(object):
             if hasattr(self, 'on_fatal_error'):
                 self.on_fatal_error(e)
 
-        except:  # catch *all* exceptions
+        except BaseException:  # catch *all* exceptions
             e = sys.exc_info()[0]
             self.logger.error('Thread exits With un-managed error : %s', e)
             self.logger.error(e)
@@ -907,8 +908,6 @@ class AgentMetrics(object):
         self._computation_msg_snd[computation] = \
             prev_count+1, prev_size+ msg_size
 
-
-from pydcop.computations_graph import constraints_hypergraph as chg
 
 repair_algo = load_algorithm_module('mgm2')
 
@@ -1190,8 +1189,8 @@ class ResilientAgent(Agent):
             communication_load = algo_module.communication_load
 
             msg_load = 0
-            for l in comp_def.node.neighbors:
-                if l == neighbor_comp:
+            for neighbor in comp_def.node.neighbors:
+                if neighbor == neighbor_comp:
                     msg_load += communication_load(comp_def.node, neighbor_comp)
 
             com_load = msg_load * route_cost
