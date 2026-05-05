@@ -114,7 +114,7 @@ class Message(SimpleRepr):
         return f"Message({self.type}, {self.content})"
 
     def __eq__(self, other):
-        if type(other) != type(self):
+        if type(other) is not type(self):
             return False
         return self.type == other.type and self.content == other.content
 
