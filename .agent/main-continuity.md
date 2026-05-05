@@ -14,6 +14,7 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - Python 3.11 / modern dependency compatibility
 - CLI end-to-end tests and local virtualenv execution
 - Core DCOP algorithms and process/thread execution flow
+- Targeted Ruff cleanup and unit-test modernization in legacy modules
 
 ## Key Decisions
 - Work conservatively: no large refactors without explicit approval
@@ -53,9 +54,20 @@ Prepare for incremental modernization (Python version, dependencies, tooling).
 - Installed Ruff in the local venv (`./.venv/bin/ruff`).
 - Added an architecture/search map to `AGENTS.md` to speed up future targeted
   inspection.
+- Ran a series of small targeted Ruff cleanups in docs, `__init__.py` modules,
+  core algorithms, and selected unit tests, committing each change separately.
+- Modernized several legacy unit-test files by replacing skipped/placeholding
+  tests with real assertions and current setup paths, especially around DSA,
+  DPOP, DCOP relations, computation graph objects, infrastructure discovery,
+  replication path utilities, and Ising/DUSC helpers.
+- Removed stale or non-behavioral tests such as an unfinished replication-path
+  test and a dict-vs-list benchmark, and tightened remaining assertions to
+  check behavior rather than implementation accidents.
 
 ## Next Steps
 - Continue targeted CLI/API test stabilization with `./.venv/bin/python`.
+- Continue improving remaining legacy unit tests one file at a time, with
+  targeted Ruff and pytest checks before each commit.
 - Review remaining CLI helpers for bare `pydcop` usage before running those
   suites broadly.
 - Review dependency list and decide supported Python/dependency versions.
