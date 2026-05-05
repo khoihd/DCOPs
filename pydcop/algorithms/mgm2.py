@@ -82,7 +82,10 @@ def computation_memory(computation: VariableComputationNode) -> float:
 
     """
     neighbors = set(
-        (n for l in computation.links for n in l.nodes if n not in computation.name)
+        n
+        for link in computation.links
+        for n in link.nodes
+        if n not in computation.name
     )
     return len(neighbors) * 2 * UNIT_SIZE
 
@@ -168,7 +171,7 @@ class Mgm2ValueMessage(Message):
         return "Mgm2ValueMessage({})".format(self.value)
 
     def __eq__(self, other):
-        if type(other) != Mgm2ValueMessage:
+        if type(other) is not Mgm2ValueMessage:
             return False
         if self.value == other.value:
             return True
@@ -207,7 +210,7 @@ class Mgm2GainMessage(Message):
         return "Mgm2GainMessage({})".format(self.value)
 
     def __eq__(self, other):
-        if type(other) != Mgm2GainMessage:
+        if type(other) is not Mgm2GainMessage:
             return False
         if self.value == other.value:
             return True
@@ -292,7 +295,7 @@ class Mgm2OfferMessage(Message):
         return "Mgm2OfferMessage({},{})".format(self.is_offering, self.offers)
 
     def __eq__(self, other):
-        if type(other) != Mgm2OfferMessage:
+        if type(other) is not Mgm2OfferMessage:
             return False
         if self.offers == other.offers:
             return True
@@ -351,7 +354,7 @@ class Mgm2ResponseMessage(Message):
         return "Mgm2ResponseMessage({},{})".format(self.accept, self.value, )
 
     def __eq__(self, other):
-        if type(other) != Mgm2ResponseMessage:
+        if type(other) is not Mgm2ResponseMessage:
             return False
         if (
             self.accept == other.accept
@@ -387,7 +390,7 @@ class Mgm2GoMessage(Message):
         return "Mgm2GoMessage({})".format(self.go)
 
     def __eq__(self, other):
-        if type(other) != Mgm2GoMessage:
+        if type(other) is not Mgm2GoMessage:
             return False
         if self.go == other.go:
             return True
