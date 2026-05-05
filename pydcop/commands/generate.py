@@ -787,10 +787,10 @@ def add_edge(
     # if a constraint has reached the max arity, it can't be chosen anymore
     if len(edges[c]) == arity:
         to_be_removed = list()
-        for node, l in available.items():
-            if node != n and c in l:
-                l.remove(c)
-            if not l:
+        for node, constraints in available.items():
+            if node != n and c in constraints:
+                constraints.remove(c)
+            if not constraints:
                 # Can't remove it while iterating
                 to_be_removed.append(node)
         for n in to_be_removed:
