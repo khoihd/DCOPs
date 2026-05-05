@@ -310,7 +310,7 @@ class UnaryBooleanRelationTest(unittest.TestCase):
 
 
 class NAryFunctionRelationTests(unittest.TestCase):
-    def init_with_name(self):
+    def test_init_with_name(self):
         x1 = Variable("x1", [2, 4, 1])
 
         def f(x):
@@ -552,10 +552,11 @@ class NAryFunctionRelationTests(unittest.TestCase):
 
         r = simple_repr(r1)
 
-        print(r)
         self.assertEqual(r["name"], "r1")
         self.assertEqual(len(r["variables"]), 2)
         self.assertEqual(r["variables"][0]["name"], "x1")
+        self.assertEqual(r["variables"][1]["name"], "x2")
+        self.assertEqual(r["f"]["expression"], "x1 + x2")
 
     def test_from_repr_with_expression_function(self):
         x1 = Variable("x1", [1, 2, 3])
@@ -672,7 +673,7 @@ class NAryFunctionRelationTests(unittest.TestCase):
         r = NAryFunctionRelation(f, [v1, v2, v3], "f_rel")
 
         with self.assertRaises(TypeError):
-            obtained = r(v1=2, v3=1, v2=1)
+            r(v1=2, v3=1, v2=1)
 
 
 class NAryFunctionRelationDecoratorTests(unittest.TestCase):
@@ -803,7 +804,9 @@ class NAryMatrixRelationInitTest(unittest.TestCase):
     def test_value_one_var(self):
         x1 = Variable("x1", ["a", "b", "c"])
         u1 = NAryMatrixRelation([x1])
-        print(u1.get_value_for_assignment(["a"]))
+
+        self.assertEqual(u1.get_value_for_assignment(["a"]), 0)
+        self.assertEqual(u1("b"), 0)
 
     def test_init_matrix_2var(self):
         x1, x2, u1 = get_2var_rel()
@@ -943,7 +946,7 @@ class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
         f = relation_from_str("f", "4", [])
         rel = NAryMatrixRelation.from_func_relation(f)
 
-        self.assertEqual(type(rel), NAryMatrixRelation)
+        self.assertIsInstance(rel, NAryMatrixRelation)
         self.assertEqual(rel.dimensions, [])
         self.assertEqual(rel(), f())
 
@@ -955,13 +958,13 @@ class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
         f = relation_from_str("f", "x1 + x2 -x3", [x1, x2, x3])
         rel = NAryMatrixRelation.from_func_relation(f)
 
-        self.assertEqual(type(rel), NAryMatrixRelation)
+        self.assertIsInstance(rel, NAryMatrixRelation)
         self.assertEqual(len(rel.dimensions), 3)
         self.assertEqual(set(rel.dimensions), {x1, x2, x3})
 
-        for assignmnent in generate_assignment_as_dict([x1, x2, x3]):
-            r_val = rel(**assignmnent)
-            f_val = f(**assignmnent)
+        for assignment in generate_assignment_as_dict([x1, x2, x3]):
+            r_val = rel(**assignment)
+            f_val = f(**assignment)
             self.assertEqual(f_val, r_val)
 
     def test_binary_rel(self):
@@ -971,13 +974,13 @@ class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
         f = relation_from_str("f", "x1 - x2 ", [x1, x2])
         rel = NAryMatrixRelation.from_func_relation(f)
 
-        self.assertEqual(type(rel), NAryMatrixRelation)
+        self.assertIsInstance(rel, NAryMatrixRelation)
         self.assertEqual(len(rel.dimensions), 2)
         self.assertEqual(set(rel.dimensions), {x1, x2})
 
-        for assignmnent in generate_assignment_as_dict([x1, x2]):
-            r_val = rel(**assignmnent)
-            f_val = f(**assignmnent)
+        for assignment in generate_assignment_as_dict([x1, x2]):
+            r_val = rel(**assignment)
+            f_val = f(**assignment)
             self.assertEqual(f_val, r_val)
 
     def test_binary_hard_rel(self):
@@ -987,13 +990,13 @@ class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
         f = relation_from_str("f", "10000 if x1 == x2 else 0", [x1, x2])
         rel = NAryMatrixRelation.from_func_relation(f)
 
-        self.assertEqual(type(rel), NAryMatrixRelation)
+        self.assertIsInstance(rel, NAryMatrixRelation)
         self.assertEqual(len(rel.dimensions), 2)
         self.assertEqual(set(rel.dimensions), {x1, x2})
 
-        for assignmnent in generate_assignment_as_dict([x1, x2]):
-            r_val = rel(**assignmnent)
-            f_val = f(**assignmnent)
+        for assignment in generate_assignment_as_dict([x1, x2]):
+            r_val = rel(**assignment)
+            f_val = f(**assignment)
             self.assertEqual(f_val, r_val)
 
 
@@ -1011,16 +1014,19 @@ class NAryMatrixRelationOtherTests(unittest.TestCase):
         x1, x2, u1 = get_2var_rel()
 
         r = simple_repr(u1)
-        print(r)
-        self.assertIsNotNone(r)
+        self.assertEqual(r["__module__"], "pydcop.dcop.relations")
+        self.assertEqual(r["__qualname__"], "NAryMatrixRelation")
+        self.assertEqual([v["name"] for v in r["variables"]], ["x1", "x2"])
+        self.assertEqual(r["matrix"], [[1, 2], [3, 4], [5, 6]])
 
     def test_from_repr(self):
         x1, x2, u1 = get_2var_rel()
 
         r = simple_repr(u1)
-        print(r)
         u = from_repr(r)
         self.assertEqual(u1, u)
+        self.assertEqual(u.dimensions, [x1, x2])
+        self.assertEqual(u.get_value_for_assignment(["b", "2"]), 4)
 
     def test_hash(self):
         x1, x2, u1 = get_2var_rel()
@@ -1644,9 +1650,9 @@ def test_random_ass_matrix_one_var():
     v1 = Variable("v1", d)
 
     m = random_assignment_matrix([v1], list(range(5)))
+    assert len(m) == len(v1.domain)
     for v in m:
         assert v in range(5)
-    print(m)
 
 
 def test_random_ass_matrix_two_var():
@@ -1655,8 +1661,9 @@ def test_random_ass_matrix_two_var():
     v2 = Variable("v2", d)
 
     m = random_assignment_matrix([v1, v2], list(range(5)))
+    assert len(m) == len(v1.domain)
+    assert all(len(row) == len(v2.domain) for row in m)
     assert m[1][3] in range(5)
-    print(m)
 
 
 def test_assignment_cost_empty():
@@ -1759,7 +1766,7 @@ def test_bench_compute_cost(benchmark):
     benchmark(to_bench)
 
 
-def test_assignment_cost_same_as_becnh():
+def test_assignment_cost_same_as_bench():
     x1 = Variable("x1", list(range(5)))
     x2 = Variable("x2", list(range(5)))
     x3 = Variable("x3", list(range(5)))
@@ -1874,7 +1881,7 @@ class JoinRelationsTestCase:
         u_j = pydcop.dcop.relations.join(u1, u2)
 
         assert u_j.arity == 3
-        assert u_j.dimensions, [x1, x2, x3]
+        assert u_j.dimensions == [x1, x2, x3]
 
         assert u_j.get_value_for_assignment(["a", "1", "z"]) == 3
         assert u_j.get_value_for_assignment(["b", "2", "y"]) == 39
@@ -1935,7 +1942,7 @@ class ProjectionTestCase(unittest.TestCase):
         # the dimension must be one less than the dimension of u1
         assert p.arity == 0
 
-        # this means that p is actually a signle value, corresponding to the
+        # this means that p is actually a single value, corresponding to the
         # max of u1
         assert p.get_value_for_assignment() == 8
 
@@ -1950,7 +1957,7 @@ class ProjectionTestCase(unittest.TestCase):
         # the dimension must be one less than the dimension of u1
         assert p.arity == 0
 
-        # this means that p is actually a signle value, corresponding to the
+        # this means that p is actually a single value, corresponding to the
         # max of u1
         assert p.get_value_for_assignment() == 2
 
