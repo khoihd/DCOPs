@@ -326,7 +326,7 @@ def test_algo_parameters_all_defaults(algo_param_defs):
     assert default_params["param1"] == "val1"
 
     assert "param2" in default_params
-    assert default_params["param2"] == None
+    assert default_params["param2"] is None
 
 
 def test_algo_parameters_with_valid_str_param(algo_param_defs):
