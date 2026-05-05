@@ -214,7 +214,6 @@ def build_models(light_domain, lights, max_model_size, model_count):
         models_var[model_var.name] = model_var
 
         model_size = randint(2, max_model_size)
-        model_lights = ()
         light_expression_parts = []
         for k, model_light in enumerate(sample(list(lights), model_size)):
             impact = randint(1, 7) / 10
