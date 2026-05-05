@@ -257,7 +257,7 @@ class ZeroAryRelation(AbstractBaseRelation, SimpleRepr):
         return "ZeroAryRelation({}, {})".format(self.name, self._value)
 
     def __eq__(self, other):
-        if type(other) != ZeroAryRelation:
+        if type(other) is not ZeroAryRelation:
             return False
         if self.name == other.name and self._value == other._value:
             return True
@@ -363,7 +363,7 @@ class UnaryFunctionRelation(AbstractBaseRelation, SimpleRepr):
         )
 
     def __eq__(self, other):
-        if type(other) != UnaryFunctionRelation:
+        if type(other) is not UnaryFunctionRelation:
             return False
         if (
             self.name == other.name
@@ -443,7 +443,7 @@ class UnaryBooleanRelation(AbstractBaseRelation, SimpleRepr):
         return "UnaryFunctionRelation({}, {})".format(self._name, self._var)
 
     def __eq__(self, other):
-        if type(other) != UnaryBooleanRelation:
+        if type(other) is not UnaryBooleanRelation:
             return False
         if self.name == other.name and self._var == other.dimensions[0]:
             return True
@@ -622,7 +622,7 @@ class NAryFunctionRelation(AbstractBaseRelation, SimpleRepr):
         return "NAryFunctionRelation({})".format(self._name)
 
     def __eq__(self, other):
-        if type(other) != NAryFunctionRelation:
+        if type(other) is not NAryFunctionRelation:
             return False
         if (
             self.name == other.name
@@ -862,10 +862,6 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
     def from_func_relation(rel: RelationProtocol) -> "NAryMatrixRelation":
         variables = rel.dimensions
         cost_matrix = NAryMatrixRelation(variables)
-        # We also compute the min and max value of the constraint as it is to
-        # be needed in gdba
-        mini = None
-        maxi = None
 
         for asgt in generate_assignment_as_dict(variables):
             value = rel(asgt)
@@ -883,7 +879,7 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
         return f"NAryMatrixRelation({self.name}, {[v.name for v in self._variables]}, {self._m})"
 
     def __eq__(self, other):
-        if type(other) != NAryMatrixRelation:
+        if type(other) is not NAryMatrixRelation:
             return False
         if (
             self.name == other.name
@@ -923,7 +919,7 @@ class NeutralRelation(AbstractBaseRelation, SimpleRepr):
         return "NeutralRelation({}, {}".format(self._name, self._variables)
 
     def __eq__(self, other):
-        if type(other) != NeutralRelation:
+        if type(other) is not NeutralRelation:
             return False
         if self.name == other.name and self.dimensions == other.dimensions:
             return True
@@ -1121,7 +1117,7 @@ class ConditionalRelation(RelationProtocol, SimpleRepr):
         )
 
     def __eq__(self, other):
-        if type(other) != ConditionalRelation:
+        if type(other) is not ConditionalRelation:
             return False
         if (
             self.name == self.name
