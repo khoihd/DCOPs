@@ -29,16 +29,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
+from pathlib import Path
 from pulp import GLPK_CMD, LpBinary, LpMaximize, LpMinimize, LpProblem, LpStatus
 from pulp import LpStatusOptimal, LpVariable, lpSum, value
 
+from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.relations import generate_assignment_as_dict
+from pydcop.dcop.yamldcop import load_dcop_from_file
 from tests.api.instances_and_utils import dcop_graphcoloring_3
+from tests.integration.dmaxsum_graphcoloring import build_graph_coloring_problem
+from tests.unit.test_algorithms_syncbb import build_pb
+
+
+INSTANCE_DIR = Path(__file__).resolve().parents[1] / "instances"
 
 
 def solve_dcop_with_pulp(dcop):
     sense = LpMinimize if dcop.objective == "min" else LpMaximize
-    problem = LpProblem(f"{dcop.name}_oracle", sense=sense)
+    problem_name = f"{dcop.name}_oracle".replace(" ", "_")
+    problem = LpProblem(problem_name, sense=sense)
 
     variable_choices = {}
     for variable in dcop.variables.values():
@@ -106,6 +115,31 @@ def solve_dcop_with_pulp(dcop):
     return assignment, value(problem.objective)
 
 
+def load_test_dcop(filename):
+    return load_dcop_from_file([str(INSTANCE_DIR / filename)])
+
+
+def build_syncbb_dcop(objective):
+    variables, constraints = build_pb()
+    return DCOP(
+        name=f"syncbb_{objective}",
+        variables={variable.name: variable for variable in variables},
+        constraints={constraint.name: constraint for constraint in constraints},
+        objective=objective,
+    )
+
+
+def build_dynamic_graphcoloring_dcop(relation_name):
+    variables, relation_states, _ = build_graph_coloring_problem()
+    relations = relation_states[relation_name]
+    return DCOP(
+        name=f"dmaxsum_{relation_name}",
+        variables={variable.name: variable for variable in variables},
+        constraints={relation.name: relation for relation in relations},
+        objective="min",
+    )
+
+
 class TestPulpDcopOracle:
     def test_graphcoloring_3_matches_known_solution(self):
         dcop = dcop_graphcoloring_3()
@@ -114,3 +148,84 @@ class TestPulpDcopOracle:
 
         assert assignment == {"v1": "R", "v2": "G", "v3": "R"}
         assert cost == pytest.approx(-0.1)
+
+    @pytest.mark.parametrize(
+        ("filename", "expected_assignment", "expected_cost"),
+        [
+            (
+                "graph_coloring1.yaml",
+                {"v1": "R", "v2": "G", "v3": "R"},
+                -0.1,
+            ),
+            (
+                "secp_simple1.yaml",
+                {"l1": 0, "l2": 3, "l3": 4, "m1": 3},
+                2.3,
+            ),
+        ],
+    )
+    def test_yaml_instance_matches_known_solution(
+        self, filename, expected_assignment, expected_cost
+    ):
+        dcop = load_test_dcop(filename)
+
+        assignment, cost = solve_dcop_with_pulp(dcop)
+
+        assert assignment == expected_assignment
+        assert cost == pytest.approx(expected_cost)
+
+    @pytest.mark.parametrize(
+        "filename",
+        [
+            "graph_coloring_10_4_15_0.1.yml",
+            "graph_coloring_csp.yaml",
+        ],
+    )
+    def test_yaml_instance_matches_known_cost(self, filename):
+        dcop = load_test_dcop(filename)
+
+        _, cost = solve_dcop_with_pulp(dcop)
+
+        assert cost == pytest.approx(0)
+
+    @pytest.mark.parametrize(
+        ("objective", "expected_assignment", "expected_cost"),
+        [
+            ("min", {"vA": "G", "vB": "G", "vC": "G", "vD": "G"}, 12),
+            ("max", {"vA": "G", "vB": "R", "vC": "R", "vD": "G"}, 53),
+        ],
+    )
+    def test_syncbb_toy_problem_matches_known_solution(
+        self, objective, expected_assignment, expected_cost
+    ):
+        dcop = build_syncbb_dcop(objective)
+
+        assignment, cost = solve_dcop_with_pulp(dcop)
+
+        assert assignment == expected_assignment
+        assert cost == pytest.approx(expected_cost)
+
+    @pytest.mark.parametrize(
+        ("relation_name", "expected_assignment", "expected_cost"),
+        [
+            (
+                "r1",
+                {"v1": "R", "v2": "G", "v3": "B", "v4": "R"},
+                0,
+            ),
+            (
+                "r1_2",
+                {"v1": "B", "v2": "G", "v3": "B", "v4": "R"},
+                5,
+            ),
+        ],
+    )
+    def test_dynamic_graphcoloring_state_matches_known_solution(
+        self, relation_name, expected_assignment, expected_cost
+    ):
+        dcop = build_dynamic_graphcoloring_dcop(relation_name)
+
+        assignment, cost = solve_dcop_with_pulp(dcop)
+
+        assert assignment == expected_assignment
+        assert cost == pytest.approx(expected_cost)
