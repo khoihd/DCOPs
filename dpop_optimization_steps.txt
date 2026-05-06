@@ -135,8 +135,18 @@ Possible changes:
     `conda run -n khoihd python profiling/profile_dpop_utils.py --case all --strategy all --repeat 10`
     Initial result: pre-conversion matched original UTIL output for the profiling
     cases and reduced total `_compute_utils_msg()` profiling time in both cases.
-[ ] Measure whether ordering local joins by relation size/arity reduces
+[x] Measure whether ordering local joins by relation size/arity reduces
     intermediate matrix sizes.
+    Initial profiling command:
+    `conda run -n khoihd python profiling/profile_dpop_utils.py --case all --strategy all --repeat 10`
+    Initial result: ordering matched original UTIL output. It reduced total
+    join-result cells in the multi-constraint smart-light case, but had no
+    meaningful effect in the single-local-constraint child-util case. Existing
+    YAML fixtures maxed out at two local constraints per DPOP computation, so
+    the profiling helper now includes a deterministic six-local-constraint
+    case. In that larger case, ordering reduced total join-result cells, but
+    combined pre-conversion plus ordering was not meaningfully faster than
+    pre-conversion alone.
 [ ] Consider a helper that joins local constraints exactly once, but only if it
     improves clarity without changing message timing assumptions.
 

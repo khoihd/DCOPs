@@ -39,6 +39,7 @@ class OperationStats:
     left: str
     right: str
     result: str
+    result_cells: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,20 +57,43 @@ Strategy = Callable[[dpop.DpopAlgo, list[OperationStats]], None]
 def _relation_summary(relation: Any) -> str:
     dimensions = getattr(relation, "dimensions", [])
     names = ",".join(v.name for v in dimensions) or "-"
+    shape = _relation_shape(relation)
+    cells = _relation_cells(relation)
+    cells_text = "unknown" if cells is None else str(cells)
+    return (
+        f"{type(relation).__name__} dims=[{names}] "
+        f"shape={shape} cells={cells_text}"
+    )
+
+
+def _relation_shape(relation: Any) -> tuple[int, ...] | None:
     shape = getattr(relation, "shape", None)
     if shape is None and hasattr(relation, "_m"):
         shape = relation._m.shape
+    if shape is None:
+        return None
+    return tuple(shape)
+
+
+def _relation_cells(relation: Any) -> int | None:
+    shape = _relation_shape(relation)
+    if shape is None:
+        return None
     cells = 1
-    if shape:
-        for size in shape:
-            cells *= size
-    else:
-        cells = 0
-    return f"{type(relation).__name__} dims=[{names}] shape={shape} cells={cells}"
+    for size in shape:
+        cells *= size
+    return cells
 
 
 def _dimension_names(relation: Any) -> list[str]:
     return [variable.name for variable in relation.dimensions]
+
+
+def _relation_sort_key(relation: Any) -> tuple[int, int, tuple[str, ...]]:
+    cells = _relation_cells(relation)
+    arity = getattr(relation, "arity", len(getattr(relation, "dimensions", [])))
+    dimension_names = tuple(_dimension_names(relation))
+    return (cells if cells is not None else 10**18, arity, dimension_names)
 
 
 @contextmanager
@@ -88,6 +112,7 @@ def profile_dpop_relations(stats: list[OperationStats]) -> Iterator[None]:
                 _relation_summary(left),
                 _relation_summary(right),
                 _relation_summary(result),
+                _relation_cells(result),
             )
         )
         return result
@@ -103,6 +128,7 @@ def profile_dpop_relations(stats: list[OperationStats]) -> Iterator[None]:
                 _relation_summary(relation),
                 variable.name,
                 _relation_summary(result),
+                _relation_cells(result),
             )
         )
         return result
@@ -152,11 +178,28 @@ def _pre_convert_local_constraints(
                 _relation_summary(constraint),
                 "-",
                 _relation_summary(converted),
+                _relation_cells(converted),
             )
         )
         converted_constraints.append(converted)
 
     computation._constraints = converted_constraints
+
+
+def _order_local_joins(
+    computation: dpop.DpopAlgo, stats: list[OperationStats]
+) -> None:
+    del stats
+    computation._constraints = sorted(
+        computation._constraints, key=_relation_sort_key
+    )
+
+
+def _pre_convert_ordered_local_joins(
+    computation: dpop.DpopAlgo, stats: list[OperationStats]
+) -> None:
+    _pre_convert_local_constraints(computation, stats)
+    _order_local_joins(computation, stats)
 
 
 def smart_light_case() -> dpop.DpopAlgo:
@@ -218,13 +261,68 @@ def child_util_case() -> dpop.DpopAlgo:
     return computation
 
 
+def many_local_constraints_case() -> dpop.DpopAlgo:
+    variable = Variable("x", list(range(6)))
+    parent = Variable("a", list(range(6)))
+    pseudo_b = Variable("b", list(range(6)))
+    pseudo_c = Variable("c", list(range(6)))
+    pseudo_d = Variable("d", list(range(6)))
+
+    @AsNAryFunctionRelation(variable, parent, pseudo_b, pseudo_c, pseudo_d)
+    def global_rel(x, a, b, c, d):
+        return (x + a + 2 * b + 3 * c + 5 * d) % 11
+
+    @AsNAryFunctionRelation(variable)
+    def unary_rel(x):
+        return x
+
+    @AsNAryFunctionRelation(variable, parent)
+    def parent_rel(x, a):
+        return abs(x - a)
+
+    @AsNAryFunctionRelation(variable, pseudo_b)
+    def pseudo_b_rel(x, b):
+        return (x * b) % 7
+
+    @AsNAryFunctionRelation(variable, pseudo_c)
+    def pseudo_c_rel(x, c):
+        return (x + c) % 5
+
+    @AsNAryFunctionRelation(variable, pseudo_d)
+    def pseudo_d_rel(x, d):
+        return abs(x - d) * 2
+
+    return dpop.DpopAlgo(
+        _dpop_computation_def(
+            variable,
+            constraints=[
+                global_rel,
+                unary_rel,
+                parent_rel,
+                pseudo_b_rel,
+                pseudo_c_rel,
+                pseudo_d_rel,
+            ],
+            links=[
+                PseudoTreeLink("parent", variable.name, parent.name),
+                PseudoTreeLink("pseudo_parent", variable.name, pseudo_b.name),
+                PseudoTreeLink("pseudo_parent", variable.name, pseudo_c.name),
+                PseudoTreeLink("pseudo_parent", variable.name, pseudo_d.name),
+            ],
+        )
+    )
+
+
 CASES: dict[str, CaseFactory] = {
     "smart-light": smart_light_case,
     "child-util": child_util_case,
+    "many-local-constraints": many_local_constraints_case,
 }
 
 STRATEGIES: dict[str, Strategy] = {
+    "ordered-local-joins": _order_local_joins,
     "original": _original_strategy,
+    "pre-convert-ordered-local-joins": _pre_convert_ordered_local_joins,
     "pre-convert-local-constraints": _pre_convert_local_constraints,
 }
 
@@ -278,17 +376,41 @@ def print_summary(
     if comparison is not None:
         print(f"  output={comparison}")
 
-    by_operation: dict[str, tuple[int, float]] = {}
+    by_operation: dict[str, tuple[int, float, int | None, int]] = {}
     for stat in stats:
-        count, op_elapsed = by_operation.get(stat.operation, (0, 0.0))
-        by_operation[stat.operation] = (count + 1, op_elapsed + stat.elapsed)
+        count, op_elapsed, peak_cells, total_cells = by_operation.get(
+            stat.operation, (0, 0.0, None, 0)
+        )
+        if stat.result_cells is None:
+            new_peak_cells = peak_cells
+            new_total_cells = total_cells
+        else:
+            new_peak_cells = (
+                stat.result_cells
+                if peak_cells is None
+                else max(peak_cells, stat.result_cells)
+            )
+            new_total_cells = total_cells + stat.result_cells
+        by_operation[stat.operation] = (
+            count + 1,
+            op_elapsed + stat.elapsed,
+            new_peak_cells,
+            new_total_cells,
+        )
 
-    for operation, (count, op_elapsed) in sorted(by_operation.items()):
+    for operation, (count, op_elapsed, peak_cells, total_cells) in sorted(
+        by_operation.items()
+    ):
         average = op_elapsed / count if count else 0
         print(
             f"  {operation} count={count} "
             f"total={op_elapsed:.6f}s avg={average:.6f}s"
         )
+        if operation == "join" and peak_cells is not None:
+            print(
+                f"  {operation}_result_cells "
+                f"peak={peak_cells} total={total_cells}"
+            )
 
     if details:
         for index, stat in enumerate(stats, start=1):
