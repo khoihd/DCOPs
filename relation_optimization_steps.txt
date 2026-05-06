@@ -154,11 +154,13 @@ Verify:
 
 Priority 3: NAryMatrixRelation.set_value_for_assignment()
 ---------------------------------------------------------
-[ ] Step 3 complete
+[x] Step 3 complete
 
 Why:
-- set_value_for_assignment() now benefits from the optimized _slice_matrix()
-  bookkeeping, but it still performs avoidable scalar index setup.
+- Before this step, set_value_for_assignment() reused the optimized
+  _slice_matrix() bookkeeping in both list and dict branches.
+- This step stops routing full scalar assignments through _slice_matrix() and
+  computes the full index tuple directly.
 - It still copies the full matrix on each call because the public API returns a
   new relation instead of mutating self.
 - Generators for graph coloring, meetings, IoT/Ising-style instances use this
@@ -178,22 +180,24 @@ Risk:
   stay compatible.
 
 Implementation:
-[ ] Reuse the optimized _slice_matrix() bookkeeping or compute indexes directly.
-[ ] For list input, compute the full scalar index tuple directly from variable
+[x] Previous baseline reused the optimized _slice_matrix() bookkeeping.
+[x] Replace _slice_matrix() calls with direct scalar index tuple construction.
+[x] For list input, compute the full scalar index tuple directly from variable
     order.
-[ ] For dict input, compute the full scalar index tuple directly from variable
+[x] For dict input, compute the full scalar index tuple directly from variable
     names.
-[ ] Keep exactly one np.copy(self._m) per call.
-[ ] Return NAryMatrixRelation(self._variables, matrix, name=self.name).
+[x] Keep exactly one np.copy(self._m) per call.
+[x] Return NAryMatrixRelation(self._variables, matrix, name=self.name).
 
 Tests:
-[ ] Run existing set_value_for_assignment tests.
-[ ] Add tests for dict values in a different variable order if needed.
-[ ] Add tests for missing/extra variables only if current behavior is unclear.
+[x] Run existing set_value_for_assignment tests.
+[x] Confirm existing tests cover dict values in a different variable order.
+[x] Add regression coverage that set_value_for_assignment() does not call
+    _slice_matrix().
 
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
-[ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 
 Priority 4: assignment generation helpers

@@ -920,6 +920,24 @@ class NAryMatrixRelationInitTest(unittest.TestCase):
         u2 = u1.set_value_for_assignment({"x1": 2, "x2": 5}, 3)
         self.assertEqual(u2.get_value_for_assignment([2, 5]), 3)
 
+    def test_set_value_computes_indexes_directly(self):
+        x1 = Variable("x1", [2, 4, 6])
+        x2 = Variable("x2", [1, 3, 5])
+
+        class DirectSetRelation(NAryMatrixRelation):
+            def _slice_matrix(
+                self, sliced_vars, sliced_values, ignore_extra_vars=False
+            ):
+                raise AssertionError("set_value_for_assignment should not slice")
+
+        u1 = DirectSetRelation([x1, x2], [[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+        u2 = u1.set_value_for_assignment([4, 1], 0)
+        self.assertEqual(u2.get_value_for_assignment([4, 1]), 0)
+
+        u3 = u1.set_value_for_assignment({"x2": 5, "x1": 2}, 0)
+        self.assertEqual(u3.get_value_for_assignment([2, 5]), 0)
+
     def test_set_float_value_on_zeroed_init(self):
         x1 = Variable("x1", ["R", "G"])
         x2 = Variable("x2", ["R", "G"])

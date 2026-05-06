@@ -756,6 +756,22 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
         return u
 
     def _slice_matrix(self, sliced_vars, sliced_values, ignore_extra_vars=False):
+        """
+        Build matrix slicing metadata for a partial variable assignment.
+
+        ``sliced_vars`` and ``sliced_values`` are parallel iterables describing
+        variable names and the values used to fix them. The returned
+        ``slice_vars`` list contains the variables that remain unfixed, in
+        relation order. The returned slice tuple can be used directly to index
+        this relation's matrix, with scalar indexes for fixed variables and
+        ``slice(None)`` for variables that remain in the sliced relation.
+
+        :param sliced_vars: variable names to fix.
+        :param sliced_values: values corresponding to ``sliced_vars``.
+        :param ignore_extra_vars: when true, ignore variables that are not
+            dimensions of this relation instead of raising an error.
+        :return: ``(slice_vars, matrix_slice)``.
+        """
 
         var_names = {v.name for v in self._variables}
         assignment = {}
@@ -867,20 +883,20 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
         :param rel_value: the value of the relation.
         """
         if isinstance(var_values, list):
-            _, s = self._slice_matrix([v.name for v in self._variables], var_values)
-            matrix = np.copy(self._m)
-            matrix[s] = rel_value
-            return NAryMatrixRelation(self._variables, matrix, name=self.name)
-
+            s = []
+            for variable, value in zip(self._variables, var_values):
+                s.append(variable.domain.index(value))
+            for _ in self._variables[len(var_values) :]:
+                s.append(slice(None))
+            s = tuple(s)
         elif isinstance(var_values, dict):
-            values = []
-            for v in self._variables:
-                values.append(var_values[v.name])
-            _, s = self._slice_matrix([v.name for v in self._variables], values)
-            matrix = np.copy(self._m)
-            matrix[s] = rel_value
-            return NAryMatrixRelation(self._variables, matrix, name=self.name)
-        raise ValueError("Could not set value, must be list or dict")
+            s = tuple(v.domain.index(var_values[v.name]) for v in self._variables)
+        else:
+            raise ValueError("Could not set value, must be list or dict")
+
+        matrix = np.copy(self._m)
+        matrix[s] = rel_value
+        return NAryMatrixRelation(self._variables, matrix, name=self.name)
 
     @staticmethod
     def from_func_relation(rel: RelationProtocol) -> "NAryMatrixRelation":
