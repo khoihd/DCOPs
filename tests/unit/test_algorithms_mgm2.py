@@ -32,8 +32,6 @@
 import unittest
 from unittest.mock import MagicMock
 
-import pytest
-
 from pydcop.computations_graph.constraints_hypergraph import VariableComputationNode
 from pydcop.dcop.relations import (
     UnaryFunctionRelation,
@@ -860,7 +858,6 @@ class TestsHandleMessage(unittest.TestCase):
         self.assertEqual(computation4._potential_gain, 9)
         self.assertEqual(computation4._potential_value, 1)
 
-    @pytest.mark.skip
     def test_offer_already_has_partner(self):
         x1 = Variable("x1", list(range(2)))
         x2 = Variable("x2", list(range(2)))
@@ -882,7 +879,10 @@ class TestsHandleMessage(unittest.TestCase):
         computation._is_offerer = True
         computation.on_offer_msg("x2", Mgm2OfferMessage(), 1)
         self.assertEqual(computation._state, "offer")
-        # self.assertEqual(computation._offers, [])
+        self.assertEqual(len(computation._offers), 1)
+        sender, offer = computation._offers[0]
+        self.assertEqual(sender, "x2")
+        self.assertFalse(offer.is_offering)
         # Received only fake offers
         computation2 = Mgm2Computation(
             ComputationDef(
@@ -892,10 +892,12 @@ class TestsHandleMessage(unittest.TestCase):
         )
         computation2.message_sender = DummySender()
         computation2._state = "offer"
-        computation2.__nb_received_offers__ = 1
+        computation2._is_offerer = True
         computation2.on_offer_msg("x2", Mgm2OfferMessage(), 1)
-        self.assertEqual(computation2._state, "gain")
-        self.assertEqual(computation2._offers, [("x2", Mgm2OfferMessage())])
+        computation2.on_offer_msg("x3", Mgm2OfferMessage(), 1)
+        self.assertEqual(computation2._state, "answer?")
+        self.assertEqual(len(computation2._offers), 2)
+        self.assertTrue(all(not offer.is_offering for _, offer in computation2._offers))
         # receives a real offer
         computation3 = Mgm2Computation(
             ComputationDef(
@@ -911,7 +913,11 @@ class TestsHandleMessage(unittest.TestCase):
             "x2", Mgm2OfferMessage({(1, 1): 8}, is_offering=True), 1
         )
         self.assertEqual(computation3._state, "offer")
-        self.assertEqual(2, len(computation3._offers))
+        self.assertEqual(1, len(computation3._offers))
+        sender, offer = computation3._offers[0]
+        self.assertEqual(sender, "x2")
+        self.assertTrue(offer.is_offering)
+        self.assertEqual(offer.offers, {(1, 1): 8})
         self.assertEqual(computation3._potential_gain, 0)
         self.assertIsNone(computation3._potential_value)
         # Receives a real offer which is the last expected one
@@ -921,58 +927,24 @@ class TestsHandleMessage(unittest.TestCase):
                 AlgorithmDef.build_with_default_param("mgm2"),
             )
         )
-        computation4.message_sender = DummySender()
+        computation4.message_sender = MagicMock()
         computation4._state = "offer"
         computation4._is_offerer = True
-        computation4.__nb_received_offers__ = 1
         computation4.on_offer_msg(
             "x2", Mgm2OfferMessage({(1, 1): 8}, is_offering=True), 1
         )
-        self.assertEqual(len(computation4), 3)
+        computation4.on_offer_msg("x3", Mgm2OfferMessage(), 1)
+        self.assertEqual(len(computation4._offers), 2)
+        sender, offer = computation4._offers[0]
+        self.assertEqual(sender, "x2")
+        self.assertTrue(offer.is_offering)
+        self.assertEqual(offer.offers, {(1, 1): 8})
         self.assertEqual(computation4._state, "answer?")
         self.assertEqual(computation4._potential_gain, 0)
         self.assertIsNone(computation4._potential_value)
-
-    #
-    # def test_offer_has_better_unilateral_move(self):
-    #     x1 = Variable("x1", list(range(2)))
-    #     x2 = Variable('x2', list(range(2)))
-    #     x3 = Variable('x3', list(range(2)))
-    #
-    #     @AsNAryFunctionRelation(x1, x2)
-    #     def phi(x1_, x2_):
-    #         if x1_ == x2_:
-    #             return 1
-    #         return 0
-    #
-    #     @AsNAryFunctionRelation(x1, x3)
-    #     def psi(x1_, x3_):
-    #         if x1_ == x3_:
-    #             return 8
-    #         return 0
-    #
-    #     # Receives a real offer from last neighbor
-    #     computation = Mgm2Computation(
-    #         ComputationDef(
-    #             VariableComputationNode(x1, [phi, psi]),
-    #             AlgorithmDef.build_with_default_param('mgm2')
-    #         ))
-    #     computation.message_sender = DummySender()
-    #
-    #     computation._state = 'offer'
-    #     computation._neighbors_values = {'x2': 1, 'x3': 1}
-    #     computation.__value__ = 1
-    #     computation.__cost__ = 9
-    #     computation._potential_gain = 9  # best unilateral move
-    #     computation._potential_value = 0  # best unilateral move
-    #     computation.__nb_received_offers__ = 1
-    #     computation.on_offer_msg('x2', Mgm2OfferMessage({(0, 1): 1},
-    #                                                          is_offering=True), 1)
-    #     self.assertEqual(computation._offers, [('x2', Mgm2OfferMessage({(0, 1): 1},
-    #                                                          is_offering=True))])
-    #     self.assertEqual(computation._state, 'gain')
-    #     self.assertEqual(computation._potential_gain, 9)
-    #     self.assertEqual(computation._potential_value, 0)
+        computation4.message_sender.assert_called_once_with(
+            "x1", "x2", Mgm2ResponseMessage(False), None, None
+        )
 
     def test_response_accept(self):
         x1 = Variable("x1", list(range(3)))
