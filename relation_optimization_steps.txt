@@ -307,7 +307,8 @@ Candidates:
 - Completed: find_optimum() now evaluates generated full assignments directly
   without filtering them first, and snapshots constraint.dimensions once with
   list(constraint.dimensions).
-- ConditionalRelation.dimensions recomputes and sorts dimensions on each access.
+- Completed: ConditionalRelation.dimensions is cached at construction time and
+  still returns a copy to preserve the old fresh-list behavior.
 - NAryFunctionRelation.slice() rebuilds variable-name lists on each call.
 - NAryMatrixRelation.__hash__ hashes str(self._m), which is fast-ish but
   imprecise and can still be expensive for large matrices.
@@ -326,6 +327,8 @@ Expected complexity impact:
 Verify:
 [x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
 [x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
 [x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 Guidance:

@@ -1255,6 +1255,25 @@ class ConditionalRelationsTest(unittest.TestCase):
         self.assertIn(v1, cond_rel2.dimensions)
         self.assertIn(v2, cond_rel2.dimensions)
 
+    def test_dimensions_returns_copy(self):
+        v1 = Variable("v1", [True, False])
+        v2 = Variable("v2", ["R", "G", "B"])
+
+        @AsNAryFunctionRelation(v1)
+        def condition(v):
+            return v
+
+        @AsNAryFunctionRelation(v2)
+        def rel1(v):
+            return 1 if v == "G" else 5
+
+        cond_rel = ConditionalRelation(condition, rel1)
+
+        dimensions = cond_rel.dimensions
+        dimensions.pop()
+
+        self.assertEqual(cond_rel.dimensions, [v1, v2])
+
     def test_get_val(self):
 
         v1 = Variable("v1", [True, False])

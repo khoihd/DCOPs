@@ -1032,6 +1032,11 @@ class ConditionalRelation(RelationProtocol, SimpleRepr):
         self._relation_if_true = relation_if_true
         self._name = name if name is not None else relation_if_true.name
         self._return_neutral = return_neutral
+        self._dimensions = list(self._condition.dimensions)
+        for v in self._relation_if_true.dimensions:
+            if v not in self._dimensions:
+                self._dimensions.append(v)
+        self._dimensions.sort(key=lambda vo: vo.name)
 
     @property
     def condition(self) -> RelationProtocol:
@@ -1047,12 +1052,7 @@ class ConditionalRelation(RelationProtocol, SimpleRepr):
 
     @property
     def dimensions(self) -> List[Variable]:
-        dims = list(self._condition.dimensions)
-        for v in self._relation_if_true.dimensions:
-            if v not in dims:
-                dims.append(v)
-        dims.sort(key=lambda vo: vo.name)
-        return dims
+        return self._dimensions.copy()
 
     @property
     def arity(self) -> int:
