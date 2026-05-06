@@ -32,6 +32,21 @@
   PuLP/GLPK oracle in `tests/utils/dcop_oracle.py`.
 
 ## Current Status
+- Test-suite stabilization pass completed: the suite is reported passing
+  without skipped tests after modernizing legacy tests and benchmark tests.
+- Recent fixes covered:
+  - `tests/unit/test_agentfw.py`: modernized in-process agent messaging tests.
+  - `tests/unit/test_algorithms_mgm2.py`: updated stale MGM2 offer-handling
+    tests to match current message storage and offer-count semantics.
+  - `pydcop/infrastructure/communication.py` and
+    `tests/unit/test_infra_communication.py`: retry messages are now resent
+    automatically when missing agents register.
+  - `tests/unit/test_dcop_relations.py`: assignment-cost benchmark test now
+    works with or without the optional benchmark fixture.
+  - `tests/unit/test_replication_path_utils.py`: replication path benchmark
+    tests use the current list-of-tuples path table shape.
+- Project-wide declaration newline style was normalized: blank lines immediately
+  after `def`, `async def`, and `class` declarations were removed.
 - Relation optimization in `pydcop/dcop/relations.py` is complete for now.
   Details live in `relation_optimization_steps.txt`.
 - Deferred relation items: `assignment_cost()`, `find_optimal()`, and
