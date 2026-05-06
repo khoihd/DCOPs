@@ -2105,6 +2105,71 @@ class ProjectionTestCase(unittest.TestCase):
         assert p.get_value_for_assignment(["1"]) == 8
         assert p.get_value_for_assignment(["2"]) == 64
 
+    def test_projection_slow_function_relation_one_var_min_max(self):
+        x1 = Variable("x1", ["a", "b", "c"])
+
+        @AsNAryFunctionRelation(x1)
+        def u1(x):
+            return {"a": 4, "b": 2, "c": 8}[x]
+
+        p_max = pydcop.dcop.relations.projection_slow(u1, x1)
+        p_min = pydcop.dcop.relations.projection_slow(u1, x1, mode="min")
+
+        assert p_max.arity == 0
+        assert p_max.get_value_for_assignment() == 8
+        assert p_min.arity == 0
+        assert p_min.get_value_for_assignment() == 2
+
+    def test_projection_slow_uses_direct_evaluation_before_slicing(self):
+        x1 = Variable("x1", ["a", "b", "c"])
+        x2 = Variable("x2", ["1", "2"])
+
+        costs = {
+            ("a", "1"): 2,
+            ("b", "1"): 4,
+            ("c", "1"): 8,
+            ("a", "2"): 16,
+            ("b", "2"): 32,
+            ("c", "2"): 64,
+        }
+
+        class DirectOnlyRelation(NAryFunctionRelation):
+            def slice(self, partial_assignment):
+                raise AssertionError("projection_slow should not slice this relation")
+
+        u1 = DirectOnlyRelation(lambda x1, x2: costs[(x1, x2)], [x1, x2])
+
+        p = pydcop.dcop.relations.projection_slow(u1, x1)
+
+        assert p.dimensions == [x2]
+        assert p.get_value_for_assignment(["1"]) == 8
+        assert p.get_value_for_assignment(["2"]) == 64
+
+    def test_projection_slow_falls_back_to_slicing_when_direct_evaluation_fails(self):
+        x1 = Variable("x1", ["a", "b", "c"])
+        x2 = Variable("x2", ["1", "2"])
+
+        costs = {
+            ("a", "1"): 2,
+            ("b", "1"): 4,
+            ("c", "1"): 8,
+            ("a", "2"): 16,
+            ("b", "2"): 32,
+            ("c", "2"): 64,
+        }
+
+        class SliceOnlyRelation(NAryFunctionRelation):
+            def get_value_for_assignment(self, assignment):
+                raise NotImplementedError
+
+        u1 = SliceOnlyRelation(lambda x1, x2: costs[(x1, x2)], [x1, x2])
+
+        p = pydcop.dcop.relations.projection_slow(u1, x1)
+
+        assert p.dimensions == [x2]
+        assert p.get_value_for_assignment(["1"]) == 8
+        assert p.get_value_for_assignment(["2"]) == 64
+
     def test_projection_slow_matrix_matches_projection_fast(self):
         x1 = Variable("x1", ["a", "b"])
         x2 = Variable("x2", ["1", "2"])

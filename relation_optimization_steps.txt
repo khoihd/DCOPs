@@ -50,7 +50,7 @@ Verify:
 
 Priority 2: projection_slow() direct generic evaluation
 -------------------------------------------------------
-[ ] Step 2 complete
+[x] Step 2 complete
 
 Why:
 - projection_slow() is now the generic fallback used by projection() for
@@ -69,32 +69,32 @@ Risk:
   direct relation evaluation is not safe for a relation type.
 
 Implementation:
-[ ] Keep projection() as the main dispatcher.
-[ ] Keep projection_fast() unchanged.
-[ ] In projection_slow(), keep remaining_vars exactly as today.
-[ ] Pre-validate mode or preserve find_arg_optimal() invalid-mode behavior.
-[ ] For each partial assignment, evaluate candidate assignments directly when
+[x] Keep projection() as the main dispatcher.
+[x] Keep projection_fast() unchanged.
+[x] In projection_slow(), keep remaining_vars exactly as today.
+[x] Pre-validate mode or preserve find_arg_optimal() invalid-mode behavior.
+[x] For each partial assignment, evaluate candidate assignments directly when
     practical: set a_var.name to each domain value and call the relation with
-    keyword arguments.
-[ ] Track the best projected value without creating a sliced relation.
-[ ] Write the best value directly into the raw result matrix.
-[ ] Fall back to the current slice() + find_arg_optimal() behavior if direct
+    get_value_for_assignment().
+[x] Track the best projected value without creating a sliced relation.
+[x] Write the best value directly into the raw result matrix.
+[x] Fall back to the current slice() + find_arg_optimal() behavior if direct
     evaluation would change compatibility.
 
 Tests:
-[ ] Keep projection_slow() correctness tests for function relations.
-[ ] Add or confirm projection_slow() tests for min and max modes.
-[ ] Add or confirm projection_slow() tests for one-variable/scalar projection.
-[ ] Add or confirm projection_slow() result parity with projection_fast() on a
+[x] Keep projection_slow() correctness tests for function relations.
+[x] Add or confirm projection_slow() tests for min and max modes.
+[x] Add or confirm projection_slow() tests for one-variable/scalar projection.
+[x] Add or confirm projection_slow() result parity with projection_fast() on a
     matrix relation used directly in tests.
-[ ] Add or update benchmark-style coverage for projection_slow().
+[x] Add or update benchmark-style coverage for projection_slow().
 
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
-[ ] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
-[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve_dpop.py tests/api/test_api_solve.py
-[ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve_dpop.py tests/api/test_api_solve.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 
 Priority 3: NAryMatrixRelation.from_func_relation()

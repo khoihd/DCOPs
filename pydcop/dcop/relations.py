@@ -1802,6 +1802,30 @@ def projection_fast(
     return NAryMatrixRelation(remaining_vars, np.asarray(matrix, dtype=np.float64))
 
 
+def _project_value_direct(
+    a_rel: Constraint, a_var: Variable, partial: Dict[str, Any], mode: str
+):
+    """
+    Find the projected value by evaluating the original relation directly.
+    """
+    if mode == "min":
+        best_rel_val = get_data_type_max(DEFAULT_TYPE)
+    elif mode == "max":
+        best_rel_val = get_data_type_min(DEFAULT_TYPE)
+    else:
+        raise ValueError("Invalid optimization mode: " + mode)
+
+    assignment = partial.copy()
+    for value in a_var.domain:
+        assignment[a_var.name] = value
+        current_rel_val = a_rel.get_value_for_assignment(assignment)
+        if (mode == "max" and best_rel_val < current_rel_val) or (
+            mode == "min" and best_rel_val > current_rel_val
+        ):
+            best_rel_val = current_rel_val
+    return best_rel_val
+
+
 def projection_slow(a_rel: Constraint, a_var: Variable, mode="max") -> Constraint:
     """
     Generic projection implementation for relation types without matrix access.
@@ -1817,9 +1841,11 @@ def projection_slow(a_rel: Constraint, a_var: Variable, mode="max") -> Constrain
 
     # Visit every assignment of the remaining variables.
     for partial in generate_assignment_as_dict(remaining_vars):
-        # Fix the remaining variables, then optimize over a_var using the
-        # generic relation protocol.
-        _, rel_val = find_arg_optimal(a_var, a_rel.slice(partial), mode)
+        # Optimize over a_var without creating an intermediate sliced relation.
+        try:
+            rel_val = _project_value_direct(a_rel, a_var, partial, mode)
+        except (AttributeError, KeyError, NotImplementedError, TypeError, ValueError):
+            _, rel_val = find_arg_optimal(a_var, a_rel.slice(partial), mode)
 
         # Convert the current assignment values to matrix coordinates.
         # Look up each assigned value's index in its variable domain.
