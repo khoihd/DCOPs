@@ -218,18 +218,13 @@ class DpopAlgo(VariableComputation):
         # relation on the on the lowest node in the tree that is involved in the
         # relation.
         self._constraints = []
-        descendants = self._pseudo_children + self._children
+        descendants = set(self._pseudo_children + self._children)
         self.logger.debug(f"Descendants for computation {self.name}: {descendants} ")
         constraints = []
         for r in comp_def.node.constraints:
             # filter out all relations that depends on one of our descendants
-            relation_var_names = [v.name for v in r.dimensions]
-            keep_constraint = True
-            for descendant in descendants:
-                if descendant in relation_var_names:
-                    keep_constraint = False
-                    break
-            if keep_constraint:
+            relation_var_names = {v.name for v in r.dimensions}
+            if descendants.isdisjoint(relation_var_names):
                 constraints.append(r)
         self._constraints = constraints
         self.logger.debug(

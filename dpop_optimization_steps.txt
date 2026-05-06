@@ -70,7 +70,7 @@ Expected impact:
 
 Implementation:
 [x] Replace remove-from-copy logic with append-to-filtered-list logic.
-[ ] Use a descendant-name set.
+[x] Use a descendant-name set.
 [ ] Use each relation's `scope_names` or a local tuple of variable names once.
 [ ] Preserve exactly which constraints are kept or filtered.
 
