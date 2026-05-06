@@ -258,7 +258,6 @@ class TestInProcessCommunictionLayer(object):
         full_msg = ('c1', 'c2', 'msg')
         assert comm1.send_msg('a1', 'a2', full_msg,on_error='ignore')
 
-    @pytest.mark.skip
     def test_retry_when_sending_to_unknown_agent_retry_default(self):
         comm1 = InProcessCommunicationLayer(on_error='retry')
         comm1.discovery = Discovery('a1', comm1)
@@ -269,10 +268,9 @@ class TestInProcessCommunictionLayer(object):
         comm2 = create_autospec(InProcessCommunicationLayer)
         comm1.discovery.register_agent('a2', comm2)
 
-        comm2.receive_msg.assert_called_with('a1', 'a2', full_msg)
-        comm2.receive_msg.assert_called_with('a1', 'a2', full_msg)
+        comm2.receive_msg.assert_called_once_with('a1', 'a2', full_msg)
+        assert 'a2' not in comm1._failed_msg
 
-    @pytest.mark.skip
     def test_retry_when_sending_to_unknown_agent_retry_on_send(self):
         comm1 = InProcessCommunicationLayer(None)
         comm1.discovery = Discovery('a1', comm1)
@@ -283,7 +281,8 @@ class TestInProcessCommunictionLayer(object):
         comm2 = create_autospec(InProcessCommunicationLayer)
         comm1.discovery.register_agent('a2', comm2)
 
-        comm2.receive_msg.assert_called_with('a1', 'a2', full_msg)
+        comm2.receive_msg.assert_called_once_with('a1', 'a2', full_msg)
+        assert 'a2' not in comm1._failed_msg
 
 
 @pytest.fixture

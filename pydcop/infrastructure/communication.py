@@ -110,6 +110,7 @@ class CommunicationLayer(object):
         self.discovery = None
         self.messaging = None
         self._failed_msg = defaultdict(lambda: [])
+        self._retry_agent_subscriptions = set()
 
     @property
     def address(self):
@@ -174,6 +175,14 @@ class CommunicationLayer(object):
                 msg,
             )
             self._failed_msg[dest_agent].append((src_agent, dest_agent, msg, on_error))
+            if (
+                self.discovery is not None
+                and dest_agent not in self._retry_agent_subscriptions
+            ):
+                self.discovery.subscribe_agent(
+                    dest_agent, self._on_agent_registration, one_shot=True
+                )
+                self._retry_agent_subscriptions.add(dest_agent)
             return False
         else:
             logger.warning(
@@ -193,11 +202,17 @@ class CommunicationLayer(object):
         :param dest_agent:
         :return:
         """
-        for src, dest, msg, on_error in self._failed_msg[dest_agent]:
+        failed_messages = self._failed_msg.pop(dest_agent, [])
+        for src, dest, msg, on_error in failed_messages:
             logger.warning(
                 "retrying delivery of message from %s to %s : " "%s", src, dest, msg
             )
             self.send_msg(src, dest, msg, on_error, from_retry=True)
+
+    def _on_agent_registration(self, evt: str, agent: str, address):
+        if evt == "agent_added":
+            self._retry_agent_subscriptions.discard(agent)
+            self.retry(agent)
 
 
 class UnreachableAgent(Exception):
@@ -548,8 +563,8 @@ class Messaging(object):
         self._failed = []
 
         # Containers for metrics on sent messages:
-        self.count_ext_msg = defaultdict(lambda: 0)  # type: Dict[str, int]
-        self.size_ext_msg = defaultdict(lambda: 0)  # type: Dict[str, int]
+        self.count_ext_msg = defaultdict(int)
+        self.size_ext_msg = defaultdict(int)
         self.last_msg_time = 0
         self.msg_queue_count = 0
 
@@ -622,9 +637,6 @@ class Messaging(object):
         currently no time limit for this, meaning that a message can stay in
         fail state forever and never been delivered if the corresponding
         computation is never registered.
-
-        TODO: implement some kind of timeout mechanism to report an error if
-        message stay in the failed stay for too long.
 
         Parameters
         ----------
