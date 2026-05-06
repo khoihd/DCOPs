@@ -2077,6 +2077,44 @@ def test_join_matrix_relations_different_order():
     assert joined(x1=1, x2=1) == 44
 
 
+def test_benchmark_join_fast_against_join_slow():
+    domain = list(range(7))
+    x1 = Variable("x1", domain)
+    x2 = Variable("x2", domain)
+    x3 = Variable("x3", domain)
+    x4 = Variable("x4", domain)
+    u1_matrix = np.arange(len(domain) ** 3, dtype=np.float64).reshape(
+        (len(domain),) * 3
+    )
+    u2_matrix = np.arange(len(domain) ** 3, dtype=np.float64).reshape(
+        (len(domain),) * 3
+    )
+    u1 = NAryMatrixRelation([x1, x2, x3], u1_matrix)
+    u2 = NAryMatrixRelation([x2, x3, x4], u2_matrix)
+
+    joined_fast = pydcop.dcop.relations.join_fast(u1, u2)
+    joined_slow = pydcop.dcop.relations.join_slow(u1, u2)
+    assert joined_fast.dimensions == joined_slow.dimensions
+    for assignment in generate_assignment_as_dict(joined_fast.dimensions):
+        assert joined_fast(**assignment) == joined_slow(**assignment)
+
+    def best_time(func, repeat):
+        best = float("inf")
+        for _ in range(repeat):
+            start = time.perf_counter()
+            func()
+            best = min(best, time.perf_counter() - start)
+        return best
+
+    fast_time = best_time(lambda: pydcop.dcop.relations.join_fast(u1, u2), repeat=10)
+    slow_time = best_time(lambda: pydcop.dcop.relations.join_slow(u1, u2), repeat=2)
+
+    assert fast_time < slow_time, (
+        "join_fast should be faster than join_slow "
+        f"(fast={fast_time:.6f}s, slow={slow_time:.6f}s)"
+    )
+
+
 class ProjectionTestCase(unittest.TestCase):
     def test_projection_oneVarRel(self):
 

@@ -142,6 +142,7 @@ Tests:
 [x] Add or confirm tests for matrix/function joins.
 [x] Add or confirm tests for different variable order.
 [x] Add or confirm tests for zero-arity joins.
+[x] Add benchmark-style coverage comparing join_fast() and join_slow().
 
 Verify:
 [x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
