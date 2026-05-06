@@ -153,8 +153,11 @@ Possible changes:
     descendant filtering. `_compute_utils_msg()` still performs the same loop,
     but local constraints are joined from smaller estimated relation footprint
     to larger footprint, with stable ordering for ties.
-[ ] Consider a helper that joins local constraints exactly once, but only if it
+[x] Consider a helper that joins local constraints exactly once, but only if it
     improves clarity without changing message timing assumptions.
+    Implemented `_join_local_constraints()` and called it from the same points
+    that already joined local constraints: isolated-root start, root after all
+    child UTIL messages, and non-root `_compute_utils_msg()`.
 
 Risks:
 - Join dimension order is visible in UTIL relations.
@@ -162,10 +165,10 @@ Risks:
 - Memory can get worse if a size-based order expands dimensions earlier.
 
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
-[ ] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
-[ ] conda run -n khoihd python -m pytest tests/dcop_cli/test_solve.py
-[ ] conda run -n khoihd ruff check pydcop/algorithms/dpop.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
+[x] conda run -n khoihd python -m pytest tests/dcop_cli/test_solve.py
+[x] conda run -n khoihd ruff check pydcop/algorithms/dpop.py
 
 
 Priority 5: small helper polish

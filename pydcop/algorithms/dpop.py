@@ -300,9 +300,7 @@ class DpopAlgo(VariableComputation):
             # we are both root and leaf : means we are a isolated variable we
             #  can select our own value alone:
             if self._constraints:
-                for r in self._constraints:
-                    self._joined_utils = join(self._joined_utils, r)
-
+                self._join_local_constraints()
                 values, current_cost = find_arg_optimal(
                     self._variable, self._joined_utils, self._mode
                 )
@@ -396,9 +394,7 @@ class DpopAlgo(VariableComputation):
 
                 # The root obviously has no parent nor pseudo parent, yet it
                 # may have unary relations (with it-self!)
-                for r in self._constraints:
-                    self._joined_utils = join(self._joined_utils, r)
-
+                self._join_local_constraints()
                 values, current_cost = find_arg_optimal(
                     self._variable, self._joined_utils, self._mode
                 )
@@ -423,9 +419,12 @@ class DpopAlgo(VariableComputation):
                 )
                 self.post_msg(self._parent, msg)
 
-    def _compute_utils_msg(self):
+    def _join_local_constraints(self):
         for r in self._constraints:
             self._joined_utils = join(self._joined_utils, r)
+
+    def _compute_utils_msg(self):
+        self._join_local_constraints()
 
         # use projection to eliminate self out of the message to our parent
         util = projection(self._joined_utils, self._variable, self._mode)
