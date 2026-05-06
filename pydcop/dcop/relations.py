@@ -1729,10 +1729,10 @@ def join(u1: Constraint, u2: Constraint) -> Constraint:
 
 
 def _join_dimensions(u1: Constraint, u2: Constraint):
-    dims = u1.dimensions[:]
-    for d2 in u2.dimensions:
-        if d2 not in dims:
-            dims.append(d2)
+    dims = list(u1.dimensions)
+    for variable in u2.dimensions:
+        if variable not in dims:
+            dims.append(variable)
     return dims
 
 
