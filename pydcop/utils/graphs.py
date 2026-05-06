@@ -106,7 +106,6 @@ def calc_diameter(nodes):
 
 
 def find_furthest_node(root_node, nodes):
-
     # BFS on the graph defined by nodes
     queue = [root_node]
     distances = {root_node.name: 0}
@@ -261,7 +260,6 @@ def display_bipartite_graph(variables, relations):
 
 
 def cycles_count(variables, relations):
-
     g = as_networkx_graph(variables, relations)
     cycles = nx.cycle_basis(g)
     return len(cycles)

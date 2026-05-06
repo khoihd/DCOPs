@@ -66,7 +66,6 @@ def test_find_vars_starts_with():
 
 
 def test_generate_10_agents():
-
     agents = generate_agents_from_count(10)
     assert len(agents) == 10
     agents = {a for a in agents}
@@ -76,7 +75,6 @@ def test_generate_10_agents():
 
 
 def test_generate_10_agents_with_prefix():
-
     agents = generate_agents_from_count(10, agent_prefix="agt_")
     assert len(agents) == 10
     agents = {a for a in agents}
@@ -86,7 +84,6 @@ def test_generate_10_agents_with_prefix():
 
 
 def test_generate_100_agents():
-
     agents = generate_agents_from_count(100)
     assert len(agents) == 100
     agents = {a for a in agents}
@@ -98,7 +95,6 @@ def test_generate_100_agents():
 
 
 def test_generate_hosting_costs():
-
     mapping = {"a1": ["v01", "v02"], "a2": [], "a9": ["v09"], "a0": ["v00"]}
 
     costs = generate_hosting_costs("name_mapping", mapping)
@@ -127,7 +123,6 @@ def test_find_prefix_len2():
 
 
 def test_generate_agent_from_variables():
-
     variables = ["v1", "v2", "v3", "v4"]
     obtained = generate_agents_from_variables(variables)
     assert len(obtained) == 4
@@ -138,7 +133,6 @@ def test_generate_agent_from_variables():
 
 
 def test_generate_agent_from_variables_with_prefix():
-
     variables = ["v1", "v2", "v3", "v4"]
     obtained = generate_agents_from_variables(variables, agent_prefix="A_")
     assert len(obtained) == 4

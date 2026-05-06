@@ -867,7 +867,6 @@ class Agent(object):
 
 
 def notify_wrap(f, cb):
-
     def wrapped(*args, **kwargs):
         f(*args, **kwargs)
         cb(*args, **kwargs)
@@ -913,7 +912,6 @@ repair_algo = load_algorithm_module('mgm2')
 
 
 class RepairComputationRegistration(object):
-
     def __init__(self, computation: MessagePassingComputation,
                  status: str, candidate: str):
         self.computation = computation

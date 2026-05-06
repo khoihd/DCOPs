@@ -814,7 +814,6 @@ def write_in_file(filename: str, dcop_str: str):
 
 
 def find_objective(weights: List[float], n: int, is_hard: bool):
-
     objective = 0
     if is_hard:
         # Choose an objective which is reachable

@@ -53,7 +53,6 @@ INFNT = sys.maxsize
 
 
 def dpop_nonbinaryrelation():
-
     x0 = Variable('x0', list(range(10)))
     x1 = Variable('x1', list(range(10)))
     x2 = Variable('x2', list(range(10)))

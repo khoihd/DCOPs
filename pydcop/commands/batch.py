@@ -95,7 +95,6 @@ logger = logging.getLogger("pydcop.cli.batch")
 
 
 def set_parser(subparsers):
-
     logger.debug("pyDCOP batch ")
 
     parser = subparsers.add_parser("batch", help="Running benchmarks")
@@ -115,7 +114,6 @@ progress_file = None
 
 
 def run_cmd(args):
-
     with open(args.bench_file, mode="r", encoding="utf-8") as f:
         bench_def = yaml.load(f, Loader=yaml.FullLoader)
 

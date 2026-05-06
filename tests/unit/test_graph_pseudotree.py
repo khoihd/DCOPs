@@ -42,7 +42,6 @@ from pydcop.utils.simple_repr import simple_repr, from_repr
 
 
 class DfsTreeGenerationTests(unittest.TestCase):
-
     def test_find_neighbors_relations(self):
         domain = ['a', 'b', 'c']
 
@@ -297,9 +296,7 @@ def check_tree(tree_root, visited=None):
 
 
 class PseudoTreeGeneration(unittest.TestCase):
-
     def test_build_single_var(self):
-
         v1 = Variable('v1', [1,2,3])
         dcop = DCOP('test', 'min')
         dcop.variables = {'v1': v1}
@@ -311,7 +308,6 @@ class PseudoTreeGeneration(unittest.TestCase):
         self.assertEqual(len(cg.links), 0)
 
     def test_build_two_var(self):
-
         v1 = Variable('v1', [1,2,3])
         v2 = Variable('v2', [1,2,3])
         c1 = relation_from_str('c1', 'v1 + v2 ', [v1, v2])
@@ -359,9 +355,7 @@ class PseudoTreeGeneration(unittest.TestCase):
 
 
 class DfsTreeDpopTests(unittest.TestCase):
-
     def test_2nodes_tree_relation_at_bottom(self):
-
         domain = ['a', 'b', 'c']
         x1 = Variable('x1', domain)
         x2 = Variable('x2', domain)
@@ -460,7 +454,6 @@ class DfsTreeDpopTests(unittest.TestCase):
 
 
 class TestPseudoTreeSimpleRepr(unittest.TestCase):
-
     def test_node(self):
         v1 = Variable('v1', [1, 2, 3])
         link = PseudoTreeLink('parent', 'v1', 'v2')
@@ -477,7 +470,6 @@ class TestPseudoTreeSimpleRepr(unittest.TestCase):
         self.assertEqual(node2.neighbors, ['v2'])
 
     def test_link_simple_repr(self):
-
         l1 = PseudoTreeLink('parent', 'v1', 'v2')
 
         r = simple_repr(l1)
@@ -500,7 +492,6 @@ class TestPseudoTreeSimpleRepr(unittest.TestCase):
 
 
 class TestMetrics(unittest.TestCase):
-
     def test_density_two_var_one_factor(self):
         dcop = DCOP('test', 'min')
         d1 = VariableDomain('d1', '--', [1, 2, 3])

@@ -40,7 +40,6 @@ from tests.dcop_cli.utils import instance_path
 
 
 class GraphColoring1(unittest.TestCase):
-
     def test_oneagent_pseudotree(self):
         result = run_distribute('graph_coloring1.yaml', 'oneagent',
                                 'pseudotree')
@@ -147,7 +146,6 @@ class GraphColoring1(unittest.TestCase):
 
 
 class DistAlgoOpionCompatibility(unittest.TestCase):
-
     def test_dist_with_only_algo_only(self):
         run_distribute('graph_coloring1.yaml', 'oneagent',
                                 algo='maxsum')

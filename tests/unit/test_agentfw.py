@@ -38,9 +38,7 @@ from pydcop.infrastructure.agents import Agent
 from pydcop import infrastructure
 
 
-
 class AgentFwTest(unittest.TestCase):
-
     def test_sendmsg_counts(self):
         comm1 = infrastructure.communication.InProcessCommunicationLayer()
         comm2 = infrastructure.communication.InProcessCommunicationLayer()

@@ -292,7 +292,6 @@ def agent_variables_mapping(
 
 
 def generate_hosting_costs(mode: str,  mapping: Dict[str, List[str]]):
-
     costs = {}
     for agt_name in mapping:
         agt_costs = {}
@@ -389,7 +388,6 @@ def find_corresponding_variables(
 def find_corresponding_variables_start_with(
     agents: List[str], variables: List[str], agt_prefix=None, var_prefix=None
 ) -> Dict[str, List[str]]:
-
     var_prefix = var_prefix if var_prefix else find_prefix(variables)
     var_regexp = re.compile(f"{var_prefix}(?P<index_var>\w+)")
     agt_prefix = agt_prefix if agt_prefix else find_prefix(agents)

@@ -148,7 +148,6 @@ agents = []
 
 
 def set_parser(subparsers):
-
     parser = subparsers.add_parser("agent", help="Run one or several standalone agents")
     parser.set_defaults(func=run_cmd)
     parser.set_defaults(on_force_exit=on_force_exit)

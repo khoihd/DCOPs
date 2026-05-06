@@ -61,9 +61,7 @@ def local_messaging():
     return messaging
 
 class TestMessaging(object):
-
     def test_messaging_local_msg(self, local_messaging):
-
         local_messaging.discovery.register_computation('c1', 'a1')
         local_messaging.discovery.register_computation('c2', 'a1')
 
@@ -107,7 +105,6 @@ class TestMessaging(object):
         assert full_msg is None
 
     def test_msg_to_computation_hosted_on_another_agent(self, local_messaging):
-
         local_messaging.discovery.register_computation('c1', 'a1')
         local_messaging.discovery.register_computation('c2', 'a2', 'addr2')
         local_messaging._comm.send_msg = MagicMock()
@@ -147,7 +144,6 @@ class TestMessaging(object):
         assert local_messaging.size_all_ext_msg == 0
 
     def test__metrics_ext_msg(self, local_messaging):
-
         local_messaging.discovery.register_computation('c1', 'a1')
         local_messaging.discovery.register_computation('c2', 'a2', 'addr2')
         local_messaging.discovery.register_computation('c3', 'a1')
@@ -189,7 +185,6 @@ class TestMessaging(object):
 
 
 class TestInProcessCommunictionLayer(object):
-
     def test_address(self):
         # for in-process, the address is the object it-self
         comm1 = InProcessCommunicationLayer()
@@ -208,7 +203,6 @@ class TestInProcessCommunictionLayer(object):
             comm2.discovery.agent_address('a1')
 
     def test_msg_to_another_agent(self):
-
         comm1 = InProcessCommunicationLayer()
         Messaging('a1', comm1)
         comm1.discovery = Discovery('a1', comm1)
@@ -226,7 +220,6 @@ class TestInProcessCommunictionLayer(object):
         comm2.receive_msg.assert_called_with('a1', 'a2', full_msg)
 
     def test_received_msg_is_delivered_to_messaging_queue(self):
-
         comm1 = InProcessCommunicationLayer()
         Messaging('a1', comm1)
         comm1.messaging.post_msg = MagicMock()
@@ -305,10 +298,8 @@ def httpd():
 
 
 class TestHttpHandler(object):
-
     @pytest.mark.skipif(skip_http_tests(), reason='HTTP_TESTS == NO')
     def test_http_handler_one_message(self, httpd):
-
         t = Thread(name='http_thread',
                    target=httpd.serve_forever)
         t.start()
@@ -326,7 +317,6 @@ class TestHttpHandler(object):
 
     @pytest.mark.skipif(skip_http_tests(), reason='HTTP_TESTS == NO')
     def test_http_handler_several_messages(self, httpd):
-
         t = Thread(name='http_thread',
                    target=httpd.serve_forever)
         t.start()
@@ -382,7 +372,6 @@ def http_comms():
 
 
 class TestHttpCommLayer(object):
-
     @pytest.mark.skipif(skip_http_tests(), reason='HTTP_TESTS == NO')
     def test_one_message_between_two(self, http_comms):
         comm1, comm2 = http_comms

@@ -38,7 +38,6 @@ from pydcop.utils.simple_repr import simple_repr, from_repr
 
 
 def test_algo_def():
-
     a = AlgorithmDef("maxsum", {"stability": 0.01}, "min")
 
     assert a.algo == "maxsum"
@@ -48,7 +47,6 @@ def test_algo_def():
 
 
 def test_simple_repr():
-
     a = AlgorithmDef("maxsum", {"stability": 0.01}, "min")
 
     r = simple_repr(a)
@@ -59,7 +57,6 @@ def test_simple_repr():
 
 
 def test_from_repr():
-
     a = AlgorithmDef("maxsum", {"stability": 0.01}, "min")
 
     r = simple_repr(a)
@@ -70,14 +67,12 @@ def test_from_repr():
 
 
 def test_building_algodef_with_default_params():
-
     a = AlgorithmDef.build_with_default_param("amaxsum")
 
     assert a.params["damping"] == 0.5
 
 
 def test_building_algodef_with_provided_and_default_params():
-
     a = AlgorithmDef.build_with_default_param("dsa", {"variant": "B"}, mode="max")
 
     assert a.params["variant"] == "B"  # provided param
@@ -87,7 +82,6 @@ def test_building_algodef_with_provided_and_default_params():
 
 
 def test_load_algorithm():
-
     # We test load for all available algorithms
     for a in list_available_algorithms():
         algo = load_algorithm_module(a)
@@ -98,7 +92,6 @@ def test_load_algorithm():
 
 
 def test_load_algorithm_with_default_footprint():
-
     # dsatuto has no load method defined : check that we get instead default
     # implementations
     algo = load_algorithm_module("dsatuto")

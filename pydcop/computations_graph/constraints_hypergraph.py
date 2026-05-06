@@ -147,7 +147,6 @@ class ConstraintLink(Link):
 
 
 class ComputationConstraintsHyperGraph(ComputationGraph):
-
     """
     A `ComputationConstraintsHyperGraph` represents computation graph that
     have the same extract structure as the constraint hyper of the

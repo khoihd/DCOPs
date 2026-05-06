@@ -325,7 +325,6 @@ class UnaryFunctionRelation(AbstractBaseRelation, SimpleRepr):
         raise ValueError("Too many variables when slicing UnaryRelation")
 
     def get_value_for_assignment(self, assignment) -> Union[float, int]:
-
         if isinstance(assignment, list):
             if len(assignment) == 1:
                 return self._rel_function(assignment[0])
@@ -407,7 +406,6 @@ class UnaryBooleanRelation(AbstractBaseRelation, SimpleRepr):
         raise ValueError("Invalid slice argument on UnaryBooleanRelation")
 
     def get_value_for_assignment(self, assignment):
-
         if isinstance(assignment, list):
             if len(assignment) == 1:
                 return True if assignment[0] else False
@@ -586,7 +584,6 @@ class NAryFunctionRelation(AbstractBaseRelation, SimpleRepr):
         )
 
     def get_value_for_assignment(self, assignment):
-
         if isinstance(assignment, list):
             args_dict = {}
             for i in range(len(assignment)):
@@ -662,7 +659,6 @@ class AsNAryFunctionRelation(object):
         self.vars = list(args)
 
     def __call__(self, f):
-
         return NAryFunctionRelation(f, self.vars)
 
 
@@ -1064,7 +1060,6 @@ class ConditionalRelation(RelationProtocol, SimpleRepr):
         return tuple([len(v.domain) for v in self.dimensions])
 
     def slice(self, partial_assignment: Dict[str, object]) -> RelationProtocol:
-
         cond_var_names = [v.name for v in self._condition.dimensions]
         true_names = [v.name for v in self._relation_if_true.dimensions]
 
@@ -1113,7 +1108,6 @@ class ConditionalRelation(RelationProtocol, SimpleRepr):
             return ConditionalRelation(sliced_cond, sliced_rel)
 
     def get_value_for_assignment(self, assignment):
-
         if isinstance(assignment, list):
 
             cond_args = {
@@ -1353,7 +1347,6 @@ relation_from_str = constraint_from_str
 
 def constraint_from_external_definition(name: str,
         source_file: str, expression: str, all_variables: Iterable[Variable]):
-
     f_exp = ExpressionFunction(expression, source_file)
     relation_variables = []
     for v in f_exp.variable_names:
@@ -1395,7 +1388,6 @@ def add_var_to_rel(
     variables = list(original_relation.dimensions) + [variable]
 
     def new_rel_f(**kwargs):
-
         args_for_original = {k: v for k, v in kwargs.items() if k != variable.name}
         original_value = original_relation(**args_for_original)
 
@@ -1452,7 +1444,6 @@ def get_data_type_max(data_type):
 
 
 def get_data_type_min(data_type):
-
     if data_type == np.int8:
         return -128
     elif data_type == np.int16:

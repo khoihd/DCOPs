@@ -92,17 +92,14 @@ class TestVariable(unittest.TestCase):
         self.assertRaises(ValueError, Variable, "v", None)
 
     def test_no_initial_value(self):
-
         v = Variable("v", [1, 2, 3, 4])
         self.assertEqual(v.initial_value, None)
 
     def test_initial_value(self):
-
         v = Variable("v", [1, 2, 3, 4], 2)
         self.assertEqual(v.initial_value, 2)
 
     def test_invalid_initial_value(self):
-
         self.assertRaises(ValueError, Variable, "v", [1, 2, 3, 4], "A")
         self.assertRaises(ValueError, Variable, "v", [1, 2, 3, 4], initial_value="A")
 
@@ -337,7 +334,6 @@ class TestVariableWithNoisyFunctionCost(unittest.TestCase):
 
 class TestExternalVariables(unittest.TestCase):
     def test_create(self):
-
         domain = VariableDomain("d", "d", [1, 2, 3, 4])
         v = ExternalVariable("v", domain, value=1)
 
@@ -354,7 +350,6 @@ class TestExternalVariables(unittest.TestCase):
         self.assertEqual(v_clone.value, 1)
 
     def test_create_no_initial_value(self):
-
         domain = VariableDomain("d", "d", [1, 2, 3, 4])
         # As None is not in the domain, the initial value MUST be given when
         # creating the variable

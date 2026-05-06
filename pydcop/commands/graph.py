@@ -116,7 +116,6 @@ logger = logging.getLogger("pydcop.cli.graph")
 
 
 def set_parser(subparsers):
-
     parser = subparsers.add_parser(
         "graph",
         help="Graph metrics for dcop graphs. Can also be used to display a graphical "
@@ -162,7 +161,6 @@ def run_cmd(args):
 
 
 def graph_stats(dcop, graph_module):
-
     # Build factor-graph computation graph
     logger.info("Building computation graph for dcop {}".format(dcop.name))
     cg = graph_module.build_computation_graph(dcop)

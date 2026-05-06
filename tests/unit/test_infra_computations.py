@@ -63,7 +63,6 @@ def test_message_serialization():
 
 
 def test_message_factory():
-
     MyMessage = message_type("my_msg", ["foo", "bar"])
     msg = MyMessage(42, 21)
     assert msg.type == "my_msg"
@@ -75,7 +74,6 @@ def test_message_factory():
 
 
 def test_message_factory_kwargs():
-
     MyMessage = message_type("my_msg", ["foo", "bar"])
     msg = MyMessage(bar=42, foo=21)
     assert msg.type == "my_msg"
@@ -87,7 +85,6 @@ def test_message_factory_kwargs():
 
 
 def test_message_factory_serialization():
-
     MyMessage = message_type("my_msg", ["foo", "bar"])
     msg = MyMessage(42, 21)
     r = simple_repr(msg)
@@ -97,7 +94,6 @@ def test_message_factory_serialization():
 
 
 def test_setting_message_sender_on_computation():
-
     c = MessagePassingComputation("c")
 
     c.message_sender = MagicMock()
@@ -109,7 +105,6 @@ def test_setting_message_sender_on_computation():
 
 
 def test_setting_message_sender_only_works_once():
-
     c = MessagePassingComputation("c")
 
     c.message_sender = MagicMock()
@@ -118,7 +113,6 @@ def test_setting_message_sender_only_works_once():
 
 
 def test_periodic_action_on_computation():
-
     a = Agent("a", MagicMock())
 
     class TestComputation(MessagePassingComputation):
@@ -213,7 +207,6 @@ def test_oneshot_delayed_action_on_computation():
 
 
 def test_several_periodic_action_on_computation():
-
     a = Agent("a", MagicMock())
 
     class TestComputation(MessagePassingComputation):
@@ -245,7 +238,6 @@ def test_several_periodic_action_on_computation():
 
 
 def test_periodic_action_not_called_when_paused():
-
     a = Agent("a", MagicMock())
 
     class TestComputation(MessagePassingComputation):

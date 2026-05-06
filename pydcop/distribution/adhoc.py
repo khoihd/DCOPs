@@ -90,7 +90,6 @@ def _distribute_try(computation_graph: ComputationGraph,
                     computation_memory=None,
                     communication_load=None,
                     attempt=0):
-
     agents_capa = {a.name: a.capacity for a in agents}
     # The distribution methods depends on the order used to process the node,
     # we shuffle them to test a new configuration when retry a distribution

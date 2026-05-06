@@ -44,7 +44,6 @@ Agent = namedtuple('Agent', ['name'])
 
 
 class TestDistributionAdHocFactorGraph(unittest.TestCase):
-
     def test_no_hints(self):
         d1 = VariableDomain('d1', '', [1, 2, 3, 5])
 
@@ -170,7 +169,6 @@ class TestDistributionAdHocFactorGraph(unittest.TestCase):
 
 
 class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
-
     def setUp(self):
         d1 = VariableDomain('d1', '', [1, 2, 3, 5])
 
@@ -193,7 +191,6 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
                                           [cmf1, cr1, cr2])
 
     def test_model_on_single_agent(self):
-
         hints = DistributionHints(must_host={'a1': ['v1'], 'a2': ['v2']},
                                   host_with={'m1': ['mf1']})
 
@@ -209,7 +206,6 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
         self.assertTrue(is_all_hosted(self.cg, agent_mapping))
 
     def test_model_on_dependent_light(self):
-
         hints = DistributionHints(must_host={'a1': ['v1'], 'a2': ['v2']},
                                   host_with={'m1': ['mf1']})
 
@@ -225,7 +221,6 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
         self.assertTrue(is_all_hosted(self.cg, agent_mapping))
 
     def test_rule_with_model(self):
-
         hints = DistributionHints(must_host={'a1': ['v1'], 'a3': ['v2']},
                                   host_with={'m1': ['mf1']})
 
@@ -246,7 +241,6 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
         self.assertTrue(is_all_hosted(self.cg, agent_mapping))
 
     def test_rule_with_light(self):
-
         hints = DistributionHints(must_host={'a1': ['v1'], 'a3': ['v2']},
                                   host_with={'m1': ['mf1']})
 

@@ -134,7 +134,6 @@ class UiServer(MessagePassingComputation):
                             'computations': self._computations()}))
 
     def _agent_data(self, agent):
-
         agt = {
             'name' : agent.name,
             'extra': agent.agent_def.extra_attr(),

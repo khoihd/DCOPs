@@ -184,7 +184,6 @@ msg_queue = Queue()
 
 
 def init(start: str):
-
     global msg_queue
     msg_queue = Queue()
 

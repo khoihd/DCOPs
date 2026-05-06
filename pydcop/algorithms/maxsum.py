@@ -303,7 +303,6 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
         self._prev_messages = defaultdict(lambda: (None, 0))
 
     def on_start(self):
-
         # Only unary factors (leaf in the graph) needs to send their costs at
         # init.Each leaf factor sends his costs to its only variable.
         # When possible it is better to use a variable with integrated costs
@@ -337,7 +336,6 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
         return computation_memory(self.computation_def.node)
 
     def on_new_cycle(self, messages, cycle_id) -> Optional[List]:
-
         # Collect costs messages from neighbor variables for this cycle (aka iteration)
         for sender, (message, t) in messages.items():
             self._costs[sender] = message.costs
@@ -523,7 +521,6 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
                 self.post_msg(f, MaxSumMessage(costs_f))
 
     def on_new_cycle(self, messages, cycle_id) -> Optional[List]:
-
         # Collect costs messages from neighbor factors for this cycle (aka iteration)
         for sender, (message, t) in messages.items():
             self.costs[sender] = message.costs

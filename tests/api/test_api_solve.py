@@ -35,7 +35,6 @@ from tests.api.instances_and_utils import dcop_graphcoloring_3
 
 
 def test_api_solve_maxsum():
-
     dcop = dcop_graphcoloring_3()
     # Agents
     dcop.add_agents(create_agents('a', [1, 2, 3], capacity=50))
@@ -45,7 +44,6 @@ def test_api_solve_maxsum():
     check_suboptimal_result(assignment)
 
 def test_api_solve_dsa():
-
     dcop = dcop_graphcoloring_3()
     dcop.add_agents(create_agents('a', [1, 2, 3], capacity=50))
 
@@ -55,7 +53,6 @@ def test_api_solve_dsa():
 
 
 def test_api_solve_dsatuto():
-
     dcop = dcop_graphcoloring_3()
     dcop.add_agents(create_agents('a', [1, 2, 3], capacity=50))
 
@@ -65,7 +62,6 @@ def test_api_solve_dsatuto():
 
 
 def test_api_solve_mgm():
-
     dcop = dcop_graphcoloring_3()
     dcop.add_agents(create_agents('a', [1, 2, 3], capacity=50))
 
@@ -75,7 +71,6 @@ def test_api_solve_mgm():
 
 
 def test_api_solve_mgm2():
-
     dcop = dcop_graphcoloring_3()
     dcop.add_agents(create_agents('a', [1, 2, 3], capacity=50))
 
@@ -85,7 +80,6 @@ def test_api_solve_mgm2():
 
 
 def test_api_solve_dpop():
-
     dcop = dcop_graphcoloring_3()
     dcop.add_agents(create_agents('a', [1, 2, 3], capacity=50))
 

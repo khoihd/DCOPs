@@ -38,7 +38,6 @@ from tests.dcop_cli.utils import instance_path
 
 
 class GraphColoring1(unittest.TestCase):
-
     def test_pseudotree(self):
         result = run_graph('graph_coloring1.yaml', 'pseudotree')
 
@@ -62,7 +61,6 @@ class GraphColoring1(unittest.TestCase):
 
 
 class SecpSimple1(unittest.TestCase):
-
     def test_pseudotree(self):
         result = run_graph('secp_simple1.yaml', 'pseudotree')
 

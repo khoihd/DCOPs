@@ -226,7 +226,6 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
             self.post_msg(child, ValueMessage(self.current_value))
 
     def on_new_cycle(self, messages, cycle_id) -> Optional[List]:
-
         if not messages:
             return
 
@@ -277,7 +276,6 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
         return
 
     def value_phase(self, sender, value):
-
         if sender not in self._ancestors:
             raise ComputationException(
                 f"Received at {self.name} value from {sender}, "

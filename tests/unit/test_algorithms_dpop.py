@@ -227,7 +227,6 @@ class TestAlgoExampleTwoVars:
         self.a1.message_sender = self.sender1
 
     def test_onstart_two_vars(self):
-
         # a0 is the root, must not send any message on start
         self.a0.on_start()
         assert self.a0.is_root
@@ -247,7 +246,6 @@ class TestAlgoExampleTwoVars:
         assert self.sender1.util_msg_data("b") == 4
 
     def test_on_util_root_two_vars(self):
-
         # Testing that the root select the correct variable when receiving
         # the util message from its only child.
 
@@ -268,7 +266,6 @@ class TestAlgoExampleTwoVars:
         assert self.a0.current_cost == 4.0
 
     def test_value_leaf_two_vars(self):
-
         self.a0.on_start()
         self.a1.on_start()
 

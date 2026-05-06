@@ -46,7 +46,6 @@ def test_node_creation_minimal():
 
 
 def test_node_creation_with_links():
-
     link = Link(['n1', 'n2'])
     n1 = ComputationNode('n1', node_type='test', links=[link])
 
@@ -58,7 +57,6 @@ def test_node_creation_with_links():
 
 
 def test_node_creation_with_hyperlinks():
-
     links = [Link(['n1', 'n2', 'n3']), Link(['n1', 'n4'])]
     n1 = ComputationNode('n1', links=links)
 
@@ -67,7 +65,6 @@ def test_node_creation_with_hyperlinks():
 
 
 def test_node_creation_with_one_neighbor():
-
     n1 = ComputationNode('n1', neighbors=['n2'])
 
     assert n1.neighbors == ['n2']
@@ -76,7 +73,6 @@ def test_node_creation_with_one_neighbor():
 
 
 def test_node_creation_with_several_neighbors():
-
     n1 = ComputationNode('n1', neighbors=['n2', 'n3', 'n4'])
 
     assert n1.neighbors == ['n2', 'n3', 'n4']
@@ -89,7 +85,6 @@ def test_node_creation_with_several_neighbors():
 
 
 def test_node_creation_raises_when_giving_links_neighbors():
-
     with pytest.raises(ValueError):
         ComputationNode('n1', links=[Link(['n2'])], neighbors=['n2'])
 

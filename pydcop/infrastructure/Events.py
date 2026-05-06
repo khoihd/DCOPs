@@ -82,7 +82,6 @@ class EventDispatcher(object):
         return cb
 
     def unsubscribe(self, cb: Callable, topic: str = None):
-
         if topic is None:
             all_cbs = list(self._cbs.items())
             for s_topic, s_cbs in all_cbs:

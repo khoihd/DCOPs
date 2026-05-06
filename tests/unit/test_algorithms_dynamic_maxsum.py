@@ -40,7 +40,6 @@ from pydcop.dcop.relations import AsNAryFunctionRelation
 #
 class DynamicFunctionFactorComputationTest(unittest.TestCase):
     def test_init(self):
-
         domain = list(range(10))
         x1 = Variable("x1", domain)
         x2 = Variable("x2", domain)
@@ -104,7 +103,6 @@ class DynamicFunctionFactorComputationTest(unittest.TestCase):
         self.assertEqual(f.name, "phi")
 
     def test_change_function_wrong_dimensions_len(self):
-
         domain = list(range(10))
         x1 = Variable("x1", domain)
         x2 = Variable("x2", domain)

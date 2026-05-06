@@ -192,7 +192,6 @@ logger = logging.getLogger("pydcop.cli.run")
 
 
 def set_parser(subparsers):
-
     algorithms = list_available_algorithms()
     logger.debug("Available DCOP algorithms %s", algorithms)
     parser = subparsers.add_parser("run", help="run a dcop")

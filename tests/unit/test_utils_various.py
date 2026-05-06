@@ -36,9 +36,7 @@ from pydcop.utils.expressionfunction import  ExpressionFunction
 
 
 class FuncArgsTests(unittest.TestCase):
-
     def test_one_arg(self):
-
         def f(a):
             return a*2
         var_list = func_args(f)
@@ -46,7 +44,6 @@ class FuncArgsTests(unittest.TestCase):
         self.assertEqual(var_list, ['a'])
 
     def test_two_arg(self):
-
         def f(a, b):
             return a +b
         var_list = func_args(f)
@@ -89,7 +86,6 @@ class FuncArgsTests(unittest.TestCase):
         self.assertEqual(var_list, ['a', 'b'])
 
     def test_expression_function(self):
-
         f = ExpressionFunction('a + b + v1')
         var_list = func_args(f)
 

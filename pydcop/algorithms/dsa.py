@@ -323,7 +323,6 @@ class DsaComputation(VariableComputation):
             self.next_cycle[variable_name] = recv_msg.value
 
     def evaluate_cycle(self):
-
         if len(self.current_cycle) == len(self.neighbors):
 
             self.logger.debug(

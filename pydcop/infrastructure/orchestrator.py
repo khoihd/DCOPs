@@ -338,7 +338,6 @@ class Orchestrator(object):
         return self._own_agt.is_running and not self._stopping.is_set()
 
     def _process_event(self):
-
         # FIXME: hack too avoid overlapping events
         waited = [a for a, state in self.mgt._agts_state.items()
                   if state != 'running']
@@ -778,7 +777,6 @@ class AgentsMgt(MessagePassingComputation):
 
     def _on_computation_replicated_msg(self, sender: str,
                                        msg: ComputationReplicatedMessage, _):
-
         if msg.agent in self._agts_state \
               and self._agts_state[msg.agent] == 'replicating':
             self._agts_state[msg.agent] = 'ready'
@@ -873,7 +871,6 @@ class AgentsMgt(MessagePassingComputation):
                                       cycle_end, msg.computation)
 
     def _on_metrics_msg(self, sender: str, msg: MetricsMessage, t):
-
         # Called when receiving a metric message from one of the
         # orchestrated agent. The metric message contains the metrics for
         # all the computations hosted by this agent.
@@ -1212,7 +1209,6 @@ class AgentsMgt(MessagePassingComputation):
         self._all_agt_stopped.wait(timeout)
 
     def global_metrics(self, current_status, t):
-
         if t is None:
             t = perf_counter()
 

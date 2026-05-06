@@ -129,7 +129,6 @@ def distribution_cost(
     computation_memory: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
 ) -> float:
-
     route = route_fonc(agentsdef)
     msg_load = msg_load_func(computation_graph, communication_load)
     hosting_cost = hosting_cost_func(agentsdef)

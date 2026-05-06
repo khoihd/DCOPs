@@ -35,9 +35,7 @@ from pydcop.distribution.objects import Distribution, DistributionHints
 
 
 class TestDistributionObject(unittest.TestCase):
-
     def test_dist(self):
-
         d = Distribution({'a1': ['v1'], 'a2': ['v2']})
 
         self.assertEqual(len(d.computations_hosted('a1')), 1)
@@ -49,7 +47,6 @@ class TestDistributionObject(unittest.TestCase):
         self.assertEqual(d.agent_for('v2'), 'a2')
 
     def test_dist_2(self):
-
         d = Distribution({'a1': ['v1', 'v2'], 'a2': ['v3']})
 
         self.assertEqual(len(d.computations_hosted('a1')), 2)
@@ -62,7 +59,6 @@ class TestDistributionObject(unittest.TestCase):
         self.assertEqual(d.agent_for('v3'), 'a2')
 
     def test_raise_on_invalid_mapping(self):
-
         self.assertRaises(ValueError, Distribution, {'a1': 'v1', 'a2': 'v2'})
 
     def test_host_on_agent(self):
@@ -82,7 +78,6 @@ class TestDistributionObject(unittest.TestCase):
         self.assertRaises(ValueError, d.host_on_agent, 'a1', ['v3'])
 
     def test_host_on_new_agent(self):
-
         d = Distribution({'a1': ['v1', 'v2'], 'a2': ['v3']})
         d.host_on_agent('a3', ['v4'])
 
@@ -110,14 +105,11 @@ class TestDistributionObject(unittest.TestCase):
 
 
 class TestDistributionHints(unittest.TestCase):
-
     def test_must_host(self):
-
         dh = DistributionHints(must_host={'a1': ['v1']})
         self.assertIn('v1', dh.must_host('a1'))
 
     def test_must_host_return_empty_when_not_specified(self):
-
         dh = DistributionHints(must_host={'a1': ['v1']})
         self.assertEqual(len(dh.must_host('a2')), 0)
 

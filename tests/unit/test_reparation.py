@@ -36,7 +36,6 @@ from pydcop.reparation import create_computation_hosted_constraint, \
 
 
 def test_create_hosted_constraint_for_computation():
-
     # say we have a computation c1 that can be hosted on agents a1, a2 and a3
     bin_vars = create_binary_variables('v_', (['c1'], ['a1', 'a2', 'a3']))
 
@@ -53,7 +52,6 @@ def test_create_hosted_constraint_for_computation():
 
 
 def test_create_capacity_constraint_for_agent():
-
     # Say our agent a1 has a remaining capacity of 50 and could hosts
     # candidates computations from [c1, c2, c3, c4], which all have a
     # footprint of 25
@@ -77,7 +75,6 @@ def test_create_capacity_constraint_for_agent():
 
 
 def test_create_hosting_constraint_for_agent():
-
     # Say agent a1 could host the candidate computations [c1, c2, c3]
     candidates = ['c1', 'c2', 'c3']
 
@@ -100,7 +97,6 @@ def test_create_hosting_constraint_for_agent():
 
 
 def test_create_comm_constraint_for_agent_single_var():
-
     # Say 1 candidate computation c1 could be hosted on a1
     # c1 depends on c3 and c4, c3 is not a candidate (ie is fixed). c4 is a
     # candidate computation but cannot be h

@@ -138,7 +138,6 @@ def toy_pb():
 
 
 def get_computation_instance(graph, name):
-
     # Get the computation node for x1
     comp_node = graph.computation(name)
 
@@ -152,7 +151,6 @@ def get_computation_instance(graph, name):
 
 
 def test_create_computation_no_links(single_variable_pb):
-
     comp = get_computation_instance(single_variable_pb, "x1")
 
     assert comp._mode == "min"
@@ -162,7 +160,6 @@ def test_create_computation_no_links(single_variable_pb):
 
 
 def test_create_computation_one_neighbor(two_variables_pb):
-
     # Get the computation instance for x1
     comp = get_computation_instance(two_variables_pb, "x1")
 
@@ -172,7 +169,6 @@ def test_create_computation_one_neighbor(two_variables_pb):
 
 
 def test_create_computation_three_variables(three_variables_pb):
-
     # Check computation instance for x1
     comp = get_computation_instance(three_variables_pb, "x1")
 
@@ -227,7 +223,6 @@ def test_create_computations(toy_pb):
 
 
 def test_select_value_at_root_simple_variable(three_variables_pb):
-
     comp = get_computation_instance(three_variables_pb, "x1")
 
     assert comp.current_value is None
@@ -247,7 +242,6 @@ def test_select_value_at_root_simple_variable(three_variables_pb):
 
 
 def test_select_value_at_root(toy_pb):
-
     comp = get_computation_instance(toy_pb, "A")
 
     assert comp.current_value is None
@@ -268,7 +262,6 @@ def test_select_value_at_root(toy_pb):
 
 
 def test_no_value_selection_at_start_when_not_root(three_variables_pb):
-
     comp = get_computation_instance(three_variables_pb, "x2")
 
     assert not comp.is_root
@@ -283,7 +276,6 @@ def test_no_value_selection_at_start_when_not_root(three_variables_pb):
 
 
 def test_select_value_in_dfs_only_one_ancestor(toy_pb):
-
     comp = get_computation_instance(toy_pb, "B")
     comp.start()
 
@@ -300,7 +292,6 @@ def test_select_value_in_dfs_only_one_ancestor(toy_pb):
 
 
 def test_select_value_in_dfs_two_ancestors(toy_pb):
-
     comp = get_computation_instance(toy_pb, "D")
     comp.start()
 
@@ -317,7 +308,6 @@ def test_select_value_in_dfs_two_ancestors(toy_pb):
 
 
 def test_cost_msg_from_leaf(toy_pb):
-
     comp_c = get_computation_instance(toy_pb, "C")
     comp_c.start()
 
@@ -333,7 +323,6 @@ def test_cost_msg_from_leaf(toy_pb):
 
 
 def test_cost_msg_from_subtree_d(toy_pb):
-
     comp_d = get_computation_instance(toy_pb, "D")
     comp_d.start()
 
@@ -350,7 +339,6 @@ def test_cost_msg_from_subtree_d(toy_pb):
 
 
 def test_cost_msg_from_subtree_b(toy_pb):
-
     comp_b = get_computation_instance(toy_pb, "B")
     comp_b.start()
     comp_b._upper_bound = 1
@@ -366,7 +354,6 @@ def test_cost_msg_from_subtree_b(toy_pb):
 
 
 def test_cost_msg_at_root(toy_pb):
-
     comp_a = get_computation_instance(toy_pb, "A")
     comp_a.start()
     comp_a._upper_bound = 0

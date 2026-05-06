@@ -211,7 +211,6 @@ def init_cli_parser(parent_parser):
 
 
 def generate(args):
-
     # Some extra checks on cli parameters!
     if args.row_count <= 2:
         raise ValueError("--row_count: The size must be > 2")
@@ -281,7 +280,6 @@ def generate_ising(
     fg_dist: bool,
     var_dist: bool,
 ) -> Tuple[DCOP, Dict, Dict]:
-
     grid_graph = nx.grid_2d_graph(row_count, col_count, periodic=True)
     domain = Domain("var_domain", "binary", [0, 1])
 
@@ -362,7 +360,6 @@ def generate_binary_constraints(
 def generate_binary_extensive_constraint(
     variable1: Variable, variable2: Variable, bin_range: float
 ) -> Constraint:
-
     constraint = NAryMatrixRelation(
         [variable1, variable2], name=f"cb_{variable1.name}_{variable2.name}"
     )
@@ -412,7 +409,6 @@ def generate_unary_constraints(
 def generate_unary_extensive_constraint(
     variable: Variable, un_range: float
 ) -> Constraint:
-
     constraint = NAryMatrixRelation([variable], name=f"cu_{variable.name}")
     value = random.uniform(-un_range, un_range)
     constraint = constraint.set_value_for_assignment({variable.name: 0}, value)

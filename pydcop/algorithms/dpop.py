@@ -71,7 +71,6 @@ UNIT_SIZE = 1
 
 
 def build_computation(comp_def: ComputationDef):
-
     computation = DpopAlgo(comp_def)
     return computation
 
@@ -204,7 +203,6 @@ class DpopAlgo(VariableComputation):
     """
 
     def __init__(self, comp_def: ComputationDef):
-
         assert comp_def.algo.algo == "dpop"
 
         super().__init__(comp_def.node.variable, comp_def)
@@ -266,7 +264,6 @@ class DpopAlgo(VariableComputation):
         return len(self._children) == 0
 
     def on_start(self):
-
         if self.is_leaf and not self.is_root:
             # If we are a leaf in the DFS Tree we can immediately compute
             # our util and send it to our parent.
@@ -407,7 +404,6 @@ class DpopAlgo(VariableComputation):
                 self.post_msg(self._parent, msg)
 
     def _compute_utils_msg(self):
-
         for r in self._constraints:
             self._joined_utils = join(self._joined_utils, r)
 

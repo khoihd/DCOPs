@@ -79,7 +79,6 @@ def test_density_two_var_one_factor():
 
 
 class TestFactorGraphComputation(unittest.TestCase):
-
     # Test computation & nodes
 
     def test_create_ok(self):

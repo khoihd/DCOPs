@@ -40,9 +40,7 @@ from pydcop.reparation.removal import _removal_orphaned_computations, \
 
 
 class ReparationMessagesTests(unittest.TestCase):
-
     def setUp(self):
-
         # A grid-shaped  (3x2) computation graph with 6 computations
         self.l1 = Link(['c1', 'c2'])
         self.l2 = Link(['c2', 'c3'])
@@ -147,7 +145,6 @@ class ReparationMessagesTests(unittest.TestCase):
         self.assertSetEqual(set(cand['c2']), {'a3', 'a6'})
 
     def test_removal_candidate_agt_info(self):
-
         # remove a1, check info for a2
         infos = _removal_candidate_agt_info('a2', ['a1'],
                                             self.cg, self.discovery)

@@ -363,7 +363,6 @@ class DbaComputation(VariableComputation):
             self.__postponed_ok_messages__.append((variable_name, recv_msg))
 
     def _handle_ok_message(self, variable_name, recv_msg):
-
         self._neighbors_values[variable_name] = recv_msg.value
         self.logger.info('%s received variable value %s from %s',
                           self.variable.name, recv_msg, variable_name)
@@ -493,7 +492,6 @@ class DbaComputation(VariableComputation):
 # #############################IMPORVE MODE##################################
     @register("dba_improve")
     def _on_improve_msg(self, variable_name, recv_msg, _):
-
         if self._mode == 'improve':
             self._handle_improve_message(variable_name, recv_msg)
         else:

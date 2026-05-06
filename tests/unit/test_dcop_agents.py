@@ -33,7 +33,6 @@ from pydcop.dcop.objects import AgentDef, create_agents
 
 
 def test_name_only():
-
     a = AgentDef("a1")
     assert a.name == "a1"
 
@@ -46,7 +45,6 @@ def test_with_capacity():
 
 
 def test_with_arbitrary_attr():
-
     a = AgentDef("a1", foo=15)
 
     assert a.name == "a1"
@@ -54,7 +52,6 @@ def test_with_arbitrary_attr():
 
 
 def test_with_various_attr():
-
     a = AgentDef("a1", foo=15, bar="bar")
 
     assert a.name == "a1"
@@ -63,7 +60,6 @@ def test_with_various_attr():
 
 
 def test_with_default_hosting_cost():
-
     a = AgentDef("a1", default_hosting_cost=15)
 
     assert a.name == "a1"
@@ -71,7 +67,6 @@ def test_with_default_hosting_cost():
 
 
 def test_with_hosting_cost():
-
     a = AgentDef("a1", hosting_costs={"foo": 5, "bar": 7})
 
     assert a.name == "a1"
@@ -81,7 +76,6 @@ def test_with_hosting_cost():
 
 
 def test_with_default_route():
-
     a = AgentDef("a1", default_route=12)
 
     assert a.name == "a1"
@@ -90,7 +84,6 @@ def test_with_default_route():
 
 
 def test_with_routes():
-
     a = AgentDef("a1", routes={"psycho": 5, "killer": 7})
 
     assert a.name == "a1"

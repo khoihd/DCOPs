@@ -742,7 +742,6 @@ class Mgm2Computation(VariableComputation):
             self._postponed_msg["go?"].append((sender_name, msg, t))
 
     def _handle_value_messages(self):
-
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(
                 f"{self.name} received values from all neighbors : {self._neighbors_values}"
@@ -787,7 +786,6 @@ class Mgm2Computation(VariableComputation):
         self._enter_state("offer")
 
     def _handle_offer_messages(self):
-
         if self.logger.isEnabledFor(logging.INFO):
             self.logger.info(f"{self.name} has all offer msg ")
 
@@ -892,7 +890,6 @@ class Mgm2Computation(VariableComputation):
         self._enter_state("gain")
 
     def _handle_gain_messages(self):
-
         # determine if can change value and send ok message to neighbors
         if self._potential_gain == 0:
             if self.logger.isEnabledFor(logging.INFO):

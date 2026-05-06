@@ -99,7 +99,6 @@ class VariableDomainTest(unittest.TestCase):
 
 class GenerateAssignementTestCase(unittest.TestCase):
     def test_generate_1var(self):
-
         x1 = Variable("x1", ["a", "b", "c"])
 
         ass = list(pydcop.dcop.relations.generate_assignment([x1]))
@@ -259,7 +258,6 @@ class FindArgOptimalTestCase(unittest.TestCase):
         self.assertEqual(c, 2)
 
     def test_findargmin_fct(self):
-
         v1 = Variable("v1", list(range(10)))
         f1 = UnaryFunctionRelation("f1", v1, lambda x: abs(x - 5))
 
@@ -336,7 +334,6 @@ def test_find_optimal_several_best_values():
 
 
 def test_optimal_cost_value():
-
     x1 = VariableWithCostFunc("x1", list(range(10)), lambda x: x * 2 + 1)
 
     assert (0, 1) == optimal_cost_value(x1, "min")
@@ -396,7 +393,6 @@ def test_algo_parameters_with_valid_str_param(algo_param_defs):
 
 
 def test_algo_parameters_with_valid_int_param(algo_param_defs):
-
     params = pydcop.algorithms.prepare_algo_params({"param2": 5}, algo_param_defs)
     assert "param2" in params
     assert params["param2"] == 5

@@ -116,7 +116,6 @@ def load_dcop(dcop_str: str, main_dir=None) -> DCOP:
 
 
 def dcop_yaml(dcop: DCOP) -> str:
-
     dcop_dict = {"name": dcop.name, "objective": dcop.objective}
     dcop_str = yaml.dump(dcop_dict, default_flow_style=False)
     dcop_str += "\n"
@@ -313,7 +312,6 @@ def _yaml_constraints(constraints: Iterable[RelationProtocol]):
 
 
 def _build_agents(loaded) -> Dict[str, AgentDef]:
-
     # Read agents list, without creating AgentDef object yet.
     # We need the preferences to create the AgentDef objects
     agents_list = {}

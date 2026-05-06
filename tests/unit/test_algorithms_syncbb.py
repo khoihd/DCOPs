@@ -100,7 +100,6 @@ def build_pb():
 
 @pytest.fixture
 def toy_pb():
-
     return build_pb()
 
 
@@ -114,7 +113,6 @@ def toy_pb_computation_graph():
 
 
 def get_computation_instance(graph, name):
-
     # Get the computation node for x1
     comp_node = graph.computation(name)
 
@@ -150,7 +148,6 @@ def test_get_candidate_value_selected():
 
 
 def test_get_next_assignement_empty_path_no_bound(toy_pb):
-
     variables, constraints = toy_pb
     variable = variables[0]
     var_constraints = [c for c in constraints if variable in c.dimensions]
@@ -161,7 +158,6 @@ def test_get_next_assignement_empty_path_no_bound(toy_pb):
 
 
 def test_get_next_assignment_no_bound(toy_pb):
-
     variables, constraints = toy_pb
     v_a, v_b, v_c, v_d = variables
     bound = float("inf")
@@ -191,7 +187,6 @@ def test_get_next_assignment_no_bound(toy_pb):
 
 
 def test_computations_message_at_start(toy_pb_computation_graph):
-
     # A is the first var in the ordering, it should start selecting a value:
     comp_a = get_computation_instance(toy_pb_computation_graph, "vA")
     assert comp_a.previous_var is None
@@ -210,7 +205,6 @@ def test_computations_message_at_start(toy_pb_computation_graph):
 
 
 def test_solve_min(toy_pb):
-
     variables, constraints = toy_pb
 
     dcop = DCOP(
@@ -230,7 +224,6 @@ def test_solve_min(toy_pb):
 
 
 def test_solve_max(toy_pb):
-
     variables, constraints = toy_pb
 
     dcop = DCOP(

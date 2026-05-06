@@ -178,7 +178,6 @@ def message_type(msg_type: str, fields: List[str]):
         return msg_type + "(" + fs + ")"
 
     def _simple_repr(self):
-
         # Full name = module + qualifiedname (for inner classes)
         r = {
             "__module__": self.__module__,

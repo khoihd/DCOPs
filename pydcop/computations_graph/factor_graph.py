@@ -157,7 +157,6 @@ class VariableComputationNode(ComputationNode):
 
 
 class FactorGraphLink(Link):
-
     """
     In Factor Graph, links are binary (FG are not hyper-graphs) and are
     between a factor node and a variable node.
@@ -233,7 +232,6 @@ class ComputationsFactorGraph(ComputationGraph):
         super().__init__('FactorGraph', nodes=nodes)
 
     def density(self):
-
         # FG are undirected graphs, the density is 2 |E| / (|V| * (|V|-1)
         e = len(self.links)
         v = len(self.nodes)

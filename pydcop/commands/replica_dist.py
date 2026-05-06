@@ -105,7 +105,6 @@ logger = logging.getLogger("pydcop.cli.replica_dist")
 
 
 def set_parser(subparsers):
-
     algorithms = list_available_algorithms()
     logger.debug("Available DCOP algorithms %s", algorithms)
 

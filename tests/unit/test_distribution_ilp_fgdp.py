@@ -67,7 +67,6 @@ def is_all_hosted(cg, dist):
 
 
 class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
-
     def setUp(self):
         global d1, v1, v2, v3, v4, v5, a1, a2
         d1 = VariableDomain('d1', '', [1, 2, 3, 5])
@@ -90,7 +89,6 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
                           [Agent('a1'), Agent('a2')], hints=None)
 
     def test_respect_must_host_for_var(self):
-
         f1 = relation_from_str('f1', 'v1 * 0.5', [v1])
         cv1 = VariableComputationNode(v1, ['f1'])
         cf1 = FactorComputationNode(f1)
@@ -109,7 +107,6 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
         self.assertEqual(agent_mapping.agent_for('v1'), 'a1')
 
     def test_respect_must_host_for_fac(self):
-
         f1 = relation_from_str('f1', 'v1 * 0.5', [v1])
         cv1 = VariableComputationNode(v1, ['f1'])
         cf1 = FactorComputationNode(f1)
@@ -128,7 +125,6 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
         self.assertEqual(agent_mapping.agent_for('f1'), 'a1')
 
     def test_respect_must_host_for_fac_and_var(self):
-
         f1 = relation_from_str('f1', 'v1 * 0.5', [v1])
         cv1 = VariableComputationNode(v1, ['f1'])
         cf1 = FactorComputationNode(f1)
@@ -149,7 +145,6 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
         self.assertEqual(agent_mapping.agent_for('v1'), 'a2')
 
     def test_respect_must_host_for_fac_and_var_same_agent(self):
-
         f1 = relation_from_str('f1', 'v1 * 0.5 + v2', [v1, v2])
         cv1 = VariableComputationNode(v1, ['f1'])
         cv2 = VariableComputationNode(v2, [])
@@ -170,7 +165,6 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
         self.assertEqual(agent_mapping.agent_for('v1'), 'a1')
 
     def test_respect_must_host_all_computation_fixed(self):
-
         f1 = relation_from_str('f1', 'v1 * 0.5 + v2', [v1, v2])
         cv1 = VariableComputationNode(v1, ['f1'])
         cv2 = VariableComputationNode(v2, [])
@@ -193,7 +187,6 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
         self.assertEqual(agent_mapping.agent_for('v2'), 'a2')
 
     def test_respect_must_host_all_computation_invalid(self):
-
         f1 = relation_from_str('f1', 'v1 * 0.5', [v1])
         cv1 = VariableComputationNode(v1, ['f1'])
         cf1 = FactorComputationNode(f1)
@@ -214,7 +207,6 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
                           communication_load=ms.communication_load)
 
 class ILPFGDP(unittest.TestCase):
-
     def setUp(self):
         global d1, v1, v2, v3, v4, v5, a1, a2
         d1 = VariableDomain('d1', '', [1, 2, 3, 5])
@@ -278,7 +270,6 @@ class ILPFGDP(unittest.TestCase):
 
 
 class UtilityFunctions(unittest.TestCase):
-
     def setUp(self):
         global d1, v1, v2, v3, v4, v5, a1, a2
         d1 = VariableDomain('d1', '', [1, 2, 3, 5])
@@ -343,7 +334,6 @@ class UtilityFunctions(unittest.TestCase):
 
 
 class ComputationMemory(unittest.TestCase):
-
     def setUp(self):
         global d1, v1, v2, v3, v4, v5, a1, a2
         d1 = VariableDomain('d1', '', [1, 2, 3, 5])

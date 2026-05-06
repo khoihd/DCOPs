@@ -223,7 +223,6 @@ class Distribution(object):
 
 
 class DistributionHints(object):
-
     def __init__(self, must_host=None, host_with=None):
         """
         
@@ -269,5 +268,4 @@ class DistributionHints(object):
 
 
 class ImpossibleDistributionException(Exception):
-
     pass

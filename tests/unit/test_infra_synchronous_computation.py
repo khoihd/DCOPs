@@ -190,7 +190,6 @@ def test_on_start_is_a_cycle_some_message_during_startup():
 
 
 def test_receive_one_neighbor():
-
     c = SynchC("test", ["bar"])
     c.on_new_cycle = MagicMock()
     c.start()
@@ -215,7 +214,6 @@ def test_receive_one_neighbor():
 
 
 def test_receive_two_neighbors():
-
     c = SynchC("test", ["bar", "yup"])
     c.on_new_cycle = MagicMock()
     c.start()
@@ -236,7 +234,6 @@ def test_receive_two_neighbors():
 
 
 def test_receive_2_neighbors_shifted():
-
     c = SynchC("test", ["bar", "yup"])
     c.on_new_cycle = MagicMock()
     c.start()
@@ -301,7 +298,6 @@ def test_sending_cycle_messages():
 
 
 def test_sending_automatic_cycle_sync_message():
-
     c = SynchC("test", ["bar"])
 
     def on_cycle(messages, cycle_id):
@@ -327,7 +323,6 @@ def test_sending_automatic_cycle_sync_message():
 
 
 def test_receiving_automatic_sync_message():
-
     c = SynchC("test", ["bar"])
     c.on_new_cycle = MagicMock()
     c.start()
@@ -342,7 +337,6 @@ def test_receiving_automatic_sync_message():
 
 
 def test_sending_automatic_cycle_sync_message_2_neighbors():
-
     c = SynchC("test", ["bar", "yup"])
 
     def on_cycle(messages, cycle_id):
@@ -386,7 +380,6 @@ def test_receiving_duplicate_message_fails():
 
 
 def test_receiving_out_of_order_messages_fails():
-
     c = SynchC("test", ["bar", "yup"])
     c.start()
 
@@ -400,7 +393,6 @@ def test_receiving_out_of_order_messages_fails():
 
 
 def test_receiving_message_from_unknown_computation_fails():
-
     c = SynchC("test", ["bar", "yup"])
     c.start()
 
@@ -414,7 +406,6 @@ def test_receiving_message_from_unknown_computation_fails():
 
 
 def test_cycle_id_is_added_when_using_post_msg():
-
     c = SynchC("test", ["bar", "yup"])
 
     c.post_msg("foo", FooMsg(1))
@@ -447,7 +438,6 @@ class SynchDcopC(SynchronousComputationMixin, DcopComputation):
 
 
 def test_receive_one_neighbor_dcop_computation():
-
     comp_def = ComputationDef(
         ComputationNode("test", neighbors=["bar"]), AlgorithmDef("fake", {})
     )
@@ -475,7 +465,6 @@ def test_receive_one_neighbor_dcop_computation():
 
 
 def test_receive_two_neighbors_dcop_computation():
-
     comp_def = ComputationDef(
         ComputationNode("test", neighbors=["bar", "yup"]), AlgorithmDef("fake", {})
     )
@@ -499,7 +488,6 @@ def test_receive_two_neighbors_dcop_computation():
 
 
 def test_cycle_id_is_added_when_using_post_to_all_neighbors_dcop_computation():
-
     comp_def = ComputationDef(
         ComputationNode("test", neighbors=["bar", "yup"]), AlgorithmDef("fake", {})
     )

@@ -165,7 +165,6 @@ start_t = None
 result = {}
 
 def set_parser(subparsers):
-
     algorithms = list_available_algorithms()
 
     parser = subparsers.add_parser("distribute", help="distribute a static dcop")

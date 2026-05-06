@@ -58,7 +58,6 @@ def test_load_name_and_description():
 
 
 def test_raises_when_no_name():
-
     with pytest.raises(ValueError):
         load_dcop(
             """
@@ -69,7 +68,6 @@ def test_raises_when_no_name():
 
 
 def test_load_name_without_desc():
-
     dcop = load_dcop(
         """
     name: dcop name
@@ -83,7 +81,6 @@ def test_load_name_without_desc():
 
 
 def test_load_name_long_desc():
-
     dcop = load_dcop(
         """
     name: dcop name
@@ -101,7 +98,6 @@ def test_load_name_long_desc():
 
 
 def test_raises_when_invalid_objective():
-
     with pytest.raises(ValueError):
         load_dcop(
             """
@@ -113,7 +109,6 @@ def test_raises_when_invalid_objective():
 
 
 def test_raises_when_no_objective():
-
     with pytest.raises(ValueError):
         load_dcop(
             """
@@ -248,7 +243,6 @@ class TestDcopLoadVariables(unittest.TestCase):
         """
 
     def test_variable(self):
-
         self.dcop_str += """
         variables:
           v1:
@@ -287,7 +281,6 @@ class TestDcopLoadVariables(unittest.TestCase):
         self.assertRaises(ValueError, load_dcop, self.dcop_str)
 
     def test_several_variables(self):
-
         self.dcop_str += """
         variables:
           v1:
@@ -401,7 +394,6 @@ class TestDcopLoadExternalVariables(unittest.TestCase):
         """
 
     def test_variable(self):
-
         self.dcop_str += """
         external_variables:
           ext_var1:
@@ -444,7 +436,6 @@ class TestDcopLoadConstraints(unittest.TestCase):
         """
 
     def test_one_var_constraint(self):
-
         self.dcop_str += """
         constraints:
           cost_v1:
@@ -460,7 +451,6 @@ class TestDcopLoadConstraints(unittest.TestCase):
         self.assertEqual(c(v1=10), 4)
 
     def test_two_var_constraint(self):
-
         self.dcop_str += """
         constraints:
           ws:
@@ -476,7 +466,6 @@ class TestDcopLoadConstraints(unittest.TestCase):
         self.assertEqual(c(v1=10, v2=3), 34)
 
     def test_external_var_constraint(self):
-
         self.dcop_str += """
         constraints:
           cond:
@@ -624,7 +613,6 @@ class TestDcopLoadAgents(unittest.TestCase):
         """
 
     def test_one_agent(self):
-
         self.dcop_str += """
         agents:
             a1:
@@ -640,7 +628,6 @@ class TestDcopLoadAgents(unittest.TestCase):
         self.assertEqual(a1.capacity, 100)
 
     def test_one_agent_with_arbitrary_attr(self):
-
         self.dcop_str += """
         agents:
             a1:
@@ -658,7 +645,6 @@ class TestDcopLoadAgents(unittest.TestCase):
         self.assertEqual(a1.foo, 12)
 
     def test_agents_with_default_route(self):
-
         self.dcop_str += """
         agents:
             a1:
@@ -691,7 +677,6 @@ class TestDcopLoadAgents(unittest.TestCase):
         self.assertEqual(dcop.agent("a2").route("a3"), 42)
 
     def test_agents_no_route_def(self):
-
         self.dcop_str += """
         agents:
             a1:
@@ -708,7 +693,6 @@ class TestDcopLoadAgents(unittest.TestCase):
         self.assertEqual(dcop.agent("a1").route("a3"), 1)
 
     def test_agents_no_default_route(self):
-
         self.dcop_str += """
         agents:
             a1:
@@ -845,7 +829,6 @@ class TestLoadDistributionHintsMustHost(unittest.TestCase):
         """
 
     def test_no_dist_hint(self):
-
         dcop = load_dcop(self.dcop_str)
         self.assertIsNone(dcop.dist_hints)
 

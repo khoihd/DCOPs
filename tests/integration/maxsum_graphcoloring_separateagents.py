@@ -98,7 +98,6 @@ def distribue_agent_for_all(variables, factors):
 
 
 def graph_coloring_no_prefs():
-
     # Extremely simple graph coloring problem
     # Three variables, 2 constraints, no cycle
     # modelled as 3 variables and two factors, each variable and each factor
@@ -146,7 +145,6 @@ def graph_coloring_no_prefs():
 
 
 def graph_coloring_with_prefs():
-
     # In this setup, we introduce preferences for each variable
     # as we are minimizing, we express preferences as cost (with lower cost
     # for preferred value)

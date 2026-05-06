@@ -41,7 +41,6 @@ from pydcop.dcop.relations import UnaryFunctionRelation, \
 
 
 class AsGraphTests(unittest.TestCase):
-
     def test_1var_1rel(self):
         domain = list(range(10))
         l1 = Variable('l1', domain)
@@ -79,7 +78,6 @@ class AsGraphTests(unittest.TestCase):
 
 
 class FindFurthestInLoopyGrap(unittest.TestCase):
-
     def setUp(self):
         Content = namedtuple('Content', ['name'])
         self.n1 = Node(Content('n1'))
@@ -123,7 +121,6 @@ class FindFurthestInLoopyGrap(unittest.TestCase):
 
 
 class GraphDiameterTests(unittest.TestCase):
-
     def test_furthest_node(self):
         Content = namedtuple('Content', ['name'])
         n1 = Node(Content('n1'))
@@ -196,7 +193,6 @@ class GraphDiameterTests(unittest.TestCase):
 
 
 class NetworkXTests(unittest.TestCase):
-
     def test_pairs_2elt(self):
         elts = ['a', 'b']
         pairs = all_pairs(elts)

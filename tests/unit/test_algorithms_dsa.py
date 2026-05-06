@@ -163,7 +163,6 @@ def test_2_unary_constraint_means_no_neighbors():
 
 
 def test_one_binary_constraint_one_neighbors():
-
     v1 = Variable('v1', [0, 1, 2, 3, 4])
     v2 = Variable('v2', [0, 1, 2, 3, 4])
 

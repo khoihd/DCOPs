@@ -39,26 +39,21 @@ from pydcop.utils.simple_repr import simple_repr, from_repr
 
 
 class TestExpressionFunction(unittest.TestCase):
-
     def test_callable(self):
-
         f = ExpressionFunction('a / b ')
         self.assertEqual(f(a=4, b=2), 2)
 
     def test_simple_math_expression(self):
-
         f = ExpressionFunction('a + b ')
         self.assertEqual(f.expression, 'a + b ')
 
     def test_oneline_python_expression(self):
-
         f = ExpressionFunction(' "ko" if a+b > 10 else a+b')
 
         self.assertEqual(f(a=2, b=3), 5)
         self.assertEqual(f(a=4, b=8), "ko")
 
     def test_complex_oneline_exp(self):
-
         # This kind of expression is exactly what we use when modelling an
         # hard constraint:
         f = ExpressionFunction('0 if round(0.2*a + 0.5*b + 0.8*c) == M '
@@ -69,7 +64,6 @@ class TestExpressionFunction(unittest.TestCase):
         self.assertEqual(f(a=5, b=2, c=3, M=4), 0)
 
     def test_variable_names(self):
-
         f = ExpressionFunction('a + b ')
         names = f.variable_names
 
@@ -78,7 +72,6 @@ class TestExpressionFunction(unittest.TestCase):
         self.assertIn('b', names)
 
     def test_should_work_with_partial(self):
-
         f = ExpressionFunction('a * (b -c)')
 
         fp = partial(f, c=2)
@@ -89,7 +82,6 @@ class TestExpressionFunction(unittest.TestCase):
         self.assertEqual(f(a=3, b=5, c=1), fp(b=5))
 
     def test_non_numeric_variable(self):
-
         f = ExpressionFunction("1 if a == 'A' else 2")
         self.assertEqual(f(a='A'), 1)
         self.assertEqual(f(a='B'), 2)

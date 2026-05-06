@@ -80,7 +80,6 @@ class ZeroAryRelationTest(unittest.TestCase):
         self.assertEqual(self.r0.shape, ())
 
     def test_get_value(self):
-
         self.assertEqual(self.r0(), 42)
 
         # should raise an exception
@@ -92,7 +91,6 @@ class ZeroAryRelationTest(unittest.TestCase):
         self.assertRaises(ValueError, self.r0.get_value_for_assignment, ["x1"])
 
     def test_set_value(self):
-
         r1 = self.r0.set_value_for_assignment({}, 21)
         self.assertEqual(r1(), 21)
 
@@ -101,12 +99,10 @@ class ZeroAryRelationTest(unittest.TestCase):
         self.assertEqual(r1(), 42)
 
     def test_slicing_on_variable_raises_valueerror(self):
-
         # should raise an exception when slicing with args
         self.assertRaises(ValueError, self.r0.slice, {"x1": "a"})
 
     def test_set_value_for_assignement(self):
-
         r1 = self.r0.set_value_for_assignment({}, 4)
 
         self.assertEqual(r1(), 4)
@@ -147,35 +143,29 @@ class UnaryFunctionRelationTest(unittest.TestCase):
         self.assertEqual(self.r0.shape, (3,))
 
     def test_slicing_on_no_var_is_ok(self):
-
         r1 = self.r0.slice({})
 
         self.assertEqual(r1.arity, 1)
         self.assertEqual(r1(3), 6)
 
     def test_slicing_on_existing_var_is_ok(self):
-
         r1 = self.r0.slice({self.x1.name: 3})
 
         self.assertEqual(r1.arity, 0)
         self.assertEqual(r1(), 6)
 
     def test_slicing_on_unknown_var_raises_valueerror(self):
-
         self.assertRaises(ValueError, self.r0.slice, {"unknown": 3})
 
     def test_slicing_on_more_than_one_var_raises_valueerror(self):
-
         self.assertRaises(ValueError, self.r0.slice, {"x1": 3, "x2": 5})
         self.assertRaises(ValueError, self.r0.slice, {"x1": 3, "x2": 5, "x3": 7})
 
     def test_get_value(self):
-
         self.assertEqual(self.r0(3), 6)
         self.assertRaises(ValueError, self.r0, 3, 4)
 
     def test_get_value_dict(self):
-
         self.assertEqual(self.r0(**{"x1": 3}), 6)
 
     def test_eq(self):
@@ -270,11 +260,9 @@ class UnaryBooleanRelationTest(unittest.TestCase):
         self.assertEqual(r1(), True)
 
     def test_slice_on_unknown_var_raises(self):
-
         self.assertRaises(ValueError, self.r0.slice, {"unknown": 4})
 
     def test_slice_on_more_than_one_var_raises(self):
-
         self.assertRaises(ValueError, self.r0.slice, {"u1": 4, "u2": 8})
 
     def test_get_value(self):
@@ -638,7 +626,6 @@ class NAryFunctionRelationTests(unittest.TestCase):
         )
 
     def test_function_with_kwargs(self):
-
         v1 = Variable("v1", [1, 2, 3])
         v2 = Variable("v2", [1, 2, 3])
         v3 = Variable("v3", [1, 2, 3])
@@ -662,7 +649,6 @@ class NAryFunctionRelationTests(unittest.TestCase):
         self.assertIn(v3, sliced.dimensions)
 
     def test_function_with_varargs(self):
-
         v1 = Variable("v1", [1, 2, 3])
         v2 = Variable("v2", [1, 2, 3])
         v3 = Variable("v3", [1, 2, 3])
@@ -738,7 +724,6 @@ class NAryMatrixRelationInitTest(unittest.TestCase):
         self.assertEqual(val, 0)
 
     def test_init_zero_one_var(self):
-
         x1, u1 = get_1var_rel()
 
         self.assertEqual(u1.dimensions, [x1])
@@ -755,7 +740,6 @@ class NAryMatrixRelationInitTest(unittest.TestCase):
         self.assertEqual(u1.shape, (3, 2))
 
     def test_init_matrix_one_var(self):
-
         x1, u1 = get_1var_rel()
 
         self.assertEqual(u1.dimensions, [x1])
@@ -783,7 +767,6 @@ class NAryMatrixRelationInitTest(unittest.TestCase):
         self.assertEqual(u1("b"), 2)
 
     def test_init_matrix_three_var(self):
-
         x1 = Variable("x1", ["a", "b", "c"])
         x2 = Variable("x2", ["1", "2"])
         x3 = Variable("x3", ["y", "z"])
@@ -952,7 +935,6 @@ class NAryMatrixRelationInitTest(unittest.TestCase):
 
 class NAryMatrixRelationSliceTest(unittest.TestCase):
     def test_slice_1var(self):
-
         x1 = Variable("x1", ["a", "b", "c"])
         u1 = NAryMatrixRelation([x1], np.array([1, 2, 3], np.int8))
 
@@ -1025,7 +1007,6 @@ class NAryMatrixRelationSliceTest(unittest.TestCase):
 
 class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
     def test_constant_relation(self):
-
         f = relation_from_str("f", "4", [])
         rel = NAryMatrixRelation.from_func_relation(f)
 
@@ -1034,7 +1015,6 @@ class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
         self.assertEqual(rel(), f())
 
     def test_3vars_relation(self):
-
         x1 = Variable("x1", [1, 2, 3, 4])
         x2 = Variable("x2", [1, 2, 3, 4])
         x3 = Variable("x3", [1, 2, 3, 4])
@@ -1051,7 +1031,6 @@ class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
             self.assertEqual(f_val, r_val)
 
     def test_binary_rel(self):
-
         x1 = Variable("x1", [1, 2, 3, 4])
         x2 = Variable("x2", [1, 2, 3, 4])
         f = relation_from_str("f", "x1 - x2 ", [x1, x2])
@@ -1067,7 +1046,6 @@ class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
             self.assertEqual(f_val, r_val)
 
     def test_binary_hard_rel(self):
-
         x1 = Variable("x1", [0, 1, 2])
         x2 = Variable("x2", [0, 1, 2])
         f = relation_from_str("f", "10000 if x1 == x2 else 0", [x1, x2])
@@ -1085,7 +1063,6 @@ class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
 
 class NAryMatrixRelationOtherTests(unittest.TestCase):
     def test_eq(self):
-
         x1 = Variable("x1", ["a", "b", "c"])
         x2 = Variable("x2", ["1", "2"])
         u1 = NAryMatrixRelation([x1, x2], [[2, 16], [4, 32], [8, 64]])
@@ -1285,7 +1262,6 @@ class ConditionalRelationsTest(unittest.TestCase):
         self.assertEqual(cond_rel.dimensions, [v1, v2])
 
     def test_get_val(self):
-
         v1 = Variable("v1", [True, False])
         v2 = Variable("v2", [1, 2, 3])
         v3 = Variable("v3", [1, 2, 3])
@@ -1322,7 +1298,6 @@ class ConditionalRelationsTest(unittest.TestCase):
         self.assertEqual(0, cond_rel(v1=False, v2=2, v3=3))
 
     def test_slice_neutral(self):
-
         v1 = Variable("v1", [True, False])
         v2 = Variable("v2", [1, 2, 3])
         v3 = Variable("v3", [1, 2, 3])
@@ -2218,7 +2193,6 @@ def test_benchmark_join_fast_against_join_slow():
 
 class ProjectionTestCase(unittest.TestCase):
     def test_projection_oneVarRel(self):
-
         # u1 is a relation with a single variable :
         x1 = Variable("x1", ["a", "b", "c"])
         u1 = NAryMatrixRelation([x1], np.array([2, 4, 8], np.int8))
@@ -2249,7 +2223,6 @@ class ProjectionTestCase(unittest.TestCase):
         assert p.get_value_for_assignment() == 2
 
     def test_projection_twoVarsRel(self):
-
         x1 = Variable("x1", ["a", "b", "c"])
         x2 = Variable("x2", ["1", "2"])
         u1 = NAryMatrixRelation(

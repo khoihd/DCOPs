@@ -232,7 +232,6 @@ def run_local_process_dcop(algo: AlgorithmDef, cg: ComputationGraph,
                            delay=None,
                            uiport=None
                            ):
-
     agents = dcop.agents
     port = 9000
     comm = HttpCommunicationLayer(('127.0.0.1', port))

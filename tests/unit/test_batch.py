@@ -56,7 +56,6 @@ def test_input_files_re(tmpdir):
 
 
 def test_params_configuration_one_parameter():
-
     confs = parameters_configuration({"param1": ["v1_1", "v_1"]})
 
     assert len(confs) == 2  # two combinations
@@ -68,7 +67,6 @@ def test_params_configuration_one_parameter():
 
 
 def test_params_configuration_two_parameters():
-
     p1_values = ["v1_1", "v1_2"]
     p2_values = ["v2_1"]
 
@@ -86,7 +84,6 @@ def test_params_configuration_two_parameters():
 
 
 def test_params_configuration_two_parameters_2_3():
-
     p1_values = ["v1_1", "v1_2"]
     p2_values = ["v2_1", "v2_1", "v2_2"]
 
@@ -104,7 +101,6 @@ def test_params_configuration_two_parameters_2_3():
 
 
 def test_params_configuration_two_parameters_with_dict():
-
     p1_values = ["v1_1", "v1_2"]
     p2_values = {"p21": ["a", "b"], "p22": ["c", "d"]}
 
@@ -152,7 +148,6 @@ def test_params_configuration_order_with_dict():
 
 
 def test_regularize_parameters():
-
     params_yaml = """
 params:
   stop_cycle: 100
@@ -179,7 +174,6 @@ params:
 
 
 def test_regularize_parameters_imbricated():
-
     params_yaml = """
 command_options:
     algo: [dsa, mgm]
@@ -244,7 +238,6 @@ def test_expand_variables_in_str_with_subdir():
 
 
 def test_expand_variables_in_list():
-
     to_expand = ["abc", "expanded_{foo}", "{foo2}_expanded"]
 
     obtained = expand_variables(to_expand, {"foo": "bar", "foo2": "bar2"})
@@ -255,7 +248,6 @@ def test_expand_variables_in_list():
 
 
 def test_expand_variables_in_list_with_subdict():
-
     to_expand = ["abc", "expanded_{foo}", "{foo2[a]}_expanded"]
 
     obtained = expand_variables(to_expand, {"foo": "bar", "foo2": {"a": "subdir"}})
@@ -266,7 +258,6 @@ def test_expand_variables_in_list_with_subdict():
 
 
 def test_expand_variables_in_dict():
-
     to_expand = {"a": "abc", "b": "expanded_{foo}", "c": "{foo2}_expanded"}
 
     obtained = expand_variables(to_expand, {"foo": "bar", "foo2": "bar2"})
@@ -277,13 +268,11 @@ def test_expand_variables_in_dict():
 
 
 def test_build_final_command_file_only():
-
     cmd, _ = build_final_command("cmd", {}, {}, {}, files=["file"])
     assert cmd == "pydcop cmd file"
 
 
 def test_build_final_command_with_global_options():
-
     cmd, _ = build_final_command(
         "cmd", {}, {"logs": "log_file.conf", "timeout": "10"}, {}, files=["file"]
     )
@@ -291,7 +280,6 @@ def test_build_final_command_with_global_options():
 
 
 def test_build_final_command_with_command_options():
-
     cmd, _ = build_final_command(
         "solve",
         {},
@@ -303,7 +291,6 @@ def test_build_final_command_with_command_options():
 
 
 def test_build_final_command_with_command_options_and_expansion():
-
     cmd, _ = build_final_command(
         "solve",
         {},
@@ -316,7 +303,6 @@ def test_build_final_command_with_command_options_and_expansion():
 
 @patch("pydcop.commands.batch.run_batch")
 def test_run_batches_iteration_only(mock_run_batch):
-
     definition = """
 sets:
   set1:

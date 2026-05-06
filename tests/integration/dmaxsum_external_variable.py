@@ -97,7 +97,6 @@ def prefer_color(preferred_color):
 
 
 def dmaxsum_external_variable():
-
     domain = VariableDomain('colors', 'color', ['R', 'G', 'B'])
     # RW Variables
     v1 = VariableNoisyCostFunc('v1', domain, prefer_color('R'))

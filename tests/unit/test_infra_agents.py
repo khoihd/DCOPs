@@ -78,7 +78,6 @@ PingMessage = message_type('ping', ['count'])
 
 
 class PingComputation(MessagePassingComputation):
-
     def __init__(self, name: str, target: str=None):
         super().__init__(name)
         self.target = target
@@ -116,7 +115,6 @@ def test_create():
 
 
 def test_start(agent):
-
     agent.start()
 
     assert agent.is_running
@@ -127,7 +125,6 @@ def test_start(agent):
 
 
 def test_stop(agent):
-
     agent._on_stop = MagicMock()
 
     agent.start()

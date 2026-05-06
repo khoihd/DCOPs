@@ -44,7 +44,6 @@ from pydcop.utils.simple_repr import simple_repr, from_repr
 
 
 def test_path_head():
-
     path = ("a1", "a2", "a3")
     assert "a1" == head(path)
 
@@ -52,7 +51,6 @@ def test_path_head():
 
 
 def test_path_iter():
-
     path = ("a1", "a2", "a3")
     it = iter(path)
     assert "a1" == next(it)
@@ -63,14 +61,12 @@ def test_path_iter():
 
 
 def test_path_last():
-
     assert "a3" == last(["a1", "a2", "a3"])
 
     assert last([]) is None
 
 
 def test_path_before_last():
-
     assert "a2" == before_last(["a1", "a2", "a3"])
 
     with pytest.raises(IndexError):
@@ -81,7 +77,6 @@ def test_path_before_last():
 
 
 def test_filter_missing_agents_paths():
-
     paths = [
         (4, ("a2", "a3", "__hosting__")),
         (3, ("a2", "a5", "a6")),
@@ -148,7 +143,6 @@ def test_bench_filter_missing_agents_paths(benchmark):
 
 
 def test_path_serialization():
-
     p = ("a2", "a3", "__hosting__")
     r = simple_repr(p)
     print(r)

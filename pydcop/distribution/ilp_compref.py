@@ -113,7 +113,6 @@ def distribution_cost(distribution: Distribution,
                       computation_memory: Callable[[ComputationNode], float],
                       communication_load: Callable[[ComputationNode, str],
                                                    float]) -> float:
-
     route = route_fonc(agentsdef)
     msg_load = msg_load_func(computation_graph, communication_load)
     hosting_cost = hosting_cost_func(agentsdef)
@@ -142,7 +141,6 @@ def lp_model(cg: ComputationGraph,
              route: Callable[[str, str], float],
              msg_load: Callable[[str, str], float],
              hosting_cost: Callable[[str, str], float]):
-
     comp_names = [n.name for n in cg.nodes]
     agt_names = [a.name for a in agentsdef]
     pb = LpProblem('ilp_compref', LpMinimize)
@@ -244,7 +242,6 @@ def capacity_fonc(agents_def: Iterable[AgentDef])\
 
 def route_fonc(agents_def: Iterable[AgentDef])\
         -> Callable[[str], float]:
-
     def route(a1_name: str, a2_name: str):
         for a in agents_def:
             if a.name == a1_name:

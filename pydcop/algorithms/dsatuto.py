@@ -98,7 +98,6 @@ class DsaTutoComputation(SynchronousComputationMixin, VariableComputation):
         pass
 
     def on_new_cycle(self, messages, cycle_id) -> Optional[List]:
-
         assignment = {self.variable.name: self.current_value}
         for sender, (message, t) in messages.items():
             assignment[sender] = message.value

@@ -84,7 +84,6 @@ class SimpleRepr(object):
 
     """
     def _simple_repr(self):
-
         # Full name = module + qualifiedname (for inner classes)
         r = {'__module__': self.__module__,
              '__qualname__': self.__class__.__qualname__}

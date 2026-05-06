@@ -97,7 +97,6 @@ def test_deploy_computation_request(orchestrated_agent):
 
 
 def test_run_computations(orchestrated_agent):
-
     orchestrated_agent.start()
     mgt = orchestrated_agent._mgt_computation
     orchestrated_agent.run = MagicMock()
@@ -110,7 +109,6 @@ def test_run_computations(orchestrated_agent):
 
 
 def test_pause_computations(orchestrated_agent):
-
     orchestrated_agent.start()
     mgt = orchestrated_agent._mgt_computation
     orchestrated_agent.pause_computations = MagicMock()

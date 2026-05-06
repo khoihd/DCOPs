@@ -13,7 +13,6 @@ def event_bus():
 
 
 def test_simple_send(event_bus):
-
     cb = MagicMock()
 
     event_bus.subscribe("evt-name", cb)
@@ -23,7 +22,6 @@ def test_simple_send(event_bus):
 
 
 def test_cb_not_called_when_not_subscribed(event_bus):
-
     cb = MagicMock()
     event_bus.send("another", 48)
     cb.assert_not_called()
@@ -46,7 +44,6 @@ def test_do_not_receive_evt_once_unsubscribed(event_bus):
 
 
 def test_unsubscribe_from_single_topic(event_bus):
-
     cb1 = event_bus.subscribe("evts", MagicMock())
     cb2 = event_bus.subscribe("evts", MagicMock())
 
@@ -65,7 +62,6 @@ def test_unsubscribe_from_single_topic(event_bus):
 
 
 def test_several_subscribers(event_bus):
-
     cb1 = event_bus.subscribe("evt-name", MagicMock())
     cb2 = event_bus.subscribe("evt-name", MagicMock())
     cb3 = event_bus.subscribe("evt-name", MagicMock())
@@ -78,7 +74,6 @@ def test_several_subscribers(event_bus):
 
 
 def test_receive_evt_from_sub_topics(event_bus):
-
     cb1 = event_bus.subscribe("a.b.*", MagicMock())
 
     # Event on sub-topic : must be received

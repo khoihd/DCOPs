@@ -42,9 +42,7 @@ from pydcop.distribution.ilp_compref import lp_model
 
 
 class TestLpModelHostingCost(unittest.TestCase):
-
     def setUp(self):
-
         c1 = ComputationNode('c1', 'dummy_type', neighbors=['c2'])
         c2 = ComputationNode('c2', 'dummy_type', neighbors=['c1'])
 
@@ -54,7 +52,6 @@ class TestLpModelHostingCost(unittest.TestCase):
                        AgentDef('a2')]
 
     def test_one_comp_on_each(self):
-
         # let's use some hardcoded value for footprint, capacity, etc.
 
         # Each agent can hold exactly one computation, there is only two
@@ -70,7 +67,6 @@ class TestLpModelHostingCost(unittest.TestCase):
         self.assertEqual(len(mapping['a2']), 1)
 
     def test_one_comp_on_each_with_hosting_cost(self):
-
         # This time we introduce a clear preference c1-a2 and c2 - a1
         def hosting_cost(a, c):
             if c == 'c1' and a == 'a2':
@@ -90,7 +86,6 @@ class TestLpModelHostingCost(unittest.TestCase):
         self.assertIn('c1', mapping['a2'])
 
     def test_one_comp_on_each_with_pref_competition(self):
-
         # Both computation are attracted to a2, but c1 is more
         def hosting_cost(a, c):
             if c == 'c1' and a == 'a2':
@@ -110,7 +105,6 @@ class TestLpModelHostingCost(unittest.TestCase):
         self.assertIn('c1', mapping['a2'])
 
     def test_one_comp_on_each_with_pref_competition2(self):
-
         # Both computation are attrative to a2
         # and a2 has enough capacity for both.
         def hosting_cost(a, c):
@@ -132,9 +126,7 @@ class TestLpModelHostingCost(unittest.TestCase):
 
 
 class TestLpModelMsgLoad(unittest.TestCase):
-
     def setUp(self):
-
         c1 = ComputationNode('c1', neighbors=['c2'])
         c2 = ComputationNode('c2', neighbors=['c1'])
         self.cg = ComputationGraph(graph_type='test',
@@ -144,7 +136,6 @@ class TestLpModelMsgLoad(unittest.TestCase):
                        AgentDef('a3')]
 
     def test_one_costly_route(self):
-
         # The route between a1 and a2 is more costly than the other routes
         # so computations should be hosted on a1 and a3 or a3 and a2
         def route(a1, a2):
@@ -164,7 +155,6 @@ class TestLpModelMsgLoad(unittest.TestCase):
         self.assertFalse(invalid_dist)
 
     def test_two_costly_routes(self):
-
         # The routes a1-a2 and a3-a1 are more costly than the other routes
         # to avoid costly route, computation must be hosted on a2 and a3
         def route(a1, a2):
@@ -188,9 +178,7 @@ class TestLpModelMsgLoad(unittest.TestCase):
 
 
 class TestLpModelRouteAndPref(unittest.TestCase):
-
     def setUp(self):
-
         c1 = ComputationNode('c1', 'dummy_type', neighbors=['c2'])
         c2 = ComputationNode('c2', 'dummy_type', neighbors=['c1'])
 
@@ -201,7 +189,6 @@ class TestLpModelRouteAndPref(unittest.TestCase):
                        AgentDef('a3')]
 
     def test_one_costly_route(self):
-
         # The route between a1 and a2 is more costly than the other routes
         # so computations should be hosted on a1 and a3 or a3 and a2
         def route(a1, a2):
@@ -229,9 +216,7 @@ class TestLpModelRouteAndPref(unittest.TestCase):
 
 
 class TestLpModelWithHyperGraph(unittest.TestCase):
-
     def setUp(self):
-
         variables = list(create_variables(
             'v', ['1','2','3'], Domain('d', '', [ 1, 2])).values())
         all_diff = constraint_from_str('all_diff', 'v1 + v2 + v3 ', variables)
@@ -248,7 +233,6 @@ class TestLpModelWithHyperGraph(unittest.TestCase):
                        AgentDef('a3')]
 
     def test_sharing_computation(self):
-
         # given their capcity, each agent must host exactly one of the 3
         # computations
         mapping = lp_model(self.cg, self.agents,
@@ -263,7 +247,6 @@ class TestLpModelWithHyperGraph(unittest.TestCase):
         self.assertEqual(len(mapping['a3']), 1)
 
     def test_group_computations(self):
-
         # No capcity problem : putting all computations on the same agent is
         # the cheapest option.
         mapping = lp_model(self.cg, self.agents,
@@ -278,7 +261,6 @@ class TestLpModelWithHyperGraph(unittest.TestCase):
                         len(mapping['a3']) == 3)
 
     def test_split_in_two_groups(self):
-
         def route(a1, a2):
             if is_same_route((a1, a2), ('a1', 'a2')):
                 return 10
@@ -296,7 +278,6 @@ class TestLpModelWithHyperGraph(unittest.TestCase):
                         len(mapping['a2']) == 0)
 
     def test_split_in_two_groups_prefa1(self):
-
         def route(a1, a2):
             if is_same_route((a1, a2), ('a1', 'a2')):
                 return 10

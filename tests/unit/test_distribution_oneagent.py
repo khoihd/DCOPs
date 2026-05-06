@@ -43,7 +43,6 @@ from pydcop.distribution.oneagent import distribute
 Agent = namedtuple('Agent', ['name'])
 
 class TestDistributionOneAgent(unittest.TestCase):
-
     def test_simple_fg(self):
         d1 = VariableDomain('d1', '', [1, 2, 3, 5])
 
@@ -64,7 +63,6 @@ class TestDistributionOneAgent(unittest.TestCase):
                             distribution.computations_hosted('a1'))
 
     def test_raise_when_not_enough_agents(self):
-
         d1 = VariableDomain('d1', '', [1, 2, 3, 5])
 
         v1 = Variable('v1', d1)

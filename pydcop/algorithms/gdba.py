@@ -355,7 +355,6 @@ class GdbaComputation(VariableComputation):
             self.__postponed_ok_messages__.append((variable_name, recv_msg))
 
     def _handle_ok_message(self, variable_name, recv_msg):
-
         self._neighbors_values[variable_name] = recv_msg.value
         self.logger.debug(
             "%s processes %s from %s", self.variable.name, recv_msg, variable_name
@@ -398,7 +397,6 @@ class GdbaComputation(VariableComputation):
             self.logger.debug("%s has sent %s to %s", self.name, msg, n.name)
 
     def _compute_best_improvement(self):
-
         """
         Compute the best possible improvement for the current assignment.
 
@@ -496,7 +494,6 @@ class GdbaComputation(VariableComputation):
             self.__postponed_improve_messages__.append((variable_name, recv_msg))
 
     def _handle_improve_message(self, variable_name, recv_msg):
-
         self._neighbors_improvements[variable_name] = recv_msg
 
         self.logger.debug("%s computes %s from %s", self.name, recv_msg, variable_name)

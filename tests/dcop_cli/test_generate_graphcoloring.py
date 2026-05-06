@@ -40,7 +40,6 @@ def test_scalefree_hard():
 def run_generate(graph, variables_count, colors_count, intentional=False,
                  soft=False,
                  p_edge=None, m_edge=None):
-
     # filename = instance_path(filename)
     pydcop_bin = path.join(path.dirname(sys.executable), "pydcop")
     cmd = f"{pydcop_bin} generate graph_coloring --graph {graph} " \

@@ -509,7 +509,6 @@ def peav_intra_extensive_constraint(
     penalty: int,
     resource_events_count: int,
 ) -> Constraint:
-
     constraint = NAryMatrixRelation([var1, var2], name=f"ci_{var1.name}_{var2.name}")
 
     # For each possible partial assignment (t1, t2) to (var1, var2)
@@ -586,7 +585,6 @@ def peav_intra_extensive_constraint_value(
 
 
 def peav_inter_extensive_constraint(var1, var2, penalty):
-
     constraint = NAryMatrixRelation([var1, var2], name=f"ce_{var1.name}_{var2.name}")
 
     # For each possible partial assignment (t1, t2) to (var1, var2)

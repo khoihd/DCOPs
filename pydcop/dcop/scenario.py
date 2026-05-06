@@ -35,7 +35,6 @@ from pydcop.utils.simple_repr import SimpleRepr
 
 
 class EventAction(SimpleRepr):
-
     def __init__(self, type: str, **kwargs):
         self._type = type
         self._args = kwargs
@@ -98,7 +97,6 @@ class Scenario(SimpleRepr):
 
     """
     def __init__(self, events: List[DcopEvent]= None):
-
         self._events = events if events else []
 
     def __iter__(self):

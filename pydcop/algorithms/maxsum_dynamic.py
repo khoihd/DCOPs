@@ -37,7 +37,6 @@ from pydcop.dcop.relations import NeutralRelation
 
 
 class DynamicFunctionFactorComputation(MaxSumFactorComputation):
-
     """
     This is a specialisation of the computation performed for factor in the
     MaxSum algorithm, for factor whose function can change during the
@@ -125,7 +124,6 @@ class FactorWithReadOnlyVariableComputation(DynamicFunctionFactorComputation):
     """
 
     def __init__(self, relation, read_only_variables, name=None, msg_sender=None):
-
         self._relation = relation
         self._read_only_variables = read_only_variables
         self._read_only_values = {}
@@ -206,7 +204,6 @@ class DynamicFactorComputation(MaxSumFactorComputation):
     """
 
     def __init__(self, relation, name=None, msg_sender=None):
-
         self._relation = relation
         self._current_relation = relation
 
@@ -360,7 +357,6 @@ class DynamicFactorVariableComputation(MaxSumVariableComputation):
     """
 
     def __init__(self, variable, factor_names, msg_sender=None):
-
         super().__init__(variable, factor_names=factor_names, msg_sender=msg_sender)
 
     @register("REMOVE")

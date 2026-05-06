@@ -39,7 +39,6 @@ from tests.dcop_cli.utils import instance_path
 
 
 class SimpleSecpDCOP1(unittest.TestCase):
-
     def check_results(self, results, status='TIMEOUT'):
         # No convergence detection for now, always stop on timeout
         self.assertEqual(results['status'], status)
@@ -94,7 +93,6 @@ class SimpleSecpDCOP1(unittest.TestCase):
 
 
 class GraphColoring1(unittest.TestCase):
-
     def check_results(self, results, status='TIMEOUT'):
         # No convergence detection for now, always stop on timeout
         self.assertEqual(results['status'], status)
@@ -181,7 +179,6 @@ class GraphColoring1(unittest.TestCase):
 
 
 class GraphColoring10(unittest.TestCase):
-
     def check_results(self, results):
         # No convergence detection for now, always stop on timeout
         self.assertEqual(results['status'], 'TIMEOUT')
@@ -198,7 +195,6 @@ class GraphColoring10(unittest.TestCase):
         self.assertEqual(results['cost'], 0)
 
 class GraphColoringCsp(unittest.TestCase):
-
     def check_results(self, results):
         # No convergence detection for now, always stop on timeout
         self.assertEqual(results['status'], 'FINISHED')

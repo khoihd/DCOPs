@@ -60,7 +60,6 @@ TIMEOUT_SLACK = 40
 
 
 def main():
-
     parser = argparse.ArgumentParser(description='pydcop')
     parser.add_argument('-v', '--verbose', default='0',
                         choices=[0, 1, 2, 3], type=int,
@@ -150,7 +149,6 @@ def main():
 
 
 def _on_force_exit(sub_exit_func, sig, frame):
-
     if cli_timer is not None:
         cli_timer.cancel()
 

@@ -127,7 +127,6 @@ def set_parser(subparsers):
 
 
 def run_cmd(args):
-
     if args.output and args.replace_output:
         if os.path.exists(args.output):
             os.remove(args.output)
@@ -207,7 +206,6 @@ def single_distrib_costs(dcop, distribution_file, algo):
 
 
 def extract(files: List[str], target):
-
     for file in files:
         logger.debug(f"analyse file {file}")
         with open(file, mode="r") as f:
@@ -228,7 +226,6 @@ def extract(files: List[str], target):
 
 
 class WriterTarget:
-
     writen: str = ""
 
     def write(self, s):

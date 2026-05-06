@@ -82,7 +82,6 @@ def distribue_agent_for_all(variables, factors):
 
 
 def graph_coloring_pb():
-
     # Variables and domain
     d1 = [0, 1]
     d2 = [0, 1, 2]
