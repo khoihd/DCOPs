@@ -1829,8 +1829,7 @@ def test_assignment_cost_extra_vars():
     assert assignment_cost({"v1": 2, "v2": 5, "v3": 4}, [c1, c2]) == 17
 
 
-@pytest.mark.skip
-def test_bench_compute_cost(benchmark):
+def test_bench_compute_cost(request):
     x1 = Variable("x1", list(range(5)))
     x2 = Variable("x2", list(range(5)))
     x3 = Variable("x3", list(range(5)))
@@ -1843,13 +1842,20 @@ def test_bench_compute_cost(benchmark):
     c4 = constraint_from_str("c4", "x3 - x2 -7", all_vars)
 
     def to_bench():
-        assignment_cost(
+        return assignment_cost(
             {"x1": 3, "x2": 4, "x3": 1, "x4": 2},
             [c1, c2, c3, c4],
             consider_variable_cost=True,
         )
 
-    benchmark(to_bench)
+    try:
+        benchmark = request.getfixturevalue("benchmark")
+    except pytest.FixtureLookupError:
+        cost = to_bench()
+    else:
+        cost = benchmark(to_bench)
+
+    assert cost == -18
 
 
 def test_assignment_cost_same_as_bench():
