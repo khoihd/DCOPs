@@ -61,45 +61,48 @@
   - `tests/api/test_api_solve_dpop.py` now runs DPOP through the public
     `solve` API and compares costs against the PuLP oracle for both
     `KNOWN_INSTANCE_SOLUTIONS` and `KNOWN_INSTANCE_COSTS`.
-- `pydcop/dcop/relations.py::join` was optimized in two small commits:
-  - `cbe67ed Optimize join matrix filling` removed repeated full-matrix copies
-    in the generic fallback by filling one raw NumPy matrix directly.
-  - `f86a6a7 Add matrix fast path for join` added a broadcasting fast path for
-    `NAryMatrixRelation` + `NAryMatrixRelation` joins, while preserving the
-    generic callable fallback for non-matrix relations.
-  - `tests/unit/test_dcop_relations.py::test_join_matrix_relations_different_order`
-    covers matrix-axis alignment when shared variables appear in different
-    relation orders.
-- Recent focused checks passed after the join optimization:
+- Relation optimization work has progressed substantially in
+  `pydcop/dcop/relations.py`:
+  - `c0d57a4 Document relation slice behavior` refreshed slice docstrings.
+  - `e29a00c Optimize generic relation projection` made
+    `projection_slow()` evaluate the original relation directly when possible,
+    with fallback to `slice()` + `find_arg_optimal()`.
+  - `72f369c Iterate projection matrix coordinates directly` removed
+    `generate_assignment_as_dict()` from the `projection_slow()` outer loop.
+  - `bf60e09 Optimize matrix conversion from functions` made
+    `NAryMatrixRelation.from_func_relation()` fill one raw matrix directly.
+  - `5ad9a9b Optimize matrix relation value lookup` made
+    `NAryMatrixRelation.get_value_for_assignment()` index matrices directly.
+  - `a08605b Refresh relation optimization plan` rewrote
+    `relation_optimization_steps.txt` with fresh priorities and complexity
+    notes.
+  - `e52fb7e Optimize matrix relation slicing` optimized
+    `NAryMatrixRelation._slice_matrix()` bookkeeping with a per-call
+    assignment dict and variable-name set.
+  - `316b856 Split join into fast and slow paths` split public `join()` into
+    a dispatcher plus `join_fast()` for matrix-backed joins and `join_slow()`
+    for the generic fallback.
+  - `d5f6019 Add join path benchmark coverage` added benchmark-style coverage
+    comparing `join_fast()` and `join_slow()`.
+- Current `relation_optimization_steps.txt` status:
+  - Completed: projection fast/slow split, `projection_slow()` direct eval,
+    projection coordinate iteration, `from_func_relation()` direct fill,
+    matrix scalar lookup, optimization-plan refresh, `_slice_matrix()`, join
+    helper split, and join fast/slow benchmark coverage.
+  - Next priority: optimize `join_slow()` itself. It still uses
+    `generate_assignment_as_dict(dims)`, `filter_assignment_dict()` twice per
+    output cell, and `domain.index()` to recover matrix coordinates.
+  - Later priorities: `NAryMatrixRelation.set_value_for_assignment()`,
+    assignment generation helpers, then `assignment_cost()` /
+    `find_optimal()` / `filter_assignment_dict()` if profiling justifies it.
+- Recent focused relation checks passed during the optimization sequence:
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
   - `conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve_dpop.py tests/api/test_api_solve.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_gdba.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve.py`
   - `conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py`
-- `pydcop/dcop/relations.py::projection` was optimized in
-  `c6a89a4 Optimize relation projection paths`:
-  - `projection()` now dispatches to `projection_fast()` for
-    `NAryMatrixRelation` and `projection_slow()` for generic relation types.
-  - `projection_fast()` uses `np.max`/`np.min` over the projected axis.
-  - `projection_slow()` preserves the generic `slice()` + `find_arg_optimal()`
-    behavior but fills one raw NumPy result matrix directly instead of using
-    repeated `set_value_for_assignment()` calls.
-  - Tests in `tests/unit/test_dcop_relations.py` cover `projection_fast()`,
-    `projection_slow()`, parity between both helpers, and a benchmark-style
-    fast-vs-slow comparison.
-- Recent projection checks passed:
-  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
-  - `conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve_dpop.py tests/api/test_api_solve.py`
-  - `conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py`
-- `relation_optimization_steps.txt` is the active checklist:
-  - Step 1 complete: projection matrix fast path and helper split.
-  - Step 2 next: optimize `projection_slow()` direct generic evaluation.
-  - Step 3 later: optimize `NAryMatrixRelation.from_func_relation()`.
-  - Step 4 later: optimize scalar lookup in
-    `NAryMatrixRelation.get_value_for_assignment()`.
-  - Step 5 later: optimize `NAryMatrixRelation._slice_matrix()`.
 - `pydcop/algorithms/mgm.py` had a small typing cleanup in
   `692b952 Modernize MGM neighbor type annotations`: old type comments on
   `_neighbors_values` and `_neighbors_gains` were converted to real
@@ -107,32 +110,35 @@
   - `conda run -n khoihd ruff check pydcop/algorithms/mgm.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
 - Current local code note before this continuity update:
-  `projection_slow()` has explanatory comments for its current slow-path
-  mechanics. Ruff passed on `pydcop/dcop/relations.py`.
+  the working tree was clean after `d5f6019`; the active relation work should
+  continue from `join_slow()` optimization, not from projection.
 
 ## Next Steps
 - If continuing relation performance work, start with
-  `pydcop/dcop/relations.py::projection_slow`:
-  - current hot line is the loop body calling
-    `find_arg_optimal(a_var, a_rel.slice(partial), mode)`.
-  - `slice()` is necessary for the current `find_arg_optimal()`-based
-    implementation, because `find_arg_optimal()` expects a one-variable
-    relation.
-  - It is not conceptually necessary for projection; the likely next
-    optimization is to evaluate the original relation directly with a complete
-    assignment dict and `a_rel.get_value_for_assignment(assignment)`.
-  - Prefer the explicit method call over `a_rel(**assignment)` for readability.
-  - Keep a fallback to the current `slice()` + `find_arg_optimal()` behavior if
-    direct evaluation is unsafe for a relation type.
-  - Add/keep tests for min/max, one-variable/scalar projection, function
-    relations, and parity with `projection_fast()` on a matrix relation.
-  - Verify with relation, DPOP unit, DPOP API oracle, and oracle/API smoke
-    tests listed in `relation_optimization_steps.txt`.
-- After `projection_slow()`, consider `NAryMatrixRelation.from_func_relation`,
-  scalar lookup in `NAryMatrixRelation.get_value_for_assignment()`, then
-  `_slice_matrix()` per `relation_optimization_steps.txt`.
-- Leave `filter_assignment_dict` and `generate_assignment_as_dict` alone unless
-  profiling shows they still matter after the targeted projection/slice work.
+  `pydcop/dcop/relations.py::join_slow`:
+  - Keep public `join()` as the dispatcher.
+  - Keep `join_fast()` unchanged for `NAryMatrixRelation` + `NAryMatrixRelation`
+    joins.
+  - In `join_slow()`, replace `generate_assignment_as_dict(dims)` with
+    coordinate iteration via `np.ndindex(matrix.shape)`.
+  - Build one full assignment dict from the matrix coordinates.
+  - Build relation-specific assignment dicts with precomputed variable-name
+    sets or tuples instead of repeatedly calling `filter_assignment_dict()`.
+  - Write directly to `matrix[matrix_index]`.
+  - Preserve join dimension ordering exactly via `_join_dimensions()`.
+  - Keep behavior conservative for generic relation types; if direct eval is
+    risky, add a small helper with fallback instead of broad refactoring.
+- Verify `join_slow()` changes with:
+  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
+  - `conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py`
+- After `join_slow()`, revisit
+  `NAryMatrixRelation.set_value_for_assignment()` if generator performance
+  matters. Its remaining improvement is mostly constant-factor index setup;
+  the full matrix copy remains the dominant behavior-preserving cost.
+- Leave broader assignment helper changes (`generate_assignment_as_dict`,
+  `filter_assignment_dict`, `assignment_cost`) until profiling or a focused
+  algorithm task justifies the risk.
 - Continue targeted CLI/API stabilization and one-file Ruff cleanup only when
   requested.
 - Review dependency/version policy later; the original project targeted older
