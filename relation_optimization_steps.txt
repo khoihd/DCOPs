@@ -257,8 +257,11 @@ Decision:
   shared broadly by algorithms, and any likely gain is a constant-factor
   improvement with higher behavior risk than the previous relation helper
   optimizations.
-- Revisit only if profiling shows assignment_cost() or repeated assignment
-  filtering is a clear hotspot.
+- Leave find_optimal() unchanged for now. The possible improvements are small
+  constant-factor cleanups and a side-effect cleanup, but the function is
+  algorithm-facing and current callers tolerate its behavior.
+- Revisit only if profiling shows assignment_cost(), find_optimal(), or
+  repeated assignment filtering is a clear hotspot.
 
 Expected complexity impact:
 - Runtime: likely constant-factor improvement rather than a new asymptotic
