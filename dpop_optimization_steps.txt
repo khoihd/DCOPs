@@ -144,9 +144,15 @@ Possible changes:
     meaningful effect in the single-local-constraint child-util case. Existing
     YAML fixtures maxed out at two local constraints per DPOP computation, so
     the profiling helper now includes a deterministic six-local-constraint
-    case. In that larger case, ordering reduced total join-result cells, but
+    case and a configurable generated case:
+    `conda run -n khoihd python profiling/profile_dpop_utils.py --case generated --strategy all --repeat 10 --generated-constraints 20 --generated-domain-size 6 --generated-max-arity 4 --generated-wide-constraints 2 --generated-seed 0`
+    In larger/generated cases, ordering reduced total join-result cells, but
     combined pre-conversion plus ordering was not meaningfully faster than
-    pre-conversion alone.
+    pre-conversion alone in the default profiling case.
+[x] Implement local constraint ordering in `DpopAlgo.__init__()` after
+    descendant filtering. `_compute_utils_msg()` still performs the same loop,
+    but local constraints are joined from smaller estimated relation footprint
+    to larger footprint, with stable ordering for ties.
 [ ] Consider a helper that joins local constraints exactly once, but only if it
     improves clarity without changing message timing assumptions.
 

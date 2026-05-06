@@ -158,7 +158,34 @@ def test_constructor_filters_descendant_constraints_without_removing_from_copy()
         )
     )
 
-    assert computation._constraints == [parent_relation, own_relation]
+    assert computation._constraints == [own_relation, parent_relation]
+
+
+def test_constructor_orders_local_constraints_by_join_size():
+    x0 = Variable("x0", ["a", "b"])
+    x1 = Variable("x1", ["a", "b"])
+    x2 = Variable("x2", ["a", "b", "c"])
+
+    large_relation = NAryMatrixRelation([x1, x0, x2], name="large_relation")
+    unary_relation = NAryMatrixRelation([x1], name="unary_relation")
+    binary_relation = NAryMatrixRelation([x1, x0], name="binary_relation")
+
+    computation = dpop.DpopAlgo(
+        dpop_computation_def(
+            x1,
+            constraints=[large_relation, binary_relation, unary_relation],
+            links=[
+                PseudoTreeLink("parent", x1.name, x0.name),
+                PseudoTreeLink("pseudo_parent", x1.name, x2.name),
+            ],
+        )
+    )
+
+    assert computation._constraints == [
+        unary_relation,
+        binary_relation,
+        large_relation,
+    ]
 
 
 def test_value_message_preserves_child_separator_order():

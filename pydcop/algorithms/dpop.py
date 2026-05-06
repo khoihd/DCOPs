@@ -116,6 +116,26 @@ def communication_load(*args):
     raise NotImplementedError("DPOP has no communication_load implementation (yet)")
 
 
+def _relation_cell_count(relation):
+    try:
+        shape = relation.shape
+    except NotImplementedError:
+        shape = tuple(len(v.domain) for v in relation.dimensions)
+
+    cell_count = 1
+    for size in shape:
+        cell_count *= size
+    return cell_count
+
+
+def _relation_join_order_key(relation):
+    try:
+        arity = relation.arity
+    except NotImplementedError:
+        arity = len(relation.dimensions)
+    return _relation_cell_count(relation), arity
+
+
 class DpopMessage(Message):
     def __init__(self, msg_type, content):
         super(DpopMessage, self).__init__(msg_type, content)
@@ -224,7 +244,7 @@ class DpopAlgo(VariableComputation):
             relation_var_names = {v.name for v in r.dimensions}
             if descendants.isdisjoint(relation_var_names):
                 constraints.append(r)
-        self._constraints = constraints
+        self._constraints = sorted(constraints, key=_relation_join_order_key)
         self.logger.debug(
             f"Constraints for computation {self.name}: {self._constraints} "
         )

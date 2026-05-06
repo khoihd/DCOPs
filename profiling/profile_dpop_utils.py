@@ -11,6 +11,12 @@ adding brittle timing assertions.
 Run from the repository root, for example:
 
     conda run -n khoihd python profiling/profile_dpop_utils.py --repeat 10
+
+    conda run -n khoihd python profiling/profile_dpop_utils.py \
+        --case generated --strategy all --repeat 10 \
+        --generated-constraints 20 --generated-domain-size 6 \
+        --generated-max-arity 4 --generated-wide-constraints 2 \
+        --generated-seed 0
 """
 
 from __future__ import annotations
@@ -18,6 +24,7 @@ from __future__ import annotations
 import argparse
 import cProfile
 import pstats
+import random
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -29,7 +36,11 @@ import numpy as np
 from pydcop.algorithms import AlgorithmDef, ComputationDef, dpop
 from pydcop.computations_graph.pseudotree import PseudoTreeLink, PseudoTreeNode
 from pydcop.dcop.objects import Variable
-from pydcop.dcop.relations import AsNAryFunctionRelation, NAryMatrixRelation
+from pydcop.dcop.relations import (
+    AsNAryFunctionRelation,
+    NAryFunctionRelation,
+    NAryMatrixRelation,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +59,15 @@ class ProfileResult:
     elapsed: float
     stats: list[OperationStats]
     util: NAryMatrixRelation
+
+
+@dataclass(frozen=True, slots=True)
+class GeneratedCaseConfig:
+    constraints: int
+    domain_size: int
+    max_arity: int
+    wide_constraints: int
+    seed: int
 
 
 CaseFactory = Callable[[], dpop.DpopAlgo]
@@ -153,6 +173,19 @@ def _dpop_computation_def(
     return ComputationDef(node, algo_def)
 
 
+def _profile_computation(
+    variable: Variable, constraints: Sequence[Any], links: Iterable[PseudoTreeLink]
+) -> dpop.DpopAlgo:
+    computation = dpop.DpopAlgo(
+        _dpop_computation_def(variable, constraints=constraints, links=links)
+    )
+    # The production constructor orders local constraints now. Profiling keeps
+    # each case's declared order so strategies can still compare before/after
+    # ordering behavior.
+    computation._constraints = list(constraints)
+    return computation
+
+
 def _original_strategy(
     computation: dpop.DpopAlgo, stats: list[OperationStats]
 ) -> None:
@@ -218,16 +251,14 @@ def smart_light_case() -> dpop.DpopAlgo:
     def cost_l3(l3_):
         return l3_
 
-    return dpop.DpopAlgo(
-        _dpop_computation_def(
-            l3,
-            constraints=[scene_rel, cost_l3],
-            links=[
-                PseudoTreeLink("parent", l3.name, l2.name),
-                PseudoTreeLink("pseudo_parent", l3.name, l1.name),
-                PseudoTreeLink("pseudo_parent", l3.name, y1.name),
-            ],
-        )
+    return _profile_computation(
+        l3,
+        constraints=[scene_rel, cost_l3],
+        links=[
+            PseudoTreeLink("parent", l3.name, l2.name),
+            PseudoTreeLink("pseudo_parent", l3.name, l1.name),
+            PseudoTreeLink("pseudo_parent", l3.name, y1.name),
+        ],
     )
 
 
@@ -246,16 +277,14 @@ def child_util_case() -> dpop.DpopAlgo:
         np.fromfunction(lambda x1, x2, x3: x1 + x2 * 2 + x3 * 3, (8, 6, 5)),
         name="child_util",
     )
-    computation = dpop.DpopAlgo(
-        _dpop_computation_def(
-            variable,
-            constraints=[local_rel],
-            links=[
-                PseudoTreeLink("parent", variable.name, parent.name),
-                PseudoTreeLink("pseudo_parent", variable.name, pseudo_parent.name),
-                PseudoTreeLink("children", variable.name, child_sep.name),
-            ],
-        )
+    computation = _profile_computation(
+        variable,
+        constraints=[local_rel],
+        links=[
+            PseudoTreeLink("parent", variable.name, parent.name),
+            PseudoTreeLink("pseudo_parent", variable.name, pseudo_parent.name),
+            PseudoTreeLink("children", variable.name, child_sep.name),
+        ],
     )
     computation._joined_utils = child_util
     return computation
@@ -292,25 +321,90 @@ def many_local_constraints_case() -> dpop.DpopAlgo:
     def pseudo_d_rel(x, d):
         return abs(x - d) * 2
 
-    return dpop.DpopAlgo(
-        _dpop_computation_def(
-            variable,
-            constraints=[
-                global_rel,
-                unary_rel,
-                parent_rel,
-                pseudo_b_rel,
-                pseudo_c_rel,
-                pseudo_d_rel,
-            ],
-            links=[
-                PseudoTreeLink("parent", variable.name, parent.name),
-                PseudoTreeLink("pseudo_parent", variable.name, pseudo_b.name),
-                PseudoTreeLink("pseudo_parent", variable.name, pseudo_c.name),
-                PseudoTreeLink("pseudo_parent", variable.name, pseudo_d.name),
-            ],
-        )
+    return _profile_computation(
+        variable,
+        constraints=[
+            global_rel,
+            unary_rel,
+            parent_rel,
+            pseudo_b_rel,
+            pseudo_c_rel,
+            pseudo_d_rel,
+        ],
+        links=[
+            PseudoTreeLink("parent", variable.name, parent.name),
+            PseudoTreeLink("pseudo_parent", variable.name, pseudo_b.name),
+            PseudoTreeLink("pseudo_parent", variable.name, pseudo_c.name),
+            PseudoTreeLink("pseudo_parent", variable.name, pseudo_d.name),
+        ],
     )
+
+
+def _generated_scope(
+    variable: Variable, pseudo_parents: Sequence[Variable], arity: int, offset: int
+) -> list[Variable]:
+    scope = [variable]
+    extra_count = arity - 1
+    if extra_count:
+        scope.extend(
+            pseudo_parents[(offset + index) % len(pseudo_parents)]
+            for index in range(extra_count)
+        )
+    return scope
+
+
+def _generated_relation(
+    scope: Sequence[Variable], relation_index: int, rng: random.Random
+) -> NAryFunctionRelation:
+    coefficients = [rng.randint(1, 11) for _ in scope]
+    offset = rng.randint(0, 17)
+    modulus = max(7, len(scope) * 5)
+
+    def relation(**assignment):
+        value = offset
+        for coefficient, variable in zip(coefficients, scope):
+            value += coefficient * assignment[variable.name]
+        return value % modulus
+
+    return NAryFunctionRelation(
+        relation,
+        scope,
+        name=f"generated_{relation_index:03d}",
+        f_kwargs=True,
+    )
+
+
+def generated_case(config: GeneratedCaseConfig) -> dpop.DpopAlgo:
+    domain = list(range(config.domain_size))
+    variable = Variable("x", domain)
+    pseudo_parents = [
+        Variable(f"p{index}", domain) for index in range(config.max_arity - 1)
+    ]
+    rng = random.Random(config.seed)
+
+    constraints = []
+    for relation_index in range(config.constraints):
+        if relation_index < config.wide_constraints:
+            arity = config.max_arity
+        elif config.max_arity == 1:
+            arity = 1
+        else:
+            arity = 1 + (
+                (relation_index - config.wide_constraints)
+                % (config.max_arity - 1)
+            )
+        scope = _generated_scope(variable, pseudo_parents, arity, relation_index)
+        constraints.append(_generated_relation(scope, relation_index, rng))
+
+    links = []
+    if pseudo_parents:
+        links.append(PseudoTreeLink("parent", variable.name, pseudo_parents[0].name))
+    for pseudo_parent in pseudo_parents[1:]:
+        links.append(
+            PseudoTreeLink("pseudo_parent", variable.name, pseudo_parent.name)
+        )
+
+    return _profile_computation(variable, constraints=constraints, links=links)
 
 
 CASES: dict[str, CaseFactory] = {
@@ -327,13 +421,24 @@ STRATEGIES: dict[str, Strategy] = {
 }
 
 
-def run_case(case_name: str, strategy_name: str, repeat: int) -> ProfileResult:
+def build_case(case_name: str, generated_config: GeneratedCaseConfig) -> dpop.DpopAlgo:
+    if case_name == "generated":
+        return generated_case(generated_config)
+    return CASES[case_name]()
+
+
+def run_case(
+    case_name: str,
+    strategy_name: str,
+    repeat: int,
+    generated_config: GeneratedCaseConfig,
+) -> ProfileResult:
     stats: list[OperationStats] = []
     util = None
     start = perf_counter()
     with profile_dpop_relations(stats):
         for _ in range(repeat):
-            computation = CASES[case_name]()
+            computation = build_case(case_name, generated_config)
             STRATEGIES[strategy_name](computation, stats)
             util = computation._compute_utils_msg()
     elapsed = perf_counter() - start
@@ -426,7 +531,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--case",
-        choices=["all"] + sorted(CASES),
+        choices=["all", "generated"] + sorted(CASES),
         default="smart-light",
         help="profiling case to run",
     )
@@ -447,21 +552,74 @@ def main() -> None:
         action="store_true",
         help="also print cProfile cumulative function timings",
     )
+    parser.add_argument(
+        "--generated-constraints",
+        type=int,
+        default=20,
+        help="number of local constraints for --case generated",
+    )
+    parser.add_argument(
+        "--generated-domain-size",
+        type=int,
+        default=6,
+        help="domain size for generated variables",
+    )
+    parser.add_argument(
+        "--generated-max-arity",
+        type=int,
+        default=4,
+        help="maximum generated constraint arity, including local variable",
+    )
+    parser.add_argument(
+        "--generated-wide-constraints",
+        type=int,
+        default=2,
+        help="number of generated constraints using the maximum arity",
+    )
+    parser.add_argument(
+        "--generated-seed",
+        type=int,
+        default=0,
+        help="seed for deterministic generated constraints",
+    )
     args = parser.parse_args()
 
     if args.repeat < 1:
         parser.error("--repeat must be greater than zero")
+    if args.generated_constraints < 1:
+        parser.error("--generated-constraints must be greater than zero")
+    if args.generated_domain_size < 1:
+        parser.error("--generated-domain-size must be greater than zero")
+    if args.generated_max_arity < 1:
+        parser.error("--generated-max-arity must be greater than zero")
+    if args.generated_wide_constraints < 0:
+        parser.error("--generated-wide-constraints cannot be negative")
+    if args.generated_wide_constraints > args.generated_constraints:
+        parser.error("--generated-wide-constraints cannot exceed constraints")
+
+    generated_config = GeneratedCaseConfig(
+        constraints=args.generated_constraints,
+        domain_size=args.generated_domain_size,
+        max_arity=args.generated_max_arity,
+        wide_constraints=args.generated_wide_constraints,
+        seed=args.generated_seed,
+    )
 
     if args.cprofile:
         profiler = cProfile.Profile()
         profiler.enable()
 
-    case_names = sorted(CASES) if args.case == "all" else [args.case]
+    case_names = (
+        ["generated"] + sorted(CASES) if args.case == "all" else [args.case]
+    )
     strategy_names = (
         sorted(STRATEGIES) if args.strategy == "all" else [args.strategy]
     )
     results = [
-        (case_name, run_case(case_name, strategy_name, args.repeat))
+        (
+            case_name,
+            run_case(case_name, strategy_name, args.repeat, generated_config),
+        )
         for case_name in case_names
         for strategy_name in strategy_names
     ]
