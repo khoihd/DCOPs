@@ -1831,28 +1831,25 @@ def projection_slow(a_rel: Constraint, a_var: Variable, mode="max") -> Constrain
     Generic projection implementation for relation types without matrix access.
     """
 
-    # Start from all relation dimensions, then remove the projected variable.
     remaining_vars = a_rel.dimensions.copy()
     remaining_vars.remove(a_var)
 
-    # Allocate the projected relation matrix once, with one axis per remaining
-    # variable and one cell per remaining-variable assignment.
     matrix = np.empty(tuple(len(v.domain) for v in remaining_vars), dtype=np.float64)
 
-    # Visit every assignment of the remaining variables.
-    for partial in generate_assignment_as_dict(remaining_vars):
+    # Visit every coordinate of the projected matrix, deriving the matching
+    # partial assignment directly from variable domains.
+    for matrix_index in np.ndindex(matrix.shape):
+        partial = {
+            v.name: v.domain[index] for v, index in zip(remaining_vars, matrix_index)
+        }
+
         # Optimize over a_var without creating an intermediate sliced relation.
         try:
             rel_val = _project_value_direct(a_rel, a_var, partial, mode)
         except (AttributeError, KeyError, NotImplementedError, TypeError, ValueError):
             _, rel_val = find_arg_optimal(a_var, a_rel.slice(partial), mode)
 
-        # Convert the current assignment values to matrix coordinates.
-        # Look up each assigned value's index in its variable domain.
-        matrix_index = tuple(v.domain.index(partial[v.name]) for v in remaining_vars)
-
         # Store the projected value directly in the result matrix.
         matrix[matrix_index] = rel_val
 
-    # Wrap the filled matrix in a relation over the remaining variables.
     return NAryMatrixRelation(remaining_vars, matrix)
