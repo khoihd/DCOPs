@@ -99,7 +99,7 @@ Verify:
 
 Priority 3: NAryMatrixRelation.from_func_relation()
 ---------------------------------------------------
-[ ] Step 3 complete
+[x] Step 3 complete
 
 Why:
 - from_func_relation() currently creates an empty NAryMatrixRelation and fills
@@ -108,19 +108,20 @@ Why:
   full-matrix copy pattern.
 
 Implementation:
-[ ] Allocate one raw NumPy matrix with shape tuple(len(v.domain) for v in variables).
-[ ] Iterate over generate_assignment_as_dict(variables).
-[ ] Evaluate the source relation exactly as today.
-[ ] Write the value directly into the raw matrix.
-[ ] Return one NAryMatrixRelation(variables, matrix, name=rel.name).
+[x] Allocate one raw NumPy matrix with shape tuple(len(v.domain) for v in variables).
+[x] Iterate over raw matrix coordinates with np.ndindex(matrix.shape).
+[x] Evaluate the source relation exactly as today.
+[x] Write the value directly into the raw matrix.
+[x] Return one NAryMatrixRelation(variables, matrix).
 
 Tests:
-[ ] Run existing NAryMatrixRelationFromFunctionTests.
-[ ] Add a test only if existing coverage misses a behavior changed by the patch.
+[x] Run existing NAryMatrixRelationFromFunctionTests.
+[x] Add a test only if existing coverage misses a behavior changed by the patch.
 
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
-[ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_gdba.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py tests/unit/test_algorithms_gdba.py
 
 
 Priority 4: scalar lookup in NAryMatrixRelation.get_value_for_assignment()

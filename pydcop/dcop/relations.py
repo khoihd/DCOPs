@@ -872,13 +872,15 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
     @staticmethod
     def from_func_relation(rel: RelationProtocol) -> "NAryMatrixRelation":
         variables = rel.dimensions
-        cost_matrix = NAryMatrixRelation(variables)
+        matrix = np.empty(tuple(len(v.domain) for v in variables), dtype=np.float64)
 
-        for asgt in generate_assignment_as_dict(variables):
-            value = rel(asgt)
-            cost_matrix = cost_matrix.set_value_for_assignment(asgt, value)
+        for matrix_index in np.ndindex(matrix.shape):
+            assignment = {
+                v.name: v.domain[index] for v, index in zip(variables, matrix_index)
+            }
+            matrix[matrix_index] = rel(assignment)
 
-        return cost_matrix
+        return NAryMatrixRelation(variables, matrix)
 
     def __str__(self):
         if self._name:
