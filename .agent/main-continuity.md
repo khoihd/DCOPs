@@ -25,7 +25,7 @@
   the intended Conda env.
 
 ## Current Focus
-- Python 3.11 / modern dependency compatibility.
+- Python 3.11+ / modern dependency compatibility.
 - CLI/API stabilization through the Conda env.
 - Core DCOP algorithms, especially DPOP.
 - Oracle-style algorithm correctness tests using known DCOP instances and the
@@ -52,29 +52,38 @@
 - Deferred relation items: `assignment_cost()`, `find_optimal()`, and
   `NAryMatrixRelation.__hash__()`.
 - High-level optimization tracking lives in `optimization_tracker.md`.
-- DPOP optimization is in progress and tracked in `dpop_optimization_steps.txt`.
-- DPOP Steps 1-3 are complete:
+- Python support metadata now declares Python 3.11+ in `setup.py`, README, and
+  installation docs.
+- DPOP optimization is complete through Step 4 and tracked in
+  `dpop_optimization_steps.txt`; Step 5 was intentionally removed/skipped.
+- DPOP Steps 1-4 are complete:
   - Baseline DPOP unit/API/Ruff checks were recorded.
   - Constructor constraint filtering now builds a kept list directly and uses
     set disjointness for descendant checks.
   - VALUE forwarding now uses membership checks instead of `KeyError` control
     flow, with coverage for child separator ordering.
-- Current next item: DPOP Priority 4, relation join/projection phase review.
+  - Priority 4 profiling added `profiling/profile_dpop_utils.py`, including
+    fixed and generated cases plus strategy comparison for original,
+    pre-convert, ordered, and pre-convert+ordered local joins.
+  - Production DPOP now orders local constraints by estimated relation
+    footprint/arity after descendant filtering.
+  - `_join_local_constraints()` factors the repeated local-constraint join loop
+    without changing the points where local constraints are joined.
+- `optimization_tracker.md` lists `pydcop/algorithms/dpop.py` as completed.
 
 ## Next Steps
-- If continuing DPOP optimization, start at `dpop_optimization_steps.txt`
-  Priority 4.
-- Be careful with DPOP Step 4: join order, pre-conversion to
-  `NAryMatrixRelation`, and helper extraction can affect intermediate UTIL
-  dimensions, memory, and tie behavior.
-- Prefer measurement and oracle checks before changing DPOP join/projection
-  behavior.
-- Baseline DPOP checks for meaningful DPOP changes:
+- If revisiting DPOP, prefer a new focused plan rather than reviving removed
+  Step 5 polish.
+- Be careful with DPOP join order, pre-conversion to `NAryMatrixRelation`, and
+  helper extraction: these can affect intermediate UTIL dimensions, memory, and
+  tie behavior.
+- Baseline checks for meaningful DPOP changes:
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
   - `conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py`
-  - `conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py`
-- Consider `tests/dcop_cli/test_solve.py` only for DPOP changes that affect CLI
-  solve/distribution behavior or message serialization.
+  - `conda run -n khoihd python -m pytest tests/dcop_cli/test_solve.py`
+  - `conda run -n khoihd ruff check pydcop/algorithms/dpop.py`
+- Consider `profiling/profile_dpop_utils.py --case generated --strategy all`
+  when evaluating future DPOP join/projection changes.
 - Leave relation helper changes alone unless profiling gives a specific reason.
 
 ## Important Paths
@@ -90,6 +99,5 @@
 
 ## Open Questions
 - What is the primary long-term execution path: CLI, library API, or both?
-- What minimum Python/dependency versions should be supported?
 - Which modules are active and worth modernizing first versus legacy?
 - Should package/module naming eventually move away from `pydcop`?

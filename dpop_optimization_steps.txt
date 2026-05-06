@@ -117,7 +117,7 @@ Verify:
 
 Priority 4: relation join/projection phase review
 -------------------------------------------------
-[ ] Step 4 complete
+[x] Step 4 complete
 
 Why:
 - `_compute_utils_msg()` is the main DPOP hot path: it joins child UTILs and
@@ -169,21 +169,3 @@ Verify:
 [x] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
 [x] conda run -n khoihd python -m pytest tests/dcop_cli/test_solve.py
 [x] conda run -n khoihd ruff check pydcop/algorithms/dpop.py
-
-
-Priority 5: small helper polish
--------------------------------
-[ ] Step 5 complete
-
-Candidates:
-- `DpopMessage.size`: make UTIL size calculation more direct while preserving
-  message-size semantics.
-- `computation_memory()`: keep behavior, but consider a small local product
-  helper if future estimates need to share logic.
-- Isolated-root value selection has duplicated `find_arg_optimal()` paths;
-  defer unless readability work is explicitly requested.
-
-Guidance:
-[ ] Do not change pseudo-tree semantics, message formats, or algorithm stop
-    behavior as part of performance cleanup.
-[ ] Keep each optimization in a small patch with focused tests.
