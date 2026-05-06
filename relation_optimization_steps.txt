@@ -244,13 +244,21 @@ Verify:
 
 Priority 5: assignment_cost(), find_optimal(), and filter_assignment_dict()
 --------------------------------------------------------------------------
-[ ] Step 5 complete
+[ ] Step 5 deferred
 
 Why:
 - assignment_cost() and find_optimal() are used in DSA, ADSA, MGM2, SyncBB,
   NCBB, and tests.
 - filter_assignment_dict() is simple but called in many loops.
 - These helpers are algorithm-facing and can affect runtime broadly.
+
+Decision:
+- Leave assignment_cost() unchanged for now. It is already manually tuned,
+  shared broadly by algorithms, and any likely gain is a constant-factor
+  improvement with higher behavior risk than the previous relation helper
+  optimizations.
+- Revisit only if profiling shows assignment_cost() or repeated assignment
+  filtering is a clear hotspot.
 
 Expected complexity impact:
 - Runtime: likely constant-factor improvement rather than a new asymptotic
