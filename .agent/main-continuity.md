@@ -90,17 +90,30 @@
     coordinates directly with `np.ndindex()`, avoiding
     `generate_assignment_as_dict()`, `filter_assignment_dict()`, and
     `domain.index()` coordinate recovery in the output-cell loop.
+  - `b53c999 Optimize matrix relation value setting` made
+    `NAryMatrixRelation.set_value_for_assignment()` compute matrix indexes
+    directly for list and dict assignments, preserving copy-on-write behavior
+    with a single `np.copy(self._m)` per call. It also documented
+    `_slice_matrix()`, added regression coverage that setting values no longer
+    calls `_slice_matrix()`, and marked Step 3 complete in
+    `relation_optimization_steps.txt`.
+- DPOP adhoc distribution support was improved:
+  - `a5f3da3 Add DPOP computation memory estimate` implemented
+    `pydcop/algorithms/dpop.py::computation_memory()` for pseudo-tree nodes.
+    The estimate is the UTIL relation size before projection: own variable
+    domain size times parent and pseudo-parent domain sizes.
+  - DPOP adhoc solve/distribute CLI tests that were previously skipped for
+    missing computation size are now enabled. The stale skip comments that said
+    "dcop does not have it" were removed; they meant DPOP, not DCOP.
 - Current `relation_optimization_steps.txt` status:
   - Completed: projection fast/slow split, `projection_slow()` direct eval,
     projection coordinate iteration, `from_func_relation()` direct fill,
     matrix scalar lookup, optimization-plan refresh, `_slice_matrix()`, join
-    helper split, join fast/slow benchmark coverage, and `join_slow()` loop
-    optimization.
-  - Next priority: `NAryMatrixRelation.set_value_for_assignment()`. It now
-    benefits from optimized `_slice_matrix()` bookkeeping, but still performs
-    avoidable scalar index setup before copying the full matrix.
-  - Later priorities: assignment generation helpers, then `assignment_cost()` /
-    `find_optimal()` / `filter_assignment_dict()` if profiling justifies it.
+    helper split, join fast/slow benchmark coverage, `join_slow()` loop
+    optimization, and `NAryMatrixRelation.set_value_for_assignment()`.
+  - Next priority: assignment generation helpers.
+  - Later priorities: `assignment_cost()` / `find_optimal()` /
+    `filter_assignment_dict()` if profiling justifies it.
 - Recent focused relation checks passed during the optimization sequence:
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
@@ -116,30 +129,23 @@
   - `conda run -n khoihd ruff check pydcop/algorithms/mgm.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
 - Current local code note before this continuity update:
-  the working tree was clean after `e82c49d`; the active relation work should
-  continue from `NAryMatrixRelation.set_value_for_assignment()`, not from
-  projection or `join_slow()`.
+  the working tree was clean after `a5f3da3`; relation Step 3 and DPOP
+  computation memory are committed.
 
 ## Next Steps
-- If continuing relation performance work, start with
-  `pydcop/dcop/relations.py::NAryMatrixRelation.set_value_for_assignment`:
-  - Preserve the public copy-on-write behavior: each call returns a new
-    `NAryMatrixRelation` and does not mutate `self`.
-  - Keep exactly one `np.copy(self._m)` per call.
-  - For list input, compute the full scalar index tuple directly from variable
-    order.
-  - For dict input, compute the full scalar index tuple directly from variable
-    names.
-  - Preserve current error behavior for list, dict, missing variable, extra
-    variable, and invalid domain values where practical.
-- Verify `set_value_for_assignment()` changes with:
+- If continuing relation performance work, start with assignment generation
+  helpers (`generate_assignment()` / `generate_assignment_as_dict()`), but only
+  after documenting current iteration order with focused tests.
+- Verify assignment-helper changes with:
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_base.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
-  - `conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py`
+  - `conda run -n khoihd ruff check pydcop/dcop/relations.py`
 - Consider DPOP or generator-focused tests only if the implementation touches
-  behavior beyond scalar index construction.
-- Leave broader assignment helper changes (`generate_assignment_as_dict`,
-  `filter_assignment_dict`, `assignment_cost`) until profiling or a focused
-  algorithm task justifies the risk.
+  behavior beyond assignment helper iteration.
+- Leave broader relation helper changes (`filter_assignment_dict`,
+  `assignment_cost`, `find_optimal`) until profiling or a focused algorithm
+  task justifies the risk.
 - Continue targeted CLI/API stabilization and one-file Ruff cleanup only when
   requested.
 - Review dependency/version policy later; the original project targeted older
