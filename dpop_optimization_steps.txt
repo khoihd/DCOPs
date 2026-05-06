@@ -102,7 +102,7 @@ Expected impact:
 - Behavior: unchanged child VALUE contents and order.
 
 Implementation:
-[ ] Replace `try` / `except KeyError` with `if v.name in value_dict`.
+[x] Replace `try` / `except KeyError` with `if v.name in value_dict`.
 [ ] Preserve child separator order in outgoing VALUE messages.
 
 Tests:
@@ -110,9 +110,9 @@ Tests:
     and outside the received separator.
 
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
 [ ] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
-[ ] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
 
 
 Priority 4: relation join/projection phase review

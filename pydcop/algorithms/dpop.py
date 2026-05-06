@@ -458,13 +458,9 @@ class DpopAlgo(VariableComputation):
             # own_separator intersection child_separator union
             # self.current_value
             for v in self._children_separator[c]:
-                try:
+                if v.name in value_dict:
                     values_msg.append(value_dict[v.name])
                     variables_msg.append(v)
-                except KeyError:
-                    # we want an intersection, we can ignore the variable if
-                    # not in value_dict
-                    pass
             msg = DpopMessage("VALUE", (variables_msg, values_msg))
             self.post_msg(c, msg)
 
