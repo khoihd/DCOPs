@@ -28,7 +28,7 @@ Existing coverage
 
 Priority 1: baseline and guardrails
 -----------------------------------
-[ ] Step 1 complete
+[x] Step 1 complete
 
 Why:
 - DPOP correctness depends on UTIL/VALUE message contents and pseudo-tree
@@ -37,15 +37,21 @@ Why:
   reduce algorithm overhead without changing selected costs.
 
 Implementation:
-[ ] Run current DPOP unit and oracle/API checks before code changes.
-[ ] Identify one or two representative DPOP cases for local timing.
-[ ] Keep any benchmark local or test-owned; do not add brittle timing asserts
+[x] Run current DPOP unit and oracle/API checks before code changes.
+[x] Identify one or two representative DPOP cases for local timing.
+[x] Keep any benchmark local or test-owned; do not add brittle timing asserts
     unless they are very conservative.
 
+Representative local timing candidates:
+- `tests/unit/test_algorithms_dpop.py::TestSmartLightSample::test_4variables`
+  for relation-heavy join/projection behavior.
+- `tests/api/test_api_solve_dpop.py` known-instance oracle cases for end-to-end
+  solve behavior.
+
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
-[ ] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
-[ ] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
+[x] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
 
 
 Priority 2: constructor constraint filtering
