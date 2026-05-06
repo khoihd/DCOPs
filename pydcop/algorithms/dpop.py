@@ -223,10 +223,10 @@ class DpopAlgo(VariableComputation):
         constraints = []
         for r in comp_def.node.constraints:
             # filter out all relations that depends on one of our descendants
-            names = [v.name for v in r.dimensions]
+            relation_var_names = [v.name for v in r.dimensions]
             keep_constraint = True
             for descendant in descendants:
-                if descendant in names:
+                if descendant in relation_var_names:
                     keep_constraint = False
                     break
             if keep_constraint:
