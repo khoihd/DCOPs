@@ -757,28 +757,25 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
 
     def _slice_matrix(self, sliced_vars, sliced_values, ignore_extra_vars=False):
 
-        s_vars = list(sliced_vars)
-        s_values = list(sliced_values)
-
-        var_names = [v.name for v in self._variables]
-        for i, v in enumerate(sliced_vars):
-            if v not in var_names:
+        var_names = {v.name for v in self._variables}
+        assignment = {}
+        for var_name, val in zip(sliced_vars, sliced_values):
+            if var_name not in var_names:
                 if not ignore_extra_vars:
                     raise AttributeError(
                         "{} is not in the dimensions of util : {}".format(
-                            v, self._variables
+                            var_name, self._variables
                         )
                     )
-                else:
-                    del s_vars[i]
-                    del s_values[i]
+                continue
+            if var_name not in assignment:
+                assignment[var_name] = val
 
         slices = []
         slice_vars = []
         for v in self._variables:
-            if v.name in s_vars:
-                slice_index = s_vars.index(v.name)
-                val = s_values[slice_index]
+            if v.name in assignment:
+                val = assignment[v.name]
                 val_index = v.domain.index(val)
                 slices.append(val_index)
             else:

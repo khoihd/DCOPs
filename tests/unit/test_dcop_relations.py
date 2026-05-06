@@ -962,6 +962,46 @@ class NAryMatrixRelationSliceTest(unittest.TestCase):
         self.assertEqual(s.shape, (len(x2.domain),))
         self.assertEqual(s.get_value_for_assignment(["2"]), 2)
 
+    def test_slice_2var_unknown_var_raises(self):
+        x1, _, u1 = get_2var_rel()
+
+        x4 = Variable("x4", [1, 2])
+
+        self.assertRaises(AttributeError, u1.slice, {x1.name: "a", x4.name: 1})
+
+    def test_slice_2var_ignore_multiple_extra_vars(self):
+        x1, x2, u1 = get_2var_rel()
+
+        x4 = Variable("x4", [1, 2])
+        x5 = Variable("x5", [1, 2])
+
+        s = u1.slice(
+            {x4.name: 1, x5.name: 2, x1.name: "a"}, ignore_extra_vars=True
+        )
+
+        self.assertEqual(s.arity, 1)
+        self.assertEqual(s.dimensions, [x2])
+        self.assertEqual(s.get_value_for_assignment(["2"]), 2)
+
+    def test_slice_3var_middle_and_last_axes(self):
+        x1 = Variable("x1", ["a", "b"])
+        x2 = Variable("x2", ["1", "2"])
+        x3 = Variable("x3", ["y", "z"])
+        u1 = NAryMatrixRelation(
+            [x1, x2, x3],
+            np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], np.int8),
+        )
+
+        middle_slice = u1.slice({x2.name: "2"})
+        self.assertEqual(middle_slice.dimensions, [x1, x3])
+        self.assertEqual(middle_slice.get_value_for_assignment(["a", "z"]), 4)
+        self.assertEqual(middle_slice.get_value_for_assignment(["b", "y"]), 7)
+
+        last_slice = u1.slice({x3.name: "y"})
+        self.assertEqual(last_slice.dimensions, [x1, x2])
+        self.assertEqual(last_slice.get_value_for_assignment(["a", "2"]), 3)
+        self.assertEqual(last_slice.get_value_for_assignment(["b", "1"]), 5)
+
 
 class NAryMatrixRelationFromFunctionTests(unittest.TestCase):
     def test_constant_relation(self):

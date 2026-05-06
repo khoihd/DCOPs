@@ -52,7 +52,7 @@ Notation used below:
 
 Priority 1: NAryMatrixRelation._slice_matrix()
 ----------------------------------------------
-[ ] Step 1 complete
+[x] Step 1 complete
 
 Why:
 - slice() is still used by MGM, DBA, Mixed DSA, Dynamic Max-Sum, DPOP value
@@ -76,25 +76,25 @@ Risk:
 - Avoid persistent caches in this step; keep it local and easy to review.
 
 Implementation:
-[ ] Replace s_vars/s_values parallel lists with a per-call assignment dict.
-[ ] Use a per-call set of relation variable names for unknown-variable checks.
-[ ] Preserve the returned slice_vars order.
-[ ] Preserve the returned tuple of scalar indexes and slice(None).
-[ ] Keep domain.index(val) for now unless profiling shows it is still a
+[x] Replace s_vars/s_values parallel lists with a per-call assignment dict.
+[x] Use a per-call set of relation variable names for unknown-variable checks.
+[x] Preserve the returned slice_vars order.
+[x] Preserve the returned tuple of scalar indexes and slice(None).
+[x] Keep domain.index(val) for now unless profiling shows it is still a
     meaningful cost after removing list scans.
 
 Tests:
-[ ] Run existing NAryMatrixRelationSliceTest.
-[ ] Add or confirm tests for unknown sliced variables with ignore_extra_vars
+[x] Run existing NAryMatrixRelationSliceTest.
+[x] Add or confirm tests for unknown sliced variables with ignore_extra_vars
     False.
-[ ] Add or confirm tests for ignore_extra_vars True.
-[ ] Add or confirm tests for slicing first, middle, and last matrix axes.
+[x] Add or confirm tests for ignore_extra_vars True.
+[x] Add or confirm tests for slicing first, middle, and last matrix axes.
 
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
-[ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 
 Priority 2: NAryMatrixRelation.set_value_for_assignment()
