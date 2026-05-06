@@ -80,7 +80,6 @@ class GraphColoring1(unittest.TestCase):
         self.assertTrue(is_hosted(dist, 'v2'))
         self.assertTrue(is_hosted(dist, 'v3'))
 
-    @unittest.skip('dpop does not define computation size')
     def test_adhoc_pseudotree(self):
         result = run_distribute('graph_coloring1.yaml', 'adhoc',
                                 'pseudotree', algo='dpop')

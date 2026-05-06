@@ -45,9 +45,41 @@ def test_communication_load_not_implemented():
         dpop.communication_load()
 
 
-def test_computation_memory_not_implemented():
-    with pytest.raises(NotImplementedError, match="computation memory"):
-        dpop.computation_memory()
+def test_computation_memory_root():
+    variable = Variable("x0", ["a", "b"])
+    node = PseudoTreeNode(
+        variable, constraints=[], links=[PseudoTreeLink("children", "x0", "x1")]
+    )
+
+    assert dpop.computation_memory(node) == 2
+
+
+def test_computation_memory_parent_separator():
+    x0 = Variable("x0", ["a", "b"])
+    x1 = Variable("x1", ["a", "b", "c"])
+    relation = NAryMatrixRelation([x0, x1])
+    node = PseudoTreeNode(
+        x1, constraints=[relation], links=[PseudoTreeLink("parent", "x1", "x0")]
+    )
+
+    assert dpop.computation_memory(node) == 6
+
+
+def test_computation_memory_parent_and_pseudo_parent_separator():
+    x0 = Variable("x0", ["a", "b"])
+    x1 = Variable("x1", ["a", "b", "c"])
+    x2 = Variable("x2", ["a", "b", "c", "d", "e"])
+    relation = NAryMatrixRelation([x0, x1, x2])
+    node = PseudoTreeNode(
+        x2,
+        constraints=[relation],
+        links=[
+            PseudoTreeLink("parent", "x2", "x1"),
+            PseudoTreeLink("pseudo_parent", "x2", "x0"),
+        ],
+    )
+
+    assert dpop.computation_memory(node) == 30
 
 
 def test_dpop_message_util_size():

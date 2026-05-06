@@ -40,9 +40,9 @@ from tests.dcop_cli.utils import instance_path
 
 class SimpleSecpDCOP1(unittest.TestCase):
 
-    def check_results(self, results):
+    def check_results(self, results, status='TIMEOUT'):
         # No convergence detection for now, always stop on timeout
-        self.assertEqual(results['status'], 'TIMEOUT')
+        self.assertEqual(results['status'], status)
         assignment = results['assignment']
         self.assertEqual(assignment['l1'], 0)
         self.assertEqual(assignment['l2'], 3)
@@ -74,19 +74,13 @@ class SimpleSecpDCOP1(unittest.TestCase):
         self.assertRaises(CalledProcessError, run_solve,
                           'maxsum', 'oneagent', 'secp_simple1.yaml', 5)
 
-    @unittest.skip
-    # Skip the test, adhoc requires an algorithm with computation footprint
-    # and dcop does not have it
     def test_dpop_adhoc(self):
         result = run_solve('dpop', 'adhoc', 'secp_simple1.yaml', 5)
-        self.check_results(result)
+        self.check_results(result, 'FINISHED')
 
-    @unittest.skip
-    # Skip the test, adhoc requires an algorithm with computation footprint
-    # and dcop does not have it
     def test_dpop_adhoc_process(self):
         result = run_solve('dpop', 'adhoc', 'secp_simple1.yaml', 5, 'process')
-        self.check_results(result)
+        self.check_results(result, 'FINISHED')
 
     def test_dsa_adhoc(self):
         run_solve('dsa', 'adhoc', 'secp_simple1.yaml', 5)
@@ -131,20 +125,14 @@ class GraphColoring1(unittest.TestCase):
                            'process')
         self.check_results(result)
 
-    @unittest.skip
-    # Skip the test, adhoc requires an algorithm with computation footprint
-    # and dcop does not have it
     def test_dpop_adhoc(self):
-        result = run_solve('dpop', 'adhoc', 'graph_coloring1.yaml', 1)
-        self.check_results(result)
+        result = run_solve('dpop', 'adhoc', 'graph_coloring1.yaml', 2)
+        self.check_results(result, 'FINISHED')
 
-    @unittest.skip
-    # Skip the test, adhoc requires an algorithm with computation footprint
-    # and dcop does not have it
     def test_dpop_adhoc_process(self):
         result = run_solve('dpop', 'adhoc', 'graph_coloring1.yaml', 3,
                            'process')
-        self.check_results(result)
+        self.check_results(result, 'FINISHED')
 
     def test_dpop_oneagent(self):
         result = run_solve('dpop', 'oneagent', 'graph_coloring1.yaml', 2)

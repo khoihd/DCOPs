@@ -67,6 +67,8 @@ from pydcop.algorithms import ALGO_STOP, ALGO_CONTINUE, ComputationDef
 
 GRAPH_TYPE = "pseudotree"
 
+UNIT_SIZE = 1
+
 
 def build_computation(comp_def: ComputationDef):
 
@@ -74,8 +76,41 @@ def build_computation(comp_def: ComputationDef):
     return computation
 
 
-def computation_memory(*args):
-    raise NotImplementedError("DPOP has no computation memory implementation (yet)")
+def computation_memory(computation):
+    """Return the memory footprint of a DPOP computation.
+
+    DPOP's dominant memory use is the UTIL relation built before projecting
+    the computation's own variable. Its dimensions are the computation variable
+    and its separator: parent plus pseudo-parents in the DFS pseudo-tree.
+    """
+    if computation.type != "PseudoTreeComputation":
+        raise ValueError(
+            "dpop computation_memory only supports PseudoTreeComputation, "
+            "invalid computation: {}".format(computation)
+        )
+
+    parent, pseudo_parents, _, _ = get_dfs_relations(computation)
+    separator_names = set(pseudo_parents)
+    if parent is not None:
+        separator_names.add(parent)
+
+    variables = {computation.variable.name: computation.variable}
+    for constraint in computation.constraints:
+        for variable in constraint.dimensions:
+            variables[variable.name] = variable
+
+    memory = len(computation.variable.domain) * UNIT_SIZE
+    for variable_name in separator_names:
+        try:
+            variable = variables[variable_name]
+        except KeyError as e:
+            raise ValueError(
+                "Could not find separator variable {} in constraints of "
+                "computation {}".format(variable_name, computation)
+            ) from e
+        memory *= len(variable.domain)
+
+    return memory
 
 
 def communication_load(*args):
