@@ -309,7 +309,8 @@ Candidates:
   list(constraint.dimensions).
 - Completed: ConditionalRelation.dimensions is cached at construction time and
   still returns a copy to preserve the old fresh-list behavior.
-- NAryFunctionRelation.slice() rebuilds variable-name lists on each call.
+- Completed: NAryFunctionRelation.slice() now uses a per-call set of variable
+  names for unknown-variable checks.
 - NAryMatrixRelation.__hash__ hashes str(self._m), which is fast-ish but
   imprecise and can still be expensive for large matrices.
 
@@ -327,6 +328,8 @@ Expected complexity impact:
 Verify:
 [x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
 [x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
 [x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 [x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
 [x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py

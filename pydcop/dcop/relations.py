@@ -557,7 +557,7 @@ class NAryFunctionRelation(AbstractBaseRelation, SimpleRepr):
             )
         else:
             # Check we're only slicing on existing variables
-            _var_names = [v.name for v in self._variables]
+            _var_names = {v.name for v in self._variables}
             for v in partial_assignment:
                 if v not in _var_names:
                     raise ValueError(
