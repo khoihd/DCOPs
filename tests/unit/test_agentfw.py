@@ -29,13 +29,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import time
 import threading
 import types
 import unittest
-from unittest.case import skip
 
-from pydcop.infrastructure.communication import InProcessCommunicationLayer
 from pydcop.infrastructure.computations import Message
 from pydcop.infrastructure.agents import Agent
 from pydcop import infrastructure
@@ -45,7 +42,6 @@ from pydcop import infrastructure
 class AgentFwTest(unittest.TestCase):
 
     def test_sendmsg_counts(self):
-
         comm1 = infrastructure.communication.InProcessCommunicationLayer()
         comm2 = infrastructure.communication.InProcessCommunicationLayer()
         a1 = Agent('a1', comm1)
@@ -77,7 +73,6 @@ class AgentFwTest(unittest.TestCase):
         self.assertEqual(received.msg, msg)
 
     def test_sendmsg_two_neighbors(self):
-
         comm1 = infrastructure.communication.InProcessCommunicationLayer()
         comm2 = infrastructure.communication.InProcessCommunicationLayer()
         comm3 = infrastructure.communication.InProcessCommunicationLayer()
@@ -137,38 +132,51 @@ class AgentFwTest(unittest.TestCase):
             for agent in agents:
                 agent.t.join(1)
 
-    @skip
-    def test_sendRevievedFrom(self):
+    def test_send_received_from(self):
+        comm1 = infrastructure.communication.InProcessCommunicationLayer()
+        comm2 = infrastructure.communication.InProcessCommunicationLayer()
+        a1 = Agent('a1', comm1)
+        a2 = Agent('a2', comm2)
 
-        comm = InProcessCommunicationLayer()
-        a1 = infrastructure.Agent('a1', comm)
-        a2 = infrastructure.Agent('a2', comm)
-        comm.register(a1.name, a1)
-        comm.register(a2.name, a2)
+        agents = [a1, a2]
+        computations = [('a1', a1), ('a2', a2)]
+        for agent in agents:
+            for known_agent in agents:
+                agent.discovery.register_agent(
+                    known_agent.name, known_agent.address, publish=False)
+            for computation, host in computations:
+                agent.discovery.register_computation(
+                    computation, host.name, host.address, publish=False)
 
         # use monkey patching on instance to set the _on_start method on a1
         # simply send a message to a2
         def a1_start(self):
-            print('starting a1')
-            print('sending msg to ')
-            self.send_msg('a1', 'a2', 'msg')
+            self._messaging.post_msg('a1', 'a2', Message('msg'))
 
         a1._on_start = types.MethodType(a1_start, a1)
 
         # Monkey patching a2 to check for message arrival
         a2.received_from = None
+        a2.received_event = threading.Event()
 
-        def handle_message(self, sender, dest, msg):
-            print('Receiving message from {} : {}'.format(sender, msg))
-            self.received_from = sender
+        def handle_message(self, sender, dest, msg, t):
+            if msg == Message('msg'):
+                self.received_from = sender
+                self.received_event.set()
+
         a2._handle_message = types.MethodType(handle_message, a2)
 
         # Running the test
-        a1.start()
-        a2.start()
-        time.sleep(0.1)
+        try:
+            a2.start()
+            a1.start()
 
-        self.assertEqual(a2.received_from, 'a1')
-
-        a1.stop()
-        a2.stop()
+            self.assertTrue(a2.received_event.wait(1))
+            self.assertEqual(a2.received_from, 'a1')
+        finally:
+            for agent in agents:
+                agent.discovery.unregister_agent(agent.name, publish=False)
+            for agent in agents:
+                agent.stop()
+            for agent in agents:
+                agent.t.join(1)
