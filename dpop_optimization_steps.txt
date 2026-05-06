@@ -1,0 +1,155 @@
+DPOP optimization plan
+======================
+
+Goal
+----
+Optimize `pydcop/algorithms/dpop.py` conservatively, preserving DPOP message
+semantics and optimality.
+
+Current code map
+----------------
+- `computation_memory()` estimates the UTIL relation footprint from the
+  computation variable and separator.
+- `DpopMessage.size` estimates UTIL and VALUE message sizes.
+- `DpopAlgo.__init__()` filters constraints so each relation is managed by the
+  lowest DFS-tree computation.
+- `_compute_utils_msg()` joins local constraints into accumulated child UTILs,
+  then projects out the computation variable.
+- `_on_util_message()` accumulates child UTILs and triggers UTIL or VALUE phase.
+- `_on_value_message()` slices the joined UTIL relation with separator values,
+  selects the local value, and forwards VALUE messages to children.
+
+Existing coverage
+-----------------
+- `tests/unit/test_algorithms_dpop.py`
+- `tests/api/test_api_solve_dpop.py`
+- DPOP cases in `tests/dcop_cli/test_solve.py`
+
+
+Priority 1: baseline and guardrails
+-----------------------------------
+[ ] Step 1 complete
+
+Why:
+- DPOP correctness depends on UTIL/VALUE message contents and pseudo-tree
+  separators.
+- Relation operations are already optimized; DPOP changes should prove they
+  reduce algorithm overhead without changing selected costs.
+
+Implementation:
+[ ] Run current DPOP unit and oracle/API checks before code changes.
+[ ] Identify one or two representative DPOP cases for local timing.
+[ ] Keep any benchmark local or test-owned; do not add brittle timing asserts
+    unless they are very conservative.
+
+Verify:
+[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[ ] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
+[ ] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
+
+
+Priority 2: constructor constraint filtering
+--------------------------------------------
+[ ] Step 2 complete
+
+Why:
+- `DpopAlgo.__init__()` copies constraints, then removes constraints while
+  scanning descendant names.
+- It rebuilds each relation's scope-name list and uses list membership.
+- This is startup overhead, but it is low risk and easy to test.
+
+Expected impact:
+- Runtime: small constant-factor improvement during computation construction.
+- Space: unchanged.
+
+Implementation:
+[ ] Replace remove-from-copy logic with append-to-filtered-list logic.
+[ ] Use a descendant-name set.
+[ ] Use each relation's `scope_names` or a local tuple of variable names once.
+[ ] Preserve exactly which constraints are kept or filtered.
+
+Tests:
+[ ] Add focused tests for constraints kept when they only involve self,
+    parent, or pseudo-parents.
+[ ] Add focused tests for constraints filtered when they involve children or
+    pseudo-children.
+
+Verify:
+[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[ ] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
+
+
+Priority 3: VALUE message intersection cleanup
+----------------------------------------------
+[ ] Step 3 complete
+
+Why:
+- `_on_value_message()` builds child VALUE messages by trying to read every
+  child separator variable from `value_dict` and ignoring `KeyError`.
+- This is small, but replacing exception-driven control flow with membership
+  checks is clearer and cheaper.
+
+Expected impact:
+- Runtime: small constant-factor improvement in VALUE propagation.
+- Behavior: unchanged child VALUE contents and order.
+
+Implementation:
+[ ] Replace `try` / `except KeyError` with `if v.name in value_dict`.
+[ ] Preserve child separator order in outgoing VALUE messages.
+
+Tests:
+[ ] Add or confirm a test where a child separator contains variables both in
+    and outside the received separator.
+
+Verify:
+[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[ ] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
+[ ] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
+
+
+Priority 4: relation join/projection phase review
+-------------------------------------------------
+[ ] Step 4 complete
+
+Why:
+- `_compute_utils_msg()` is the main DPOP hot path: it joins child UTILs and
+  local constraints, then projects out the local variable.
+- Changing join order or pre-converting constraints can change intermediate
+  dimensions and tie behavior, so this needs profiling and oracle checks first.
+
+Possible changes:
+[ ] Measure whether local function constraints should be converted to
+    `NAryMatrixRelation` before joining.
+[ ] Measure whether ordering local joins by relation size/arity reduces
+    intermediate matrix sizes.
+[ ] Consider a helper that joins local constraints exactly once, but only if it
+    improves clarity without changing message timing assumptions.
+
+Risks:
+- Join dimension order is visible in UTIL relations.
+- Tie-breaking can depend on relation dimension and value order.
+- Memory can get worse if a size-based order expands dimensions earlier.
+
+Verify:
+[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[ ] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
+[ ] conda run -n khoihd python -m pytest tests/dcop_cli/test_solve.py
+[ ] conda run -n khoihd ruff check pydcop/algorithms/dpop.py
+
+
+Priority 5: small helper polish
+-------------------------------
+[ ] Step 5 complete
+
+Candidates:
+- `DpopMessage.size`: make UTIL size calculation more direct while preserving
+  message-size semantics.
+- `computation_memory()`: keep behavior, but consider a small local product
+  helper if future estimates need to share logic.
+- Isolated-root value selection has duplicated `find_arg_optimal()` paths;
+  defer unless readability work is explicitly requested.
+
+Guidance:
+[ ] Do not change pseudo-tree semantics, message formats, or algorithm stop
+    behavior as part of performance cleanup.
+[ ] Keep each optimization in a small patch with focused tests.
