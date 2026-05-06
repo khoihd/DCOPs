@@ -13,12 +13,16 @@ Run from the repository root, for example:
     conda run -n khoihd python profiling/profile_dpop_utils.py --repeat 10
 """
 
+from __future__ import annotations
+
 import argparse
 import cProfile
 import pstats
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from time import perf_counter
+from typing import Any
 
 import numpy as np
 
@@ -28,7 +32,7 @@ from pydcop.dcop.objects import Variable
 from pydcop.dcop.relations import AsNAryFunctionRelation, NAryMatrixRelation
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class OperationStats:
     operation: str
     elapsed: float
@@ -37,7 +41,10 @@ class OperationStats:
     result: str
 
 
-def _relation_summary(relation):
+CaseFactory = Callable[[], dpop.DpopAlgo]
+
+
+def _relation_summary(relation: Any) -> str:
     dimensions = getattr(relation, "dimensions", [])
     names = ",".join(v.name for v in dimensions) or "-"
     shape = getattr(relation, "shape", None)
@@ -49,17 +56,15 @@ def _relation_summary(relation):
             cells *= size
     else:
         cells = 0
-    return "{} dims=[{}] shape={} cells={}".format(
-        type(relation).__name__, names, shape, cells
-    )
+    return f"{type(relation).__name__} dims=[{names}] shape={shape} cells={cells}"
 
 
 @contextmanager
-def profile_dpop_relations(stats):
+def profile_dpop_relations(stats: list[OperationStats]) -> Iterator[None]:
     original_join = dpop.join
     original_projection = dpop.projection
 
-    def profiled_join(left, right):
+    def profiled_join(left: Any, right: Any) -> Any:
         start = perf_counter()
         result = original_join(left, right)
         elapsed = perf_counter() - start
@@ -74,7 +79,7 @@ def profile_dpop_relations(stats):
         )
         return result
 
-    def profiled_projection(relation, variable, mode):
+    def profiled_projection(relation: Any, variable: Variable, mode: str) -> Any:
         start = perf_counter()
         result = original_projection(relation, variable, mode)
         elapsed = perf_counter() - start
@@ -98,13 +103,18 @@ def profile_dpop_relations(stats):
         dpop.projection = original_projection
 
 
-def _dpop_computation_def(variable, constraints, links, mode="min"):
+def _dpop_computation_def(
+    variable: Variable,
+    constraints: Iterable[Any],
+    links: Iterable[PseudoTreeLink],
+    mode="min",
+) -> ComputationDef:
     node = PseudoTreeNode(variable, constraints, links)
     algo_def = AlgorithmDef.build_with_default_param("dpop", mode=mode)
     return ComputationDef(node, algo_def)
 
 
-def smart_light_case():
+def smart_light_case() -> dpop.DpopAlgo:
     l1 = Variable("l1", list(range(10)))
     l2 = Variable("l2", list(range(10)))
     l3 = Variable("l3", list(range(10)))
@@ -133,7 +143,7 @@ def smart_light_case():
     )
 
 
-def child_util_case():
+def child_util_case() -> dpop.DpopAlgo:
     parent = Variable("x0", list(range(7)))
     variable = Variable("x1", list(range(8)))
     pseudo_parent = Variable("x2", list(range(6)))
@@ -163,14 +173,14 @@ def child_util_case():
     return computation
 
 
-CASES = {
+CASES: dict[str, CaseFactory] = {
     "smart-light": smart_light_case,
     "child-util": child_util_case,
 }
 
 
-def run_case(case_name, repeat):
-    stats = []
+def run_case(case_name: str, repeat: int) -> tuple[float, list[OperationStats]]:
+    stats: list[OperationStats] = []
     start = perf_counter()
     with profile_dpop_relations(stats):
         for _ in range(repeat):
@@ -180,44 +190,41 @@ def run_case(case_name, repeat):
     return elapsed, stats
 
 
-def print_summary(case_name, repeat, elapsed, stats, details):
-    print("case={} repeat={} total={:.6f}s".format(case_name, repeat, elapsed))
-    by_operation = {}
+def print_summary(
+    case_name: str,
+    repeat: int,
+    elapsed: float,
+    stats: Sequence[OperationStats],
+    details: bool,
+) -> None:
+    print(f"case={case_name} repeat={repeat} total={elapsed:.6f}s")
+    by_operation: dict[str, tuple[int, float]] = {}
     for stat in stats:
-        by_operation.setdefault(stat.operation, [0, 0.0])
-        by_operation[stat.operation][0] += 1
-        by_operation[stat.operation][1] += stat.elapsed
+        count, op_elapsed = by_operation.get(stat.operation, (0, 0.0))
+        by_operation[stat.operation] = (count + 1, op_elapsed + stat.elapsed)
 
     for operation, (count, op_elapsed) in sorted(by_operation.items()):
         average = op_elapsed / count if count else 0
         print(
-            "  {} count={} total={:.6f}s avg={:.6f}s".format(
-                operation, count, op_elapsed, average
-            )
+            f"  {operation} count={count} "
+            f"total={op_elapsed:.6f}s avg={average:.6f}s"
         )
 
     if details:
         for index, stat in enumerate(stats, start=1):
             print(
-                "  #{:03d} {} {:.6f}s\n"
-                "       left:   {}\n"
-                "       right:  {}\n"
-                "       result: {}".format(
-                    index,
-                    stat.operation,
-                    stat.elapsed,
-                    stat.left,
-                    stat.right,
-                    stat.result,
-                )
+                f"  #{index:03d} {stat.operation} {stat.elapsed:.6f}s\n"
+                f"       left:   {stat.left}\n"
+                f"       right:  {stat.right}\n"
+                f"       result: {stat.result}"
             )
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--case",
-        choices=sorted(CASES),
+        choices=["all"] + sorted(CASES),
         default="smart-light",
         help="profiling case to run",
     )
@@ -234,16 +241,23 @@ def main():
     )
     args = parser.parse_args()
 
+    if args.repeat < 1:
+        parser.error("--repeat must be greater than zero")
+
     if args.cprofile:
         profiler = cProfile.Profile()
         profiler.enable()
 
-    elapsed, stats = run_case(args.case, args.repeat)
+    case_names = sorted(CASES) if args.case == "all" else [args.case]
+    results = [(case_name, *run_case(case_name, args.repeat)) for case_name in case_names]
 
     if args.cprofile:
         profiler.disable()
 
-    print_summary(args.case, args.repeat, elapsed, stats, args.details)
+    for index, (case_name, elapsed, stats) in enumerate(results):
+        if index:
+            print()
+        print_summary(case_name, args.repeat, elapsed, stats, args.details)
 
     if args.cprofile:
         pstats.Stats(profiler).strip_dirs().sort_stats("cumtime").print_stats(25)
