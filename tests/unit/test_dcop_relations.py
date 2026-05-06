@@ -2046,6 +2046,33 @@ def test_join_slow_matrix_and_function_relations_directly():
     assert joined(x1=1, x2=1) == 13
 
 
+def test_join_slow_does_not_use_assignment_generation_or_filtering(monkeypatch):
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+
+    @AsNAryFunctionRelation(x1)
+    def u1(x):
+        return x + 1
+
+    @AsNAryFunctionRelation(x1, x2)
+    def u2(x, y):
+        return x * 10 + y
+
+    def fail(*args, **kwargs):
+        raise AssertionError("join_slow should iterate matrix coordinates directly")
+
+    monkeypatch.setattr(pydcop.dcop.relations, "generate_assignment_as_dict", fail)
+    monkeypatch.setattr(pydcop.dcop.relations, "filter_assignment_dict", fail)
+
+    joined = pydcop.dcop.relations.join_slow(u1, u2)
+
+    assert joined.dimensions == [x1, x2]
+    assert joined(x1=0, x2=0) == 1
+    assert joined(x1=0, x2=1) == 2
+    assert joined(x1=1, x2=0) == 12
+    assert joined(x1=1, x2=1) == 13
+
+
 def test_join_matrix_relation_with_zero_arity_relation():
     x1 = Variable("x1", ["a", "b", "c"])
     x2 = Variable("x2", ["1", "2"])

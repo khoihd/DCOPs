@@ -100,7 +100,7 @@ Verify:
 
 Priority 2: generic join() fallback
 -----------------------------------
-[ ] Step 2 complete
+[x] Step 2 complete
 
 Why:
 - Matrix + matrix join is optimized, but non-matrix joins still use the generic
@@ -128,16 +128,18 @@ Risk:
 Implementation:
 [x] Split join() into dispatcher, join_fast(), and join_slow().
 [x] Keep the existing matrix + matrix fast path unchanged in join_fast().
-[ ] In the fallback, allocate the result matrix once as today.
-[ ] Iterate result matrix coordinates with np.ndindex(matrix.shape).
-[ ] Build one full assignment dict from coordinates.
-[ ] Build u1/u2 assignment dicts with precomputed relation variable-name sets.
-[ ] Evaluate u1 and u2 exactly as today, or add a conservative direct-eval
+[x] In the fallback, allocate the result matrix once as today.
+[x] Iterate result matrix coordinates with np.ndindex(matrix.shape).
+[x] Build one full assignment dict from coordinates.
+[x] Build u1/u2 assignment dicts with precomputed relation variable-name tuples.
+[x] Evaluate u1 and u2 exactly as today, or add a conservative direct-eval
     helper with fallback if needed.
-[ ] Write directly to matrix[matrix_index].
+[x] Write directly to matrix[matrix_index].
 
 Tests:
 [x] Add direct tests for join_fast() and join_slow().
+[x] Add a regression test that join_slow() does not use assignment generation
+    or filtering helpers.
 [x] Run existing join tests.
 [x] Add or confirm tests for matrix/function joins.
 [x] Add or confirm tests for different variable order.

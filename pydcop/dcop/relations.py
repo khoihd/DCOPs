@@ -1755,10 +1755,18 @@ def join_slow(u1: Constraint, u2: Constraint) -> Constraint:
     """
     dims = _join_dimensions(u1, u2)
     matrix = np.empty(tuple(len(v.domain) for v in dims), dtype=np.float64)
-    for ass in generate_assignment_as_dict(dims):
-        u1_ass = filter_assignment_dict(ass, u1.dimensions)
-        u2_ass = filter_assignment_dict(ass, u2.dimensions)
-        matrix_index = tuple(v.domain.index(ass[v.name]) for v in dims)
+    dim_names = tuple(v.name for v in dims)
+    dim_domains = tuple(v.domain for v in dims)
+    u1_names = tuple(v.name for v in u1.dimensions)
+    u2_names = tuple(v.name for v in u2.dimensions)
+
+    for matrix_index in np.ndindex(matrix.shape):
+        assignment = {
+            name: domain[index]
+            for name, domain, index in zip(dim_names, dim_domains, matrix_index)
+        }
+        u1_ass = {name: assignment[name] for name in u1_names}
+        u2_ass = {name: assignment[name] for name in u2_names}
         matrix[matrix_index] = u1(**u1_ass) + u2(**u2_ass)
 
     return NAryMatrixRelation(dims, matrix, name="joined_utils")
