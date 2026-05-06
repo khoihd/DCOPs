@@ -778,7 +778,6 @@ class TestsHandleMessage(unittest.TestCase):
         self.assertEqual(computation2._potential_gain, 0)
         self.assertEqual(computation2._potential_value, 1)
 
-    @pytest.mark.skip
     def test_offer_has_no_partner_yet(self):
         x1 = Variable("x1", list(range(2)))
         x2 = Variable("x2", list(range(2)))
@@ -799,7 +798,10 @@ class TestsHandleMessage(unittest.TestCase):
         computation._state = "offer"
         computation.on_offer_msg("x2", Mgm2OfferMessage(), 1)
         self.assertEqual(computation._state, "offer")
-        self.assertEqual(computation._offers, [])
+        self.assertEqual(len(computation._offers), 1)
+        sender, offer = computation._offers[0]
+        self.assertEqual(sender, "x2")
+        self.assertFalse(offer.is_offering)
         # Received only fake offers
         computation2 = Mgm2Computation(
             ComputationDef(
@@ -809,10 +811,11 @@ class TestsHandleMessage(unittest.TestCase):
         )
         computation2.message_sender = DummySender()
         computation2._state = "offer"
-        computation2.__nb_received_offers__ = 1
         computation2.on_offer_msg("x2", Mgm2OfferMessage(), 1)
+        computation2.on_offer_msg("x3", Mgm2OfferMessage(), 1)
         self.assertEqual(computation2._state, "gain")
-        self.assertEqual(computation2._offers, [])
+        self.assertEqual(len(computation2._offers), 2)
+        self.assertTrue(all(not offer.is_offering for _, offer in computation2._offers))
 
         # Receives a real offer (but still expects other OfferMessages)
         computation3 = Mgm2Computation(
@@ -827,7 +830,11 @@ class TestsHandleMessage(unittest.TestCase):
             "x2", Mgm2OfferMessage({(1, 1): 8}, is_offering=True), 1
         )
         self.assertEqual(computation3._state, "offer")
-        self.assertEqual(computation3._offers, [("x2", {(1, 1): 8})])
+        self.assertEqual(len(computation3._offers), 1)
+        sender, offer = computation3._offers[0]
+        self.assertEqual(sender, "x2")
+        self.assertTrue(offer.is_offering)
+        self.assertEqual(offer.offers, {(1, 1): 8})
         # Receives a real offer and is the last expected OfferMessage
         computation4 = Mgm2Computation(
             ComputationDef(
@@ -840,11 +847,15 @@ class TestsHandleMessage(unittest.TestCase):
         computation4._neighbors_values = {"x2": 0, "x3": 1}
         computation4.__value__ = 0
         computation4.__cost__ = 1
-        computation4.__nb_received_offers__ = 1
         computation4.on_offer_msg(
             "x2", Mgm2OfferMessage({(1, 1): 8}, is_offering=True), 1
         )
-        self.assertEqual(computation4._offers, [("x2", {(1, 1): 8})])
+        computation4.on_offer_msg("x3", Mgm2OfferMessage(), 1)
+        self.assertEqual(len(computation4._offers), 2)
+        sender, offer = computation4._offers[0]
+        self.assertEqual(sender, "x2")
+        self.assertTrue(offer.is_offering)
+        self.assertEqual(offer.offers, {(1, 1): 8})
         self.assertEqual(computation4._state, "gain")
         self.assertEqual(computation4._potential_gain, 9)
         self.assertEqual(computation4._potential_value, 1)
