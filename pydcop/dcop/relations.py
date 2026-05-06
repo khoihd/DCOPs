@@ -1462,11 +1462,13 @@ def get_data_type_min(data_type):
 
 def generate_assignment(variables: List[Variable]):
     """
-    Returns a generator iterating on all possible assignments for the set of
-    variables vars.
+    Returns a generator iterating over all possible assignments for a set of
+    variables.
 
-    An assignment is represented as a list of values, in the same order as
-    the list of variables.
+    Each assignment is represented as a new list of values, in the same order
+    as the input variables. The iteration order follows itertools.product over
+    the input variable domains: the last variable changes fastest and the
+    first variable changes slowest.
 
     Parameters
     ----------
@@ -1475,17 +1477,18 @@ def generate_assignment(variables: List[Variable]):
 
     Returns
     -------
-    a generator iterating on all possible assignments for the set of
-    variables vars
+    generator of list[Any]
+        A generator iterating on all possible assignments for the set of
+        variables.
     """
 
     if len(variables) == 0:
         yield []
-    else:
-        for d in variables[-1].domain:
-            for ass in generate_assignment(variables[:-1]):
-                ass.append(d)
-                yield ass
+        return
+
+    domains = [v.domain for v in variables]
+    for values in product(*domains):
+        yield list(values)
 
 
 def generate_assignment_as_dict(variables: List[Variable]):
@@ -1504,7 +1507,9 @@ def generate_assignment_as_dict(variables: List[Variable]):
 
     Returns
     -------
-    a generator iterating on all possible assignments for the set of variables
+    generator of dict[str, Any]
+        A generator iterating on all possible assignments for the set of
+        variables.
     """
 
     if len(variables) == 0:

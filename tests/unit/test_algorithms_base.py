@@ -145,6 +145,36 @@ class GenerateAssignementTestCase(unittest.TestCase):
         self.assertIn(["a3", "b1", "c1"], ass)
         self.assertIn(["a2", "b1", "c2"], ass)
 
+    def test_generate_iteration_order(self):
+        x1 = Variable("x1", ["a1", "a2"])
+        x2 = Variable("x2", ["b1", "b2"])
+        x3 = Variable("x3", ["c1", "c2"])
+
+        ass = list(pydcop.dcop.relations.generate_assignment([x1, x2, x3]))
+
+        self.assertEqual(
+            ass,
+            [
+                ["a1", "b1", "c1"],
+                ["a1", "b1", "c2"],
+                ["a1", "b2", "c1"],
+                ["a1", "b2", "c2"],
+                ["a2", "b1", "c1"],
+                ["a2", "b1", "c2"],
+                ["a2", "b2", "c1"],
+                ["a2", "b2", "c2"],
+            ],
+        )
+
+    def test_generate_yields_distinct_lists(self):
+        x1 = Variable("x1", ["a1", "a2"])
+        x2 = Variable("x2", ["b1", "b2"])
+
+        ass = list(pydcop.dcop.relations.generate_assignment([x1, x2]))
+
+        ass[0][0] = "changed"
+        self.assertEqual(ass[1], ["a1", "b2"])
+
 
 class GenerateAssignementAsDictTestCase(unittest.TestCase):
     def test_generate_1var(self):
