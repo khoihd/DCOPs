@@ -30,6 +30,7 @@
 
 
 import time
+import threading
 import types
 import unittest
 from unittest.case import skip
@@ -77,47 +78,64 @@ class AgentFwTest(unittest.TestCase):
 
     def test_sendmsg_two_neighbors(self):
 
-        comm = infrastructure.communication.InProcessCommunicationLayer()
-        a1 = infrastructure.Agent('a1', comm)
-        a2 = infrastructure.Agent('a2', comm)
-        a3 = infrastructure.Agent('a3', comm)
-        comm.register(a1.name, a1)
-        comm.register(a2.name, a2)
-        comm.register(a3.name, a3)
+        comm1 = infrastructure.communication.InProcessCommunicationLayer()
+        comm2 = infrastructure.communication.InProcessCommunicationLayer()
+        comm3 = infrastructure.communication.InProcessCommunicationLayer()
+        a1 = Agent('a1', comm1)
+        a2 = Agent('a2', comm2)
+        a3 = Agent('a3', comm3)
+
+        agents = [a1, a2, a3]
+        computations = [('c1', a1), ('c2', a2), ('c3', a3)]
+        for agent in agents:
+            for known_agent in agents:
+                agent.discovery.register_agent(
+                    known_agent.name, known_agent.address, publish=False)
+            for computation, host in computations:
+                agent.discovery.register_computation(
+                    computation, host.name, host.address, publish=False)
 
         # use monkey patching on instance to set the _on_start method on a1
         # simply send a message to all neighbors
         def a1_start(self):
-            print('starting a1')
-            for n in ['a2', 'a3']:
-                print('sending msg to ' + n)
-                self.send_msg('a1', n, 'msg')
+            for n in ['c2', 'c3']:
+                self._messaging.post_msg('c1', n, Message('msg'))
 
         a1._on_start = types.MethodType(a1_start, a1)
 
         # Monkey patching a2 & a3 to check for message arrival
         a2.received = False
         a3.received = False
+        a2.received_event = threading.Event()
+        a3.received_event = threading.Event()
 
-        def handle_message(self, sender, dest, msg):
-            print('Receiving message ' + msg)
-            if msg == 'msg':
+        def handle_message(self, sender, dest, msg, t):
+            if msg == Message('msg'):
                 self.received = True
+                self.received_event.set()
+
         a2._handle_message = types.MethodType(handle_message, a2)
         a3._handle_message = types.MethodType(handle_message, a3)
 
         # Running the test
-        a1.start()
-        a2.start()
-        a3.start()
-        time.sleep(0.1)
+        try:
+            a2.start()
+            a3.start()
+            a1.start()
 
-        self.assertTrue(a2.received)
-        self.assertTrue(a3.received)
+            self.assertTrue(a2.received_event.wait(1))
+            self.assertTrue(a3.received_event.wait(1))
+            self.assertTrue(a2.received)
+            self.assertTrue(a3.received)
 
-        a1.stop()
-        a2.stop()
-        a3.stop()
+            self.assertEqual(a1.messages_count('c1'), 2)
+        finally:
+            for agent in agents:
+                agent.discovery.unregister_agent(agent.name, publish=False)
+            for agent in agents:
+                agent.stop()
+            for agent in agents:
+                agent.t.join(1)
 
     @skip
     def test_sendRevievedFrom(self):
