@@ -1884,6 +1884,19 @@ def test_relation_from_str_with_map():
     assert (c1(x1="B", x2="B")) == 3
 
 
+def test_filter_assignment_dict_preserves_assignment_order():
+    x1 = Variable("x1", list(range(5)))
+    x3 = Variable("x3", list(range(5)))
+
+    filtered = pydcop.dcop.relations.filter_assignment_dict(
+        {"x3": 3, "x1": 1, "x2": 2},
+        [x1, x3],
+    )
+
+    assert filtered == {"x3": 3, "x1": 1}
+    assert list(filtered) == ["x3", "x1"]
+
+
 class JoinRelationsTestCase:
     def test_arity_bothsamevar(self):
         x1 = Variable("x1", ["a", "b", "c"])

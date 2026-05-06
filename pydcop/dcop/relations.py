@@ -1590,10 +1590,10 @@ def filter_assignment_dict(assignment, target_vars):
     """
 
     filtered_ass = {}
-    target_vars_names = [v.name for v in target_vars]
-    for v in assignment:
-        if v in target_vars_names:
-            filtered_ass[v] = assignment[v]
+    target_vars_names = {v.name for v in target_vars}
+    for var_name, value in assignment.items():
+        if var_name in target_vars_names:
+            filtered_ass[var_name] = value
     return filtered_ass
 
 
