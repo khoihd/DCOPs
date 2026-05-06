@@ -1426,10 +1426,10 @@ def find_optimum(constraint: Constraint, mode: str) -> float:
     """
     if mode != "min" and mode != "max":
         raise ValueError("mode must be 'min' or 'max', not " + str(mode))
-    variables = [v for v in constraint.dimensions]
+    variables = list(constraint.dimensions)
     optimum = None
-    for asgt in generate_assignment_as_dict(variables):
-        rel_val = constraint(**filter_assignment_dict(asgt, constraint.dimensions))
+    for assignment in generate_assignment_as_dict(variables):
+        rel_val = constraint(**assignment)
         if optimum is None:
             optimum = rel_val
         elif mode == "max" and rel_val > optimum:

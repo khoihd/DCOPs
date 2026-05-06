@@ -62,6 +62,7 @@ from pydcop.dcop.relations import (
     generate_assignment_as_dict,
     constraint_from_str,
     assignment_cost,
+    find_optimum,
 )
 from pydcop.utils.expressionfunction import ExpressionFunction
 from pydcop.utils.simple_repr import simple_repr, from_repr, SimpleReprException
@@ -1895,6 +1896,19 @@ def test_filter_assignment_dict_preserves_assignment_order():
 
     assert filtered == {"x3": 3, "x1": 1}
     assert list(filtered) == ["x3", "x1"]
+
+
+def test_find_optimum_does_not_filter_generated_assignments(monkeypatch):
+    x1 = Variable("x1", [0, 1, 2])
+    x2 = Variable("x2", [0, 1, 2])
+    c1 = constraint_from_str("c1", "x1 + x2", [x1, x2])
+
+    def fail(*args, **kwargs):
+        raise AssertionError("find_optimum should evaluate generated assignments directly")
+
+    monkeypatch.setattr(pydcop.dcop.relations, "filter_assignment_dict", fail)
+
+    assert find_optimum(c1, "max") == 4
 
 
 class JoinRelationsTestCase:
