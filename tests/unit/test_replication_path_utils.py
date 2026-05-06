@@ -33,7 +33,6 @@ import pytest
 
 from pydcop.replication.path_utils import (
     filter_missing_agents_paths,
-    PathsTable,
     head,
     last,
     before_last,
@@ -113,8 +112,6 @@ def test_filter_missing_agents_paths_2():
 
     assert len(filtered) == len(paths)
 
-
-@pytest.mark.skip
 def test_bench_filter_missing_agents_paths(benchmark):
     def to_bench():
         paths = [
@@ -158,36 +155,6 @@ def test_path_unserialize():
     obtained = from_repr(r)
     assert given == obtained
 
-
-#
-#
-# def test_pathtable_init():
-#     p1 = ("a2", "a3")
-#     p2 = ("a2", "a4")
-#     table = PathsTable({p1: 2, p2: 3})
-#
-#     assert len(table) == 2
-#
-#
-# def test_pathtable_get():
-#     p1 = ("a2", "a3")
-#     table = PathsTable({p1: 2})
-#     assert p1 in table
-#     assert table[p1] == 2
-#
-#
-# def test_pathtable_iter():
-#     p1 = ("a2", "a3")
-#     p2 = ("a2", "a4")
-#     paths = {p1, p2}
-#     table = PathsTable({p1: 2, p2: 3})
-#
-#     for k in table:
-#         paths.remove(k)
-#
-#     assert len(paths) == 0
-
-
 def test_remove_path():
     paths = [
         (3, ("a2", "a9", "a4", "a8")),
@@ -210,8 +177,6 @@ def test_remove_path():
     remove_path(paths, ("a2", "foo", "a4"))
     assert len(paths) == 10
 
-
-@pytest.mark.skip
 def test_remove_path_bench(benchmark):
     def to_bench():
         paths = [
@@ -281,27 +246,23 @@ def test_affordable_path_from():
 
     assert len(list(paths)) == 3
 
-
-@pytest.mark.skip
 def test_bench_affordable_path_from(benchmark):
-    table = PathsTable(
-        {
-            ("a2", "a9", "a4", "a8"): 3,
-            ("a2", "a3"): 2,
-            ("a2", "a3", "a4"): 3,
-            ("a5", "a3", "a4"): 6,
-            ("a2", "a3", "a4", "a12"): 4,
-            ("a2", "a4", "a4"): 9,
-            ("a2", "a4", "a4", "a8"): 3,
-            ("a2", "a5", "a4", "a8"): 3,
-            ("a2", "a3", "a4", "a8"): 3,
-            ("a1", "a3", "a4"): 3,
-            ("a2", "a3", "a4", "a1", "a5"): 4,
-        }
-    )
+    table = [
+        (3, ("a2", "a9", "a4", "a8")),
+        (2, ("a2", "a3")),
+        (3, ("a2", "a3", "a4")),
+        (6, ("a5", "a3", "a4")),
+        (4, ("a2", "a3", "a4", "a12")),
+        (9, ("a2", "a4", "a4")),
+        (3, ("a2", "a4", "a4", "a8")),
+        (3, ("a2", "a5", "a4", "a8")),
+        (3, ("a2", "a3", "a4", "a8")),
+        (3, ("a1", "a3", "a4")),
+        (4, ("a2", "a3", "a4", "a1", "a5")),
+    ]
 
     def to_bench():
-        paths = affordable_path_from(("a2", "a3"), 3, table)
+        paths = list(affordable_path_from(("a2", "a3"), 3, table))
 
         assert len(paths) == 3
 
