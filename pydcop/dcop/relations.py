@@ -103,14 +103,10 @@ class RelationProtocol(object):
 
     def slice(self, partial_assignment: Dict[str, object]) -> "RelationProtocol":
         """
-        Slice operation on a relation.
+        Return a relation filtered by the partial assignment.
 
-        :param partial_assignment: a dict {var_name: value} containing the
-        name and value of all variable to be sliced out of the relation.
-
-        :return: A new relation with a lower (or equal) arity, depending on
-        the same variable(s) than the original relation, minus the sliced
-        variables.
+        :param partial_assignment: mapping from variable names to values.
+        :return: a relation over variables not in the partial assignment.
         """
         raise NotImplementedError("slice not implemented")
 
@@ -735,6 +731,21 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
     def slice(
         self, partial_assignment: Dict[str, object], ignore_extra_vars=False
     ) -> "NAryMatrixRelation":
+        """
+        Return a relation obtained by fixing some variables to given values.
+
+        ``partial_assignment`` maps variable names to values in their domains.
+        Assigned variables are removed from the returned relation dimensions,
+        and the returned matrix contains the corresponding slice of this
+        relation's matrix. If no assignment is provided, this relation is
+        returned unchanged.
+
+        :param partial_assignment: variable-name to value mapping used to
+            select matrix coordinates.
+        :param ignore_extra_vars: when true, variables that are not dimensions
+            of this relation are ignored instead of raising an error.
+        :return: a matrix relation over the unassigned variables.
+        """
         if not partial_assignment:
             return self
         sliced_vars, sliced_values = zip(*partial_assignment.items())
