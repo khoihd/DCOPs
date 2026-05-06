@@ -56,7 +56,7 @@ Verify:
 
 Priority 2: constructor constraint filtering
 --------------------------------------------
-[ ] Step 2 complete
+[x] Step 2 complete
 
 Why:
 - `DpopAlgo.__init__()` copies constraints, then removes constraints while
@@ -74,7 +74,7 @@ Implementation:
 [x] Ignore using each relation's `scope_names` or a local tuple of variable
     names once. The current local set comprehension avoids a broader
     relation-protocol change and is already scoped to this filter.
-[ ] Preserve exactly which constraints are kept or filtered.
+[x] Preserve exactly which constraints are kept or filtered.
 
 Tests:
 [x] Add focused tests for constraints kept when they only involve self,
