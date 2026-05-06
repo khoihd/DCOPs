@@ -5,7 +5,7 @@
 Installation
 ============
 
-PyDCOP runs on python >= 3.6.
+PyDCOP runs on python >= 3.11.
 We recommend using ``pip`` and installing pyDCOP in a
 `python venv <https://docs.python.org/3/library/venv.html>`_::
 

@@ -126,6 +126,9 @@ Why:
   dimensions and tie behavior, so this needs profiling and oracle checks first.
 
 Possible changes:
+[x] Add an opt-in profiling helper for `_compute_utils_msg()` join/projection
+    timing and relation shape inspection:
+    `conda run -n khoihd python profiling/profile_dpop_utils.py --repeat 10 --details`
 [ ] Measure whether local function constraints should be converted to
     `NAryMatrixRelation` before joining.
 [ ] Measure whether ordering local joins by relation size/arity reduces

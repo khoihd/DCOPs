@@ -87,7 +87,11 @@ setup(
         "License :: OSI Approved :: BSD License",
 
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
 
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
@@ -96,6 +100,7 @@ setup(
 
     keywords=['dcop', 'MAS'],
 
+    python_requires='>=3.11',
     install_requires=deps,
     tests_require=test_deps,
     extras_require=extras,
