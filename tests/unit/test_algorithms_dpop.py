@@ -161,6 +161,38 @@ def test_constructor_filters_descendant_constraints_without_removing_from_copy()
     assert computation._constraints == [parent_relation, own_relation]
 
 
+def test_value_message_preserves_child_separator_order():
+    x0 = Variable("x0", [0, 1])
+    x1 = Variable("x1", ["a", "b"])
+    x2 = Variable("x2", ["child"])
+    x3 = Variable("x3", [10, 20])
+    x4 = Variable("x4", ["outside"])
+
+    computation = dpop.DpopAlgo(
+        dpop_computation_def(
+            x1,
+            constraints=[],
+            links=[
+                PseudoTreeLink("parent", x1.name, x0.name),
+                PseudoTreeLink("children", x1.name, x2.name),
+            ],
+        )
+    )
+    sender = DummySender()
+    computation.message_sender = sender
+    computation._children_separator[x2.name] = [x3, x4, x0]
+    matrix = np.zeros((2, 2, 2), dtype=np.float64)
+    matrix[0, 0, 1] = 1
+    matrix[0, 1, 1] = 5
+    computation._joined_utils = NAryMatrixRelation([x0, x1, x3], matrix)
+
+    msg = DpopMessage("VALUE", ([x0, x3], [0, 20]))
+    computation._on_value_message(x0.name, msg, 0)
+
+    assert sender.value_dest_var == x2.name
+    assert sender.value_msg_data == ([x1, x3, x0], ["b", 20, 0])
+
+
 class TestAlgoExampleTwoVars:
     """
     Test case with a very simplistic setup with only two vars and one relation

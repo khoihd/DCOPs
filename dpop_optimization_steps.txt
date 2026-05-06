@@ -89,7 +89,7 @@ Verify:
 
 Priority 3: VALUE message intersection cleanup
 ----------------------------------------------
-[ ] Step 3 complete
+[x] Step 3 complete
 
 Why:
 - `_on_value_message()` builds child VALUE messages by trying to read every
@@ -103,15 +103,15 @@ Expected impact:
 
 Implementation:
 [x] Replace `try` / `except KeyError` with `if v.name in value_dict`.
-[ ] Preserve child separator order in outgoing VALUE messages.
+[x] Preserve child separator order in outgoing VALUE messages.
 
 Tests:
-[ ] Add or confirm a test where a child separator contains variables both in
+[x] Add or confirm a test where a child separator contains variables both in
     and outside the received separator.
 
 Verify:
 [x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
-[ ] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
+[x] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
 [x] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
 
 
