@@ -41,7 +41,16 @@ class OperationStats:
     result: str
 
 
+@dataclass(frozen=True, slots=True)
+class ProfileResult:
+    strategy: str
+    elapsed: float
+    stats: list[OperationStats]
+    util: NAryMatrixRelation
+
+
 CaseFactory = Callable[[], dpop.DpopAlgo]
+Strategy = Callable[[dpop.DpopAlgo, list[OperationStats]], None]
 
 
 def _relation_summary(relation: Any) -> str:
@@ -57,6 +66,10 @@ def _relation_summary(relation: Any) -> str:
     else:
         cells = 0
     return f"{type(relation).__name__} dims=[{names}] shape={shape} cells={cells}"
+
+
+def _dimension_names(relation: Any) -> list[str]:
+    return [variable.name for variable in relation.dimensions]
 
 
 @contextmanager
@@ -112,6 +125,38 @@ def _dpop_computation_def(
     node = PseudoTreeNode(variable, constraints, links)
     algo_def = AlgorithmDef.build_with_default_param("dpop", mode=mode)
     return ComputationDef(node, algo_def)
+
+
+def _original_strategy(
+    computation: dpop.DpopAlgo, stats: list[OperationStats]
+) -> None:
+    del computation, stats
+
+
+def _pre_convert_local_constraints(
+    computation: dpop.DpopAlgo, stats: list[OperationStats]
+) -> None:
+    converted_constraints = []
+    for constraint in computation._constraints:
+        if isinstance(constraint, NAryMatrixRelation):
+            converted_constraints.append(constraint)
+            continue
+
+        start = perf_counter()
+        converted = NAryMatrixRelation.from_func_relation(constraint)
+        elapsed = perf_counter() - start
+        stats.append(
+            OperationStats(
+                "convert",
+                elapsed,
+                _relation_summary(constraint),
+                "-",
+                _relation_summary(converted),
+            )
+        )
+        converted_constraints.append(converted)
+
+    computation._constraints = converted_constraints
 
 
 def smart_light_case() -> dpop.DpopAlgo:
@@ -178,26 +223,61 @@ CASES: dict[str, CaseFactory] = {
     "child-util": child_util_case,
 }
 
+STRATEGIES: dict[str, Strategy] = {
+    "original": _original_strategy,
+    "pre-convert-local-constraints": _pre_convert_local_constraints,
+}
 
-def run_case(case_name: str, repeat: int) -> tuple[float, list[OperationStats]]:
+
+def run_case(case_name: str, strategy_name: str, repeat: int) -> ProfileResult:
     stats: list[OperationStats] = []
+    util = None
     start = perf_counter()
     with profile_dpop_relations(stats):
         for _ in range(repeat):
             computation = CASES[case_name]()
-            computation._compute_utils_msg()
+            STRATEGIES[strategy_name](computation, stats)
+            util = computation._compute_utils_msg()
     elapsed = perf_counter() - start
-    return elapsed, stats
+    if util is None:
+        raise RuntimeError("No UTIL relation was computed")
+    return ProfileResult(strategy_name, elapsed, stats, util)
+
+
+def _comparison_status(
+    reference: NAryMatrixRelation, candidate: NAryMatrixRelation
+) -> str:
+    reference_dims = _dimension_names(reference)
+    candidate_dims = _dimension_names(candidate)
+    if candidate_dims != reference_dims:
+        return f"differs: dims={candidate_dims}, expected={reference_dims}"
+
+    if candidate._m.shape != reference._m.shape:
+        return f"differs: shape={candidate._m.shape}, expected={reference._m.shape}"
+
+    if not np.array_equal(candidate._m, reference._m):
+        difference = np.abs(candidate._m - reference._m)
+        return f"differs: max_abs_delta={np.max(difference):.6f}"
+
+    return "matches original"
 
 
 def print_summary(
     case_name: str,
+    strategy: str,
     repeat: int,
     elapsed: float,
     stats: Sequence[OperationStats],
     details: bool,
+    comparison: str | None = None,
 ) -> None:
-    print(f"case={case_name} repeat={repeat} total={elapsed:.6f}s")
+    print(
+        f"case={case_name} strategy={strategy} repeat={repeat} "
+        f"total={elapsed:.6f}s"
+    )
+    if comparison is not None:
+        print(f"  output={comparison}")
+
     by_operation: dict[str, tuple[int, float]] = {}
     for stat in stats:
         count, op_elapsed = by_operation.get(stat.operation, (0, 0.0))
@@ -228,6 +308,12 @@ def main() -> None:
         default="smart-light",
         help="profiling case to run",
     )
+    parser.add_argument(
+        "--strategy",
+        choices=["all"] + sorted(STRATEGIES),
+        default="original",
+        help="profiling strategy to run",
+    )
     parser.add_argument("--repeat", type=int, default=5, help="number of runs")
     parser.add_argument(
         "--details",
@@ -249,15 +335,39 @@ def main() -> None:
         profiler.enable()
 
     case_names = sorted(CASES) if args.case == "all" else [args.case]
-    results = [(case_name, *run_case(case_name, args.repeat)) for case_name in case_names]
+    strategy_names = (
+        sorted(STRATEGIES) if args.strategy == "all" else [args.strategy]
+    )
+    results = [
+        (case_name, run_case(case_name, strategy_name, args.repeat))
+        for case_name in case_names
+        for strategy_name in strategy_names
+    ]
 
     if args.cprofile:
         profiler.disable()
 
-    for index, (case_name, elapsed, stats) in enumerate(results):
+    reference_utils = {
+        case_name: result.util
+        for case_name, result in results
+        if result.strategy == "original"
+    }
+
+    for index, (case_name, result) in enumerate(results):
         if index:
             print()
-        print_summary(case_name, args.repeat, elapsed, stats, args.details)
+        comparison = None
+        if result.strategy != "original" and case_name in reference_utils:
+            comparison = _comparison_status(reference_utils[case_name], result.util)
+        print_summary(
+            case_name,
+            result.strategy,
+            args.repeat,
+            result.elapsed,
+            result.stats,
+            args.details,
+            comparison,
+        )
 
     if args.cprofile:
         pstats.Stats(profiler).strip_dirs().sort_stats("cumtime").print_stats(25)
