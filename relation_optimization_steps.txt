@@ -126,7 +126,7 @@ Verify:
 
 Priority 4: scalar lookup in NAryMatrixRelation.get_value_for_assignment()
 -------------------------------------------------------------------------
-[ ] Step 4 complete
+[x] Step 4 complete
 
 Why:
 - get_value_for_assignment() currently calls slice() and constructs a temporary
@@ -139,22 +139,23 @@ Risk:
   handling all need to remain compatible.
 
 Implementation:
-[ ] Keep zero-arity behavior unchanged.
-[ ] For list input, compute the index tuple directly from variable order.
-[ ] For dict input, compute the index tuple directly from variable names.
-[ ] Return self._m[index_tuple].item().
-[ ] Preserve current ValueError/KeyError behavior where practical.
+[x] Keep zero-arity behavior unchanged.
+[x] For list input, compute the index tuple directly from variable order.
+[x] For dict input, compute the index tuple directly from variable names.
+[x] Return self._m[index_tuple].item().
+[x] Preserve current ValueError/KeyError behavior where practical.
 
 Tests:
-[ ] Run existing NAryMatrixRelation value lookup tests.
-[ ] Add tests for dict lookup with variables in different order if needed.
-[ ] Add tests for missing assignment values if behavior is unclear.
+[x] Run existing NAryMatrixRelation value lookup tests.
+[x] Add tests for dict lookup with variables in different order if needed.
+[x] Add tests for missing assignment values if behavior is unclear.
 
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
-[ ] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
-[ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py tests/api/test_api_solve.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 
 Priority 5: NAryMatrixRelation._slice_matrix()

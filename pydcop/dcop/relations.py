@@ -809,13 +809,29 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
                     "in a n-ari relation, n!=0"
                 )
         if isinstance(var_values, list):
-            assignt = {self._variables[i].name: val for i, val in enumerate(var_values)}
-            u = self.slice(assignt)
-            return u._m.item()
+            slices = []
+            for i, val in enumerate(var_values):
+                slices.append(self._variables[i].domain.index(val))
+            for _ in self._variables[len(var_values) :]:
+                slices.append(slice(None))
+            return self._m[tuple(slices)].item()
 
         elif isinstance(var_values, dict):
-            u = self.slice(var_values)
-            return u._m.item()
+            var_names = {v.name for v in self._variables}
+            for v in var_values:
+                if v not in var_names:
+                    raise AttributeError(
+                        "{} is not in the dimensions of util : {}".format(
+                            v, self._variables
+                        )
+                    )
+            slices = []
+            for v in self._variables:
+                if v.name in var_values:
+                    slices.append(v.domain.index(var_values[v.name]))
+                else:
+                    slices.append(slice(None))
+            return self._m[tuple(slices)].item()
 
         else:
             raise ValueError("Assignment must be dict or array")

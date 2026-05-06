@@ -866,6 +866,28 @@ class NAryMatrixRelationInitTest(unittest.TestCase):
         self.assertEqual(u1(x2=1, x1=4), 4)
         self.assertEqual(u1(x1=2, x2=5), 3)
 
+    def test_get_value_does_not_slice(self):
+        x1 = Variable("x1", [2, 4, 6])
+        x2 = Variable("x2", [1, 3, 5])
+
+        class DirectLookupRelation(NAryMatrixRelation):
+            def slice(self, partial_assignment, ignore_extra_vars=False):
+                raise AssertionError("get_value_for_assignment should not slice")
+
+        u1 = DirectLookupRelation([x1, x2], [[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+        self.assertEqual(u1.get_value_for_assignment([4, 1]), 4)
+        self.assertEqual(u1.get_value_for_assignment({"x2": 5, "x1": 2}), 3)
+
+    def test_get_value_accepts_partial_assignment_for_single_remaining_value(self):
+        x1 = Variable("x1", [2, 4])
+        x2 = Variable("x2", [1])
+
+        u1 = NAryMatrixRelation([x1, x2], [[1], [4]])
+
+        self.assertEqual(u1.get_value_for_assignment([4]), 4)
+        self.assertEqual(u1.get_value_for_assignment({"x1": 2}), 1)
+
     def test_set_value_as_array(self):
         x1 = Variable("x1", [2, 4, 6])
         x2 = Variable("x2", [1, 3, 5])
