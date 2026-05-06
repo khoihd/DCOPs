@@ -202,7 +202,7 @@ Verify:
 
 Priority 4: assignment generation helpers
 -----------------------------------------
-[ ] Step 4 complete
+[x] Step 4 complete
 
 Why:
 - generate_assignment() and generate_assignment_as_dict() are recursive.
@@ -225,21 +225,21 @@ Risk:
 - Some callers may rely accidentally on yielded dict mutability.
 
 Implementation:
-[ ] First document current iteration order with focused tests.
-[ ] Consider replacing recursion with itertools.product over domains.
-[ ] Preserve yielded list/dict shape and variable order.
-[ ] Avoid changing callers in the same patch unless needed.
+[x] First document current iteration order with focused tests.
+[x] Consider replacing recursion with itertools.product over domains.
+[x] Preserve yielded list/dict shape and variable order.
+[x] Avoid changing callers in the same patch unless needed.
 
 Tests:
-[ ] Run tests/unit/test_algorithms_base.py assignment generator tests.
-[ ] Run tests/unit/test_dcop_relations.py.
-[ ] Run oracle tests if generate_assignment_as_dict() changes.
+[x] Run tests/unit/test_algorithms_base.py assignment generator tests.
+[x] Run tests/unit/test_dcop_relations.py.
+[x] Run oracle tests if generate_assignment_as_dict() changes.
 
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_base.py
-[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
-[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py
-[ ] conda run -n khoihd ruff check pydcop/dcop/relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_base.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py
 
 
 Priority 5: assignment_cost(), find_optimal(), and filter_assignment_dict()

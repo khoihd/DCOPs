@@ -32,6 +32,7 @@
 import functools
 import random
 from copy import deepcopy
+from itertools import product
 
 import numpy as np
 from typing import Dict, Iterable, Any, Tuple, Callable, List, Union
@@ -1489,10 +1490,13 @@ def generate_assignment(variables: List[Variable]):
 
 def generate_assignment_as_dict(variables: List[Variable]):
     """
-    Returns a generator iterating on all possible assignments for the set of
-    variables vars.
+    Returns a generator iterating over all possible assignments for a set of
+    variables.
 
-    An assignment is represented as a dict {var_name => var_value}.
+    Each assignment is represented as a new dict {var_name => var_value}. The
+    dict keys follow the order of the input variables. The iteration order
+    follows itertools.product over the input variable domains: the last
+    variable changes fastest and the first variable changes slowest.
 
     Parameters
     ----------
@@ -1500,18 +1504,17 @@ def generate_assignment_as_dict(variables: List[Variable]):
 
     Returns
     -------
-    a generator iterating on all possible assignments for the set of
-    variables vars
+    a generator iterating on all possible assignments for the set of variables
     """
 
     if len(variables) == 0:
         yield {}
-    else:
-        current_var = variables[-1]
-        for d in current_var.domain:
-            for ass in generate_assignment_as_dict(variables[:-1]):
-                ass[current_var.name] = d
-                yield ass
+        return
+
+    variable_names = [v.name for v in variables]
+    domains = [v.domain for v in variables]
+    for values in product(*domains):
+        yield dict(zip(variable_names, values))
 
 
 def assignment_cost(

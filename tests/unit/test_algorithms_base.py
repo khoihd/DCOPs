@@ -168,6 +168,36 @@ class GenerateAssignementAsDictTestCase(unittest.TestCase):
         self.assertIn({"x1": "b", "x2": "c"}, ass)
         self.assertIn({"x1": "c", "x2": "a"}, ass)
 
+    def test_generate_iteration_order(self):
+        x1 = Variable("x1", ["a1", "a2"])
+        x2 = Variable("x2", ["b1", "b2"])
+        x3 = Variable("x3", ["c1", "c2"])
+
+        ass = list(pydcop.dcop.relations.generate_assignment_as_dict([x1, x2, x3]))
+
+        self.assertEqual(
+            ass,
+            [
+                {"x1": "a1", "x2": "b1", "x3": "c1"},
+                {"x1": "a1", "x2": "b1", "x3": "c2"},
+                {"x1": "a1", "x2": "b2", "x3": "c1"},
+                {"x1": "a1", "x2": "b2", "x3": "c2"},
+                {"x1": "a2", "x2": "b1", "x3": "c1"},
+                {"x1": "a2", "x2": "b1", "x3": "c2"},
+                {"x1": "a2", "x2": "b2", "x3": "c1"},
+                {"x1": "a2", "x2": "b2", "x3": "c2"},
+            ],
+        )
+
+    def test_generate_yields_distinct_dicts(self):
+        x1 = Variable("x1", ["a1", "a2"])
+        x2 = Variable("x2", ["b1", "b2"])
+
+        ass = list(pydcop.dcop.relations.generate_assignment_as_dict([x1, x2]))
+
+        ass[0]["x1"] = "changed"
+        self.assertEqual(ass[1], {"x1": "a1", "x2": "b2"})
+
 
 class FindArgOptimalTestCase(unittest.TestCase):
     def test_findargmax(self):
