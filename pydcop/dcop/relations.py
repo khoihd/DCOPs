@@ -940,9 +940,10 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
 
     def _simple_repr(self):
         self._matrix = self._m.tolist()
-        r = super()._simple_repr()
-        self._matrix = None
-        return r
+        try:
+            return super()._simple_repr()
+        finally:
+            self._matrix = None
 
 
 class NeutralRelation(AbstractBaseRelation, SimpleRepr):

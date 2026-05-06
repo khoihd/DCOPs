@@ -31,6 +31,7 @@
 
 import time
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -65,7 +66,7 @@ from pydcop.dcop.relations import (
     find_optimum,
 )
 from pydcop.utils.expressionfunction import ExpressionFunction
-from pydcop.utils.simple_repr import simple_repr, from_repr, SimpleReprException
+from pydcop.utils.simple_repr import simple_repr, from_repr, SimpleReprException, SimpleRepr
 
 
 class ZeroAryRelationTest(unittest.TestCase):
@@ -1100,6 +1101,15 @@ class NAryMatrixRelationOtherTests(unittest.TestCase):
         self.assertEqual(r["__qualname__"], "NAryMatrixRelation")
         self.assertEqual([v["name"] for v in r["variables"]], ["x1", "x2"])
         self.assertEqual(r["matrix"], [[1, 2], [3, 4], [5, 6]])
+
+    def test_simple_repr_clears_temporary_matrix_on_error(self):
+        _, _, u1 = get_2var_rel()
+
+        with patch.object(SimpleRepr, "_simple_repr", side_effect=RuntimeError):
+            with pytest.raises(RuntimeError):
+                u1._simple_repr()
+
+        self.assertIsNone(u1._matrix)
 
     def test_from_repr(self):
         x1, x2, u1 = get_2var_rel()

@@ -301,7 +301,7 @@ Verify:
 
 Priority 6: low-priority cleanup candidates
 -------------------------------------------
-[ ] Step 6 complete
+[x] Step 6 complete
 
 Candidates:
 - Completed: find_optimum() now evaluates generated full assignments directly
@@ -311,8 +311,11 @@ Candidates:
   still returns a copy to preserve the old fresh-list behavior.
 - Completed: NAryFunctionRelation.slice() now uses a per-call set of variable
   names for unknown-variable checks.
-- NAryMatrixRelation.__hash__ hashes str(self._m), which is fast-ish but
-  imprecise and can still be expensive for large matrices.
+- Completed: NAryMatrixRelation._simple_repr() now clears its temporary
+  _matrix list in a finally block if serialization fails.
+- Deferred: leave NAryMatrixRelation.__hash__ unchanged. It hashes str(self._m),
+  which is imperfect for large arrays, but a more complete content hash would
+  be more expensive and behavior-sensitive.
 
 Expected complexity impact:
 - ConditionalRelation.dimensions caching could turn repeated dimension access
