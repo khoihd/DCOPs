@@ -220,14 +220,17 @@ class DpopAlgo(VariableComputation):
         self._constraints = []
         descendants = self._pseudo_children + self._children
         self.logger.debug(f"Descendants for computation {self.name}: {descendants} ")
-        constraints = list(comp_def.node.constraints)
+        constraints = []
         for r in comp_def.node.constraints:
             # filter out all relations that depends on one of our descendants
             names = [v.name for v in r.dimensions]
+            keep_constraint = True
             for descendant in descendants:
                 if descendant in names:
-                    constraints.remove(r)
+                    keep_constraint = False
                     break
+            if keep_constraint:
+                constraints.append(r)
         self._constraints = constraints
         self.logger.debug(
             f"Constraints for computation {self.name}: {self._constraints} "

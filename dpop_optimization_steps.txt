@@ -69,20 +69,20 @@ Expected impact:
 - Space: unchanged.
 
 Implementation:
-[ ] Replace remove-from-copy logic with append-to-filtered-list logic.
+[x] Replace remove-from-copy logic with append-to-filtered-list logic.
 [ ] Use a descendant-name set.
 [ ] Use each relation's `scope_names` or a local tuple of variable names once.
 [ ] Preserve exactly which constraints are kept or filtered.
 
 Tests:
-[ ] Add focused tests for constraints kept when they only involve self,
+[x] Add focused tests for constraints kept when they only involve self,
     parent, or pseudo-parents.
-[ ] Add focused tests for constraints filtered when they involve children or
+[x] Add focused tests for constraints filtered when they involve children or
     pseudo-children.
 
 Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
-[ ] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd ruff check pydcop/algorithms/dpop.py tests/unit/test_algorithms_dpop.py
 
 
 Priority 3: VALUE message intersection cleanup

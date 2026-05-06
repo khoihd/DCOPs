@@ -128,6 +128,39 @@ def dpop_computation_def(variable, constraints, links, mode="max"):
     return ComputationDef(node, algo_def)
 
 
+def test_constructor_filters_descendant_constraints_without_removing_from_copy():
+    x0 = Variable("x0", ["a", "b"])
+    x1 = Variable("x1", ["a", "b"])
+    x2 = Variable("x2", ["a", "b"])
+    x3 = Variable("x3", ["a", "b"])
+
+    parent_relation = NAryMatrixRelation([x0, x1], name="parent_relation")
+    own_relation = NAryMatrixRelation([x1], name="own_relation")
+    child_relation = NAryMatrixRelation([x1, x2], name="child_relation")
+    pseudo_child_relation = NAryMatrixRelation(
+        [x1, x3], name="pseudo_child_relation"
+    )
+
+    computation = dpop.DpopAlgo(
+        dpop_computation_def(
+            x1,
+            constraints=[
+                parent_relation,
+                child_relation,
+                own_relation,
+                pseudo_child_relation,
+            ],
+            links=[
+                PseudoTreeLink("parent", x1.name, x0.name),
+                PseudoTreeLink("children", x1.name, x2.name),
+                PseudoTreeLink("pseudo_children", x1.name, x3.name),
+            ],
+        )
+    )
+
+    assert computation._constraints == [parent_relation, own_relation]
+
+
 class TestAlgoExampleTwoVars:
     """
     Test case with a very simplistic setup with only two vars and one relation
