@@ -84,16 +84,22 @@
     for the generic fallback.
   - `d5f6019 Add join path benchmark coverage` added benchmark-style coverage
     comparing `join_fast()` and `join_slow()`.
+  - `ce4db03 Clarify join dimension helper` made `_join_dimensions()` slightly
+    clearer without changing behavior.
+  - `e82c49d Optimize generic join loop` made `join_slow()` iterate matrix
+    coordinates directly with `np.ndindex()`, avoiding
+    `generate_assignment_as_dict()`, `filter_assignment_dict()`, and
+    `domain.index()` coordinate recovery in the output-cell loop.
 - Current `relation_optimization_steps.txt` status:
   - Completed: projection fast/slow split, `projection_slow()` direct eval,
     projection coordinate iteration, `from_func_relation()` direct fill,
     matrix scalar lookup, optimization-plan refresh, `_slice_matrix()`, join
-    helper split, and join fast/slow benchmark coverage.
-  - Next priority: optimize `join_slow()` itself. It still uses
-    `generate_assignment_as_dict(dims)`, `filter_assignment_dict()` twice per
-    output cell, and `domain.index()` to recover matrix coordinates.
-  - Later priorities: `NAryMatrixRelation.set_value_for_assignment()`,
-    assignment generation helpers, then `assignment_cost()` /
+    helper split, join fast/slow benchmark coverage, and `join_slow()` loop
+    optimization.
+  - Next priority: `NAryMatrixRelation.set_value_for_assignment()`. It now
+    benefits from optimized `_slice_matrix()` bookkeeping, but still performs
+    avoidable scalar index setup before copying the full matrix.
+  - Later priorities: assignment generation helpers, then `assignment_cost()` /
     `find_optimal()` / `filter_assignment_dict()` if profiling justifies it.
 - Recent focused relation checks passed during the optimization sequence:
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
@@ -110,32 +116,27 @@
   - `conda run -n khoihd ruff check pydcop/algorithms/mgm.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
 - Current local code note before this continuity update:
-  the working tree was clean after `d5f6019`; the active relation work should
-  continue from `join_slow()` optimization, not from projection.
+  the working tree was clean after `e82c49d`; the active relation work should
+  continue from `NAryMatrixRelation.set_value_for_assignment()`, not from
+  projection or `join_slow()`.
 
 ## Next Steps
 - If continuing relation performance work, start with
-  `pydcop/dcop/relations.py::join_slow`:
-  - Keep public `join()` as the dispatcher.
-  - Keep `join_fast()` unchanged for `NAryMatrixRelation` + `NAryMatrixRelation`
-    joins.
-  - In `join_slow()`, replace `generate_assignment_as_dict(dims)` with
-    coordinate iteration via `np.ndindex(matrix.shape)`.
-  - Build one full assignment dict from the matrix coordinates.
-  - Build relation-specific assignment dicts with precomputed variable-name
-    sets or tuples instead of repeatedly calling `filter_assignment_dict()`.
-  - Write directly to `matrix[matrix_index]`.
-  - Preserve join dimension ordering exactly via `_join_dimensions()`.
-  - Keep behavior conservative for generic relation types; if direct eval is
-    risky, add a small helper with fallback instead of broad refactoring.
-- Verify `join_slow()` changes with:
+  `pydcop/dcop/relations.py::NAryMatrixRelation.set_value_for_assignment`:
+  - Preserve the public copy-on-write behavior: each call returns a new
+    `NAryMatrixRelation` and does not mutate `self`.
+  - Keep exactly one `np.copy(self._m)` per call.
+  - For list input, compute the full scalar index tuple directly from variable
+    order.
+  - For dict input, compute the full scalar index tuple directly from variable
+    names.
+  - Preserve current error behavior for list, dict, missing variable, extra
+    variable, and invalid domain values where practical.
+- Verify `set_value_for_assignment()` changes with:
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
   - `conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py`
-- After `join_slow()`, revisit
-  `NAryMatrixRelation.set_value_for_assignment()` if generator performance
-  matters. Its remaining improvement is mostly constant-factor index setup;
-  the full matrix copy remains the dominant behavior-preserving cost.
+- Consider DPOP or generator-focused tests only if the implementation touches
+  behavior beyond scalar index construction.
 - Leave broader assignment helper changes (`generate_assignment_as_dict`,
   `filter_assignment_dict`, `assignment_cost`) until profiling or a focused
   algorithm task justifies the risk.
