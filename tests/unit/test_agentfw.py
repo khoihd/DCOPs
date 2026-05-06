@@ -35,36 +35,46 @@ import unittest
 from unittest.case import skip
 
 from pydcop.infrastructure.communication import InProcessCommunicationLayer
+from pydcop.infrastructure.computations import Message
+from pydcop.infrastructure.agents import Agent
 from pydcop import infrastructure
 
 
 
 class AgentFwTest(unittest.TestCase):
 
-    @skip
     def test_sendmsg_counts(self):
 
-        comm = infrastructure.communication.InProcessCommunicationLayer()
-        a1 = infrastructure.Agent('a1', comm)
-        a2 = infrastructure.Agent('a2', comm)
-        comm.register(a1.name, a1)
-        comm.register(a2.name, a2)
+        comm1 = infrastructure.communication.InProcessCommunicationLayer()
+        comm2 = infrastructure.communication.InProcessCommunicationLayer()
+        a1 = Agent('a1', comm1)
+        a2 = Agent('a2', comm2)
 
-        self.assertEqual(a2._num_received, 0)
-        self.assertEqual(a1._num_sent, 0)
+        a1.discovery.register_agent(a1.name, a1.address, publish=False)
+        a1.discovery.register_agent(a2.name, a2.address, publish=False)
+        a2.discovery.register_agent(a1.name, a1.address, publish=False)
+        a2.discovery.register_agent(a2.name, a2.address, publish=False)
 
-        a1.send_msg('a1', 'a2', 'pouet')
+        a1.discovery.register_computation('c1', a1.name, a1.address, publish=False)
+        a1.discovery.register_computation('c2', a2.name, a2.address, publish=False)
+        a2.discovery.register_computation('c1', a1.name, a1.address, publish=False)
+        a2.discovery.register_computation('c2', a2.name, a2.address, publish=False)
 
-        self.assertEqual(a2._num_received, 1)
-        self.assertEqual(a2._num_sent, 0)
-        self.assertEqual(a1._num_sent, 1)
-        self.assertEqual(a1._num_received, 0)
+        self.assertEqual(a1.messages_count('c1'), 0)
+        self.assertEqual(comm2.messaging.msg_queue_count, 0)
 
-        received = a2.q.get_nowait()
-        self.assertEqual(received, ('a1', 'a2', 'pouet'))
+        msg = Message('pouet')
+        a1._messaging.post_msg('c1', 'c2', msg)
 
+        self.assertEqual(a1.messages_count('c1'), 1)
+        self.assertEqual(a2.messages_count('c2'), 0)
+        self.assertEqual(comm2.messaging.msg_queue_count, 1)
 
-    @skip
+        received, _ = a2._messaging.next_msg()
+        self.assertEqual(received.src_comp, 'c1')
+        self.assertEqual(received.dest_comp, 'c2')
+        self.assertEqual(received.msg, msg)
+
     def test_sendmsg_two_neighbors(self):
 
         comm = infrastructure.communication.InProcessCommunicationLayer()
