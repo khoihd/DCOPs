@@ -1720,21 +1720,40 @@ def join(u1: Constraint, u2: Constraint) -> Constraint:
     Constraint:
         a new Constraint
     """
+    if isinstance(u1, NAryMatrixRelation) and isinstance(
+        u2, NAryMatrixRelation
+    ):
+        return join_fast(u1, u2)
+
+    return join_slow(u1, u2)
+
+
+def _join_dimensions(u1: Constraint, u2: Constraint):
     dims = u1.dimensions[:]
     for d2 in u2.dimensions:
         if d2 not in dims:
             dims.append(d2)
+    return dims
 
-    if isinstance(u1, NAryMatrixRelation) and isinstance(
-        u2, NAryMatrixRelation
-    ):
-        u1_matrix = _matrix_expanded_to_join_dims(u1, dims)
-        u2_matrix = _matrix_expanded_to_join_dims(u2, dims)
-        matrix = np.asarray(u1_matrix, dtype=np.float64) + np.asarray(
-            u2_matrix, dtype=np.float64
-        )
-        return NAryMatrixRelation(dims, matrix, name="joined_utils")
 
+def join_fast(u1: NAryMatrixRelation, u2: NAryMatrixRelation) -> Constraint:
+    """
+    Join two matrix-backed relations with numpy broadcasting.
+    """
+    dims = _join_dimensions(u1, u2)
+    u1_matrix = _matrix_expanded_to_join_dims(u1, dims)
+    u2_matrix = _matrix_expanded_to_join_dims(u2, dims)
+    matrix = np.asarray(u1_matrix, dtype=np.float64) + np.asarray(
+        u2_matrix, dtype=np.float64
+    )
+    return NAryMatrixRelation(dims, matrix, name="joined_utils")
+
+
+def join_slow(u1: Constraint, u2: Constraint) -> Constraint:
+    """
+    Generic join implementation for relation types without matrix access.
+    """
+    dims = _join_dimensions(u1, u2)
     matrix = np.empty(tuple(len(v.domain) for v in dims), dtype=np.float64)
     for ass in generate_assignment_as_dict(dims):
         u1_ass = filter_assignment_dict(ass, u1.dimensions)

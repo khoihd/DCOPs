@@ -36,10 +36,11 @@ Review notes
   path in this file.
 - The remaining matrix hot path is explicit slicing:
   NAryMatrixRelation.slice() -> _slice_matrix().
-- set_value_for_assignment() still copies the whole matrix by design, but it
-  also pays avoidable _slice_matrix() overhead.
+- _slice_matrix() bookkeeping is now optimized, reducing explicit slice overhead.
 - Generic join() still uses generate_assignment_as_dict(), filter_assignment_dict(),
-  and domain.index() inside the fallback loop.
+  and domain.index() inside the fallback loop; it is the next best target.
+- set_value_for_assignment() still copies the whole matrix by design, so its
+  remaining improvement is mostly constant-factor index setup.
 - assignment_cost(), find_optimal(), and filter_assignment_dict() are used by
   several local-search algorithms; optimize them only with targeted tests.
 
@@ -97,53 +98,9 @@ Verify:
 [x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 
-Priority 2: NAryMatrixRelation.set_value_for_assignment()
----------------------------------------------------------
-[ ] Step 2 complete
-
-Why:
-- set_value_for_assignment() still calls _slice_matrix() for scalar assignment.
-- It still copies the full matrix on each call because the public API returns a
-  new relation instead of mutating self.
-- Generators for graph coloring, meetings, IoT/Ising-style instances use this
-  method repeatedly while building constraints.
-
-Expected complexity impact:
-- Runtime: keep the unavoidable O(M) full matrix copy, but reduce scalar index
-  setup from the current _slice_matrix() overhead to O(n + n*d) for full
-  assignments.
-- Space: unchanged O(M), because the API returns a new relation and must copy
-  the matrix.
-- Note: this improves constants; it does not change the main asymptotic cost
-  while copy-on-write behavior is preserved.
-
-Risk:
-- Public immutability behavior must remain unchanged.
-- Error behavior for list, dict, missing variable, and invalid values should
-  stay compatible.
-
-Implementation:
-[ ] After Priority 1, reuse the simpler index-building path.
-[ ] For list input, compute the full scalar index tuple directly from variable
-    order.
-[ ] For dict input, compute the full scalar index tuple directly from variable
-    names.
-[ ] Keep exactly one np.copy(self._m) per call.
-[ ] Return NAryMatrixRelation(self._variables, matrix, name=self.name).
-
-Tests:
-[ ] Run existing set_value_for_assignment tests.
-[ ] Add tests for dict values in a different variable order if needed.
-[ ] Add tests for missing/extra variables only if current behavior is unclear.
-
-Verify:
-[ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
-[ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
-
-
-Priority 3: generic join() fallback
+Priority 2: generic join() fallback
 -----------------------------------
-[ ] Step 3 complete
+[ ] Step 2 complete
 
 Why:
 - Matrix + matrix join is optimized, but non-matrix joins still use the generic
@@ -169,7 +126,8 @@ Risk:
   calls, or get_value_for_assignment().
 
 Implementation:
-[ ] Keep the existing matrix + matrix fast path unchanged.
+[x] Split join() into dispatcher, join_fast(), and join_slow().
+[x] Keep the existing matrix + matrix fast path unchanged in join_fast().
 [ ] In the fallback, allocate the result matrix once as today.
 [ ] Iterate result matrix coordinates with np.ndindex(matrix.shape).
 [ ] Build one full assignment dict from coordinates.
@@ -179,14 +137,59 @@ Implementation:
 [ ] Write directly to matrix[matrix_index].
 
 Tests:
-[ ] Run existing join tests.
-[ ] Add or confirm tests for matrix/function joins.
-[ ] Add or confirm tests for different variable order.
-[ ] Add or confirm tests for zero-arity joins.
+[x] Add direct tests for join_fast() and join_slow().
+[x] Run existing join tests.
+[x] Add or confirm tests for matrix/function joins.
+[x] Add or confirm tests for different variable order.
+[x] Add or confirm tests for zero-arity joins.
+
+Verify:
+[x] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
+[x] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
+[x] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
+
+
+Priority 3: NAryMatrixRelation.set_value_for_assignment()
+---------------------------------------------------------
+[ ] Step 3 complete
+
+Why:
+- set_value_for_assignment() now benefits from the optimized _slice_matrix()
+  bookkeeping, but it still performs avoidable scalar index setup.
+- It still copies the full matrix on each call because the public API returns a
+  new relation instead of mutating self.
+- Generators for graph coloring, meetings, IoT/Ising-style instances use this
+  method repeatedly while building constraints.
+
+Expected complexity impact:
+- Runtime: keep the unavoidable O(M) full matrix copy, but reduce remaining
+  scalar index setup to a simple O(n + n*d) pass for full assignments.
+- Space: unchanged O(M), because the API returns a new relation and must copy
+  the matrix.
+- Note: this improves constants; it does not change the main asymptotic cost
+  while copy-on-write behavior is preserved.
+
+Risk:
+- Public immutability behavior must remain unchanged.
+- Error behavior for list, dict, missing variable, and invalid values should
+  stay compatible.
+
+Implementation:
+[ ] Reuse the optimized _slice_matrix() bookkeeping or compute indexes directly.
+[ ] For list input, compute the full scalar index tuple directly from variable
+    order.
+[ ] For dict input, compute the full scalar index tuple directly from variable
+    names.
+[ ] Keep exactly one np.copy(self._m) per call.
+[ ] Return NAryMatrixRelation(self._variables, matrix, name=self.name).
+
+Tests:
+[ ] Run existing set_value_for_assignment tests.
+[ ] Add tests for dict values in a different variable order if needed.
+[ ] Add tests for missing/extra variables only if current behavior is unclear.
 
 Verify:
 [ ] conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py
-[ ] conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py
 [ ] conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py
 
 

@@ -1992,6 +1992,76 @@ class JoinRelationsTestCase:
         assert j(x1=1, x2=2) == 4
 
 
+def test_join_fast_matrix_relations_directly():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+    u1 = NAryMatrixRelation([x1, x2], np.array([[1, 2], [3, 4]], np.int8))
+    u2 = NAryMatrixRelation([x2, x1], np.array([[10, 20], [30, 40]], np.int8))
+
+    joined = pydcop.dcop.relations.join_fast(u1, u2)
+
+    assert joined.dimensions == [x1, x2]
+    assert joined(x1=0, x2=0) == 11
+    assert joined(x1=1, x2=0) == 23
+    assert joined(x1=0, x2=1) == 32
+    assert joined(x1=1, x2=1) == 44
+
+
+def test_join_slow_function_relations_directly():
+    x1 = Variable("x1", [0, 1, 2])
+    x2 = Variable("x2", [0, 1, 2])
+
+    @AsNAryFunctionRelation(x1, x2)
+    def u1(x, y):
+        return x + y
+
+    @AsNAryFunctionRelation(x2, x1)
+    def u2(x, y):
+        return x - y
+
+    joined = pydcop.dcop.relations.join_slow(u1, u2)
+
+    assert joined.dimensions == [x1, x2]
+    assert joined(1, 1) == 2
+    assert joined(1, 2) == 4
+    assert joined(x1=1, x2=1) == 2
+    assert joined(x1=1, x2=2) == 4
+
+
+def test_join_slow_matrix_and_function_relations_directly():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+    u1 = NAryMatrixRelation([x1], np.array([1, 2], np.int8))
+
+    @AsNAryFunctionRelation(x1, x2)
+    def u2(x, y):
+        return x * 10 + y
+
+    joined = pydcop.dcop.relations.join_slow(u1, u2)
+
+    assert joined.dimensions == [x1, x2]
+    assert joined(x1=0, x2=0) == 1
+    assert joined(x1=0, x2=1) == 2
+    assert joined(x1=1, x2=0) == 12
+    assert joined(x1=1, x2=1) == 13
+
+
+def test_join_matrix_relation_with_zero_arity_relation():
+    x1 = Variable("x1", ["a", "b", "c"])
+    x2 = Variable("x2", ["1", "2"])
+    u1 = NAryMatrixRelation(
+        [x1, x2], np.array([[2, 16], [4, 32], [8, 64]], np.int8)
+    )
+    u2 = NAryMatrixRelation([])
+
+    joined = pydcop.dcop.relations.join(u1, u2)
+
+    assert joined.arity == 2
+    assert joined.dimensions == [x1, x2]
+    assert joined.get_value_for_assignment(["a", "1"]) == 2
+    assert joined.get_value_for_assignment(["b", "2"]) == 32
+
+
 def test_join_matrix_relations_different_order():
     x1 = Variable("x1", [0, 1])
     x2 = Variable("x2", [0, 1])
