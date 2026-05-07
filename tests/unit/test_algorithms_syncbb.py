@@ -37,12 +37,15 @@ from unittest.mock import MagicMock
 import pytest
 
 from pydcop.algorithms import AlgorithmDef, ComputationDef
+from pydcop.algorithms import syncbb
 from pydcop.algorithms.syncbb import (
     get_value_candidates,
     get_next_assignment,
     constraints_for_variable,
     SyncBBComputation,
     SyncBBForwardMessage,
+    SyncBBBackwardMessage,
+    SyncBBTerminateMessage,
 )
 from pydcop.computations_graph.ordered_graph import build_computation_graph
 from pydcop.dcop.dcop import DCOP
@@ -113,17 +116,38 @@ def toy_pb_computation_graph():
     return g
 
 
-def get_computation_instance(graph, name):
+def get_computation_instance(graph, name, mode="min"):
     # Get the computation node for x1
     comp_node = graph.computation(name)
 
     # Create the ComputationDef and computation instance
-    algo_def = AlgorithmDef.build_with_default_param("syncbb")
+    algo_def = AlgorithmDef.build_with_default_param("syncbb", mode=mode)
     comp_def = ComputationDef(comp_node, algo_def)
     comp = SyncBBComputation(comp_def)
     comp._msg_sender = MagicMock()
 
     return comp
+
+
+def test_build_computation_returns_syncbb_instance(toy_pb_computation_graph):
+    comp_node = toy_pb_computation_graph.computation("vA")
+    algo_def = AlgorithmDef.build_with_default_param("syncbb")
+    comp_def = ComputationDef(comp_node, algo_def)
+
+    comp = syncbb.build_computation(comp_def)
+
+    assert isinstance(comp, SyncBBComputation)
+    assert comp.name == "vA"
+
+
+def test_terminate_message_has_no_payload():
+    message = SyncBBTerminateMessage()
+
+    assert message.type == "terminate"
+    assert message.size == 0
+    assert str(message) == "terminate()"
+    assert repr(message) == "terminate()"
+    assert message == SyncBBTerminateMessage()
 
 
 def test_get_candidates_no_value_selected():
@@ -197,6 +221,28 @@ def test_get_next_assignment_no_bound(toy_pb):
     assert obtained == ("R", 3)
 
 
+def test_get_next_assignment_respects_min_bound(toy_pb):
+    variables, constraints = toy_pb
+    _, v_b, _, _ = variables
+    constraints_b = [c for c in constraints if v_b in c.dimensions]
+
+    obtained = get_next_assignment(
+        v_b, None, constraints_b, [("vA", "R", 0)], 5, "min"
+    )
+    assert obtained is None
+
+
+def test_get_next_assignment_skips_current_value(toy_pb):
+    variables, constraints = toy_pb
+    _, v_b, _, _ = variables
+    constraints_b = [c for c in constraints if v_b in c.dimensions]
+
+    obtained = get_next_assignment(
+        v_b, "R", constraints_b, [("vA", "R", 0)], float("inf"), "min"
+    )
+    assert obtained == ("G", 8)
+
+
 def test_computations_message_at_start(toy_pb_computation_graph):
     # A is the first var in the ordering, it should start selecting a value:
     comp_a = get_computation_instance(toy_pb_computation_graph, "vA")
@@ -213,6 +259,133 @@ def test_computations_message_at_start(toy_pb_computation_graph):
     assert comp_c.next_var == "vD"
     comp_c.start()
     comp_c.message_sender.assert_not_called()
+
+
+def test_computation_start_uses_max_initial_bound(toy_pb_computation_graph):
+    comp_a = get_computation_instance(toy_pb_computation_graph, "vA", mode="max")
+
+    comp_a.start()
+
+    comp_a._msg_sender.assert_any_call(
+        "vA", "vB", SyncBBForwardMessage([("vA", "R", 0)], -float("inf")), None, None
+    )
+
+
+def test_forward_message_extends_path(toy_pb_computation_graph):
+    comp_b = get_computation_instance(toy_pb_computation_graph, "vB")
+
+    comp_b.on_forward_message(
+        "vA", SyncBBForwardMessage([("vA", "R", 0)], float("inf")), 0
+    )
+
+    comp_b._msg_sender.assert_called_once_with(
+        "vB",
+        "vC",
+        SyncBBForwardMessage([("vA", "R", 0), ("vB", "R", 5)], float("inf")),
+        None,
+        None,
+    )
+    assert comp_b.cycle_count == 1
+
+
+def test_forward_message_backtracks_when_no_value_with_bound(
+    toy_pb_computation_graph,
+):
+    comp_b = get_computation_instance(toy_pb_computation_graph, "vB")
+    comp_b.upper_bound = 5
+
+    comp_b.on_forward_message(
+        "vA", SyncBBForwardMessage([("vA", "R", 0)], 5), 0
+    )
+
+    comp_b._msg_sender.assert_called_once_with(
+        "vB",
+        "vA",
+        SyncBBBackwardMessage([("vA", "R", 0)], 5),
+        None,
+        None,
+    )
+    assert comp_b.cycle_count == 1
+
+
+def test_last_variable_updates_bound_and_backtracks(toy_pb_computation_graph):
+    comp_d = get_computation_instance(toy_pb_computation_graph, "vD")
+    path = [("vA", "R", 0), ("vB", "R", 5), ("vC", "R", 10)]
+
+    comp_d.on_forward_message("vC", SyncBBForwardMessage(path, float("inf")), 0)
+
+    assert comp_d.upper_bound == 18
+    assert comp_d.current_value == "R"
+    assert comp_d.current_cost == 18
+    comp_d._msg_sender.assert_called_once_with(
+        "vD", "vC", SyncBBBackwardMessage(path, 18), None, None
+    )
+    assert comp_d.cycle_count == 1
+
+
+def test_backward_message_updates_bound_and_tries_next_value(
+    toy_pb_computation_graph,
+):
+    comp_b = get_computation_instance(toy_pb_computation_graph, "vB")
+
+    comp_b.on_backward_msg(
+        "vC", SyncBBBackwardMessage([("vA", "R", 0), ("vB", "R", 5)], 12), 0
+    )
+
+    assert comp_b.upper_bound == 12
+    assert comp_b.current_value == "R"
+    assert comp_b.current_cost == 12
+    comp_b._msg_sender.assert_called_once_with(
+        "vB",
+        "vC",
+        SyncBBForwardMessage([("vA", "R", 0), ("vB", "G", 8)], 12),
+        None,
+        None,
+    )
+    assert comp_b.cycle_count == 1
+
+
+def test_backward_message_backtracks_when_domain_is_exhausted(
+    toy_pb_computation_graph,
+):
+    comp_b = get_computation_instance(toy_pb_computation_graph, "vB")
+
+    comp_b.on_backward_msg(
+        "vC", SyncBBBackwardMessage([("vA", "R", 0), ("vB", "G", 8)], 12), 0
+    )
+
+    comp_b._msg_sender.assert_called_once_with(
+        "vB", "vA", SyncBBBackwardMessage([("vA", "R", 0)], 12), None, None
+    )
+    assert comp_b.cycle_count == 1
+
+
+def test_first_variable_terminates_when_backtracking_exhausts_domain(
+    toy_pb_computation_graph,
+):
+    comp_a = get_computation_instance(toy_pb_computation_graph, "vA")
+    comp_a.finished = MagicMock()
+
+    comp_a.on_backward_msg("vB", SyncBBBackwardMessage([("vA", "G", 0)], 12), 0)
+
+    comp_a.finished.assert_called_once_with()
+    comp_a._msg_sender.assert_called_once_with(
+        "vA", "vB", SyncBBTerminateMessage(), None, None
+    )
+    assert comp_a.cycle_count == 1
+
+
+def test_terminate_message_is_forwarded_and_finishes(toy_pb_computation_graph):
+    comp_b = get_computation_instance(toy_pb_computation_graph, "vB")
+    comp_b.finished = MagicMock()
+
+    comp_b.on_terminate_message("vA", SyncBBTerminateMessage(), 0)
+
+    comp_b.finished.assert_called_once_with()
+    comp_b._msg_sender.assert_called_once_with(
+        "vB", "vC", SyncBBTerminateMessage(), None, None
+    )
+    assert comp_b.cycle_count == 1
 
 
 def test_solve_min(toy_pb):

@@ -170,7 +170,11 @@ Path = List[PathElement]
 
 SyncBBForwardMessage = message_type("forward", ["current_path", "ub"])
 SyncBBBackwardMessage = message_type("backward", ["current_path", "ub"])
-SyncBBTerminateMessage = message_type("terminate", ["current_path", "ub"])
+SyncBBTerminateMessage = message_type("terminate", [])
+
+
+def build_computation(comp_def: ComputationDef):
+    return SyncBBComputation(comp_def)
 
 
 class SyncBBComputation(VariableComputation):
