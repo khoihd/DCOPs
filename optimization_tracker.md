@@ -64,12 +64,15 @@ Recent verification used:
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
 - `conda run -n khoihd ruff check pydcop/algorithms/mgm.py tests/unit/test_algorithms_mgm.py`
 - `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/dcop_cli/test_solve.py -k mgm`
+- `conda run -n khoihd ruff check profiling/profile_mgm_compute_best_value.py`
 
 Notes:
 - Fixed exact-neighbor memory accounting for similarly-prefixed variable names.
 - Fixed `break_mode: random` tie handling to use random tie-break numbers.
 - Added message-property and state-transition guardrail tests before future
   MGM message-flow changes.
+- Added `profiling/profile_mgm_compute_best_value.py`; sampled profiles point
+  at sliced relation evaluation in `_compute_best_value()`.
 
 ### pydcop/algorithms/
 

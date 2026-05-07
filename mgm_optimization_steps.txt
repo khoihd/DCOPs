@@ -50,8 +50,38 @@ Verification:
 - `conda run -n khoihd ruff check pydcop/algorithms/mgm.py tests/unit/test_algorithms_mgm.py`
 - `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/dcop_cli/test_solve.py -k mgm`
 
+## Step 3: Profile `_compute_best_value()`
+
+Completed:
+
+- Added `profiling/profile_mgm_compute_best_value.py`.
+- The profiler builds MGM computations directly, prepares complete neighbor
+  assignments, and times the actual `_compute_best_value()` path.
+- It records aggregate timings for wrapped helper calls:
+  `filter_assignment_dict()`, `NAryFunctionRelation.slice()`, and
+  `find_arg_optimal()`.
+- It also supports `--cprofile` for cumulative stack timings.
+
+Sample runs:
+
+- `conda run -n khoihd python profiling/profile_mgm_compute_best_value.py`
+- `conda run -n khoihd python profiling/profile_mgm_compute_best_value.py --case generated --repeat 200 --neighbors 8 --constraints 24 --domain-size 8 --max-arity 4 --cprofile`
+- `conda run -n khoihd python profiling/profile_mgm_compute_best_value.py --case graph-coloring --repeat 200`
+
+Observed:
+
+- In generated cases, `find_arg_optimal()` and repeated sliced relation
+  evaluation dominate `_compute_best_value()` time.
+- In the small graph-coloring case, relation slicing dominates because the
+  constraints are simple and string-backed.
+- `filter_assignment_dict()` is visible but small in the sampled cases.
+- Relation-level helper optimization remains out of scope for this MGM pass.
+
+Verification:
+
+- `conda run -n khoihd ruff check profiling/profile_mgm_compute_best_value.py`
+
 Possible next steps:
 
-- Profile `_compute_best_value()` before touching local relation evaluation.
 - Keep relation-level helpers such as `assignment_cost()` and `find_optimal()`
   out of scope unless there is a separate relation-focused plan.
