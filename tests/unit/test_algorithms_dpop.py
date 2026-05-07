@@ -323,6 +323,39 @@ def test_intermediate_node_sends_util_after_child_message():
     assert sender.util_msg_data("b") == 14
 
 
+def test_intermediate_node_carries_child_util_ancestor_context():
+    x0 = Variable("x0", [0, 1])
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+    parent_relation = NAryMatrixRelation(
+        [x0, x1], np.array([[0, 2], [10, 1]]), name="parent_relation"
+    )
+    computation = dpop.DpopAlgo(
+        dpop_computation_def(
+            x1,
+            constraints=[parent_relation],
+            links=[
+                PseudoTreeLink("parent", x1.name, x0.name),
+                PseudoTreeLink("children", x1.name, x2.name),
+            ],
+        )
+    )
+    sender = DummySender()
+    computation.message_sender = sender
+    child_util = NAryMatrixRelation(
+        [x1, x0], np.array([[1, 3], [5, 4]]), name="child_util"
+    )
+
+    computation._on_util_message(x2.name, DpopMessage("UTIL", child_util), 0)
+
+    assert computation._children_separator == {x2.name: [x1, x0]}
+    assert sender.util_sender_var == x1.name
+    assert sender.util_dest_var == x0.name
+    assert sender.util_msg_data.dimensions == [x0]
+    assert sender.util_msg_data(0) == 7
+    assert sender.util_msg_data(1) == 13
+
+
 def test_value_message_preserves_child_separator_order():
     x0 = Variable("x0", [0, 1])
     x1 = Variable("x1", ["a", "b"])

@@ -34,15 +34,27 @@ For each algorithm:
 5. Add focused tests for hand-checkable behavior or discovered gaps.
 6. Record any implementation fixes or intentional deviations.
 
+## Review Assumptions
+
+- Ignore how the computation graph is constructed unless the algorithm's
+  correctness depends on a specific construction method.
+- Assume both minimization and maximization are acceptable unless the algorithm
+  is inherently tied to one objective direction.
+- Assume N-ary constraints are acceptable unless the algorithm is inherently
+  tied to a specific constraint arity, such as unary or binary constraints.
+- Focus on whether the implementation follows the paper's algorithmic logic and
+  whether any implementation behavior contradicts the paper.
+
 ## Tracker
 
 - DPOP
   - Priority: 1
   - Implementation: `pydcop/algorithms/dpop.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/dpop_petcu_05.pdf`
   - Check File: `verification_archive/dpop_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: Verified
+  - Notes: Core UTIL/VALUE logic matches the paper; memory helper caveat is
+    documented in the check file.
 
 - MGM
   - Priority: 2
