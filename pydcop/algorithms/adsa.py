@@ -83,6 +83,7 @@ import random
 from typing import Tuple, Any, List, Dict
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef
+from pydcop.computations_graph.constraints_hypergraph import VariableComputationNode
 from pydcop.dcop.relations import (
     find_optimum,
     assignment_cost,
@@ -98,6 +99,9 @@ from pydcop.infrastructure.computations import (
 
 # Type of computations graph that must be used with dsa
 GRAPH_TYPE = "constraints_hypergraph"
+
+HEADER_SIZE = 0
+UNIT_SIZE = 1
 
 
 def build_computation(comp_def: ComputationDef) -> DcopComputation:
@@ -116,6 +120,24 @@ def build_computation(comp_def: ComputationDef) -> DcopComputation:
 
     """
     return ADsaComputation(comp_def=comp_def)
+
+
+def computation_memory(computation: VariableComputationNode) -> float:
+    """Return the memory footprint of an ADSA computation."""
+    neighbors = set(
+        (
+            n
+            for link in computation.links
+            for n in link.nodes
+            if n != computation.name
+        )
+    )
+    return len(neighbors) * UNIT_SIZE
+
+
+def communication_load(src: VariableComputationNode, target: str) -> float:
+    """Return the communication load between two variables."""
+    return UNIT_SIZE + HEADER_SIZE
 
 
 algo_params = [
@@ -188,7 +210,7 @@ class ADsaComputation(VariableComputation):
             # If a variable has no neighbors, we must select its final value immediately.
             # We also do not need to setup a periodic action.
             if hasattr(self._variable, "cost_for_val"):
-                current_cost, value = optimal_cost_value(self._variable, self.mode)
+                value, current_cost = optimal_cost_value(self._variable, self.mode)
                 self.value_selection(value, current_cost)
                 if self.logger.isEnabledFor(logging.INFO):
                     self.logger.info(
@@ -238,6 +260,7 @@ class ADsaComputation(VariableComputation):
             # if self.current_value is not None:
             assignment[self.variable.name] = self.current_value
             current_cost = assignment_cost(assignment, self.constraints)
+            current_cost += self.variable.cost_for_val(self.current_value)
             delta = abs(current_cost - best_cost)
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(
@@ -248,7 +271,7 @@ class ADsaComputation(VariableComputation):
             if self.variant == "A":
                 self.variant_a(delta, best_cost, args_best)
             elif self.variant == "B":
-                self.variant_b(delta, best_cost, args_best)
+                self.variant_b(delta, best_cost, args_best, assignment)
             elif self.variant == "C":
                 self.variant_c(delta, best_cost, args_best)
 
@@ -256,7 +279,6 @@ class ADsaComputation(VariableComputation):
             n = len(self.neighbors)
             c = len(self.current_assignment)
 
-            print(f" {self.name} Still waiting for neighbors values {n-c} out of {n} ")
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(
                     f"Still waiting for neighbors values {n-c} out of {n} "
@@ -278,7 +300,7 @@ class ADsaComputation(VariableComputation):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("Variant A, no reason to change")
 
-    def variant_b(self, delta, best_cost, best_values):
+    def variant_b(self, delta, best_cost, best_values, assignment=None):
         """
         DSA-B value change : only if gain is positive or == 0 but some
         constraints are still violated (i.e. not at their optimal value).
@@ -288,7 +310,7 @@ class ADsaComputation(VariableComputation):
                 self.logger.debug("Variant B, attempt probabilistic change")
             self.probabilistic_change(best_cost, best_values)
 
-        elif delta == 0 and self.exists_violated_constraint():
+        elif delta == 0 and self.exists_violated_constraint(assignment):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("Variant B, attempt probabilistic change")
             if len(best_values) > 1:
@@ -355,36 +377,46 @@ class ADsaComputation(VariableComputation):
         float
             The cost achieved with these values.
         """
-        assignment = assignment.copy()
-
         arg_best, best_cost = None, float("inf")
         if self.mode == "max":
             arg_best, best_cost = None, -float("inf")
 
-        for value in self.variable.domain:
-            assignment[self.variable.name] = value
-            cost = assignment_cost(assignment, self.constraints)
+        variable_name = self.variable.name
+        previous_value = assignment.get(variable_name, None)
+        had_previous_value = variable_name in assignment
+        try:
+            for value in self.variable.domain:
+                assignment[variable_name] = value
+                cost = assignment_cost(assignment, self.constraints)
 
-            # Take into account variable cost, if any
-            cost += self.variable.cost_for_val(value)
+                # Take into account variable cost, if any
+                cost += self.variable.cost_for_val(value)
 
-            if cost == best_cost:
-                arg_best.append(value)
-            elif (self.mode == "min" and cost < best_cost) or (
-                self.mode == "max" and cost > best_cost
-            ):
-                best_cost, arg_best = cost, [value]
+                if cost == best_cost:
+                    arg_best.append(value)
+                elif (self.mode == "min" and cost < best_cost) or (
+                    self.mode == "max" and cost > best_cost
+                ):
+                    best_cost, arg_best = cost, [value]
+        finally:
+            if had_previous_value:
+                assignment[variable_name] = previous_value
+            else:
+                assignment.pop(variable_name, None)
 
         return arg_best, best_cost
 
-    def exists_violated_constraint(self) -> bool:
+    def exists_violated_constraint(self, assignment=None) -> bool:
         """
         Tells if there is a violated soft constraint regarding the current
         assignment
         :return: a boolean
         """
-        assignment = self.current_assignment.copy()
-        assignment[self.variable.name] = self.current_value
+        if assignment is None:
+            assignment = self.current_assignment
+            if self.variable.name not in assignment:
+                assignment = self.current_assignment.copy()
+                assignment[self.variable.name] = self.current_value
         for c in self.constraints:
             const = c(**filter_assignment_dict(assignment, c.dimensions))
             if const != self.best_constraints_costs[c.name]:

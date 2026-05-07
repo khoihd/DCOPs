@@ -10,6 +10,7 @@ in the file-specific `*_optimization_steps.txt` documents.
 - `pydcop/algorithms/dsa.py`
 - `pydcop/algorithms/mgm.py`
 - `pydcop/algorithms/mgm2.py`
+- `pydcop/algorithms/adsa.py`
 
 ## Detailed Notes
 
@@ -18,12 +19,12 @@ in the file-specific `*_optimization_steps.txt` documents.
 - `dsa_optimization_steps.txt`
 - `mgm_optimization_steps.txt`
 - `mgm2_optimization_steps.txt`
+- `adsa_optimization_steps.txt`
 
 ## Current Next Step
 
 No active optimization pass is planned. Remaining algorithm candidates:
 
-- `pydcop/algorithms/adsa.py`
 - `pydcop/algorithms/amaxsum.py`
 - `pydcop/algorithms/dba.py`
 - `pydcop/algorithms/dsatuto.py`
@@ -42,6 +43,7 @@ Pick one file at a time and start a new focused plan before changing it.
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_adsa.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_amaxsum.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dba.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsatuto.py`

@@ -1,0 +1,45 @@
+# ADSA Optimization Steps
+
+## Status
+
+Complete. No further ADSA optimization is planned in this pass.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_objects.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/adsa.py`
+
+Both passed before edits. ADSA did not have a dedicated focused unit test file
+before this pass.
+
+## Step 1: Focused Coverage and Local Hot-Path Cleanup
+
+Completed:
+
+- Add focused ADSA unit coverage for defaults, message behavior, memory/load
+  accounting, periodic waiting output, no-neighbor startup, and local
+  value-cost handling.
+- Add module-level memory and communication load helpers matching ADSA's value
+  message and neighbor-assignment state.
+- Avoid unconditional stdout output from the periodic waiting path.
+- Avoid an extra assignment copy in `find_best_values()` while preserving the
+  caller's assignment mapping.
+- Reuse the current full assignment for DSA-B violated-constraint checks.
+- Fix no-neighbor startup to unpack `optimal_cost_value()` as `(value, cost)`.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_adsa.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_adsa.py tests/unit/test_algorithms_objects.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/adsa.py tests/unit/test_algorithms_adsa.py`
+- ADSA runtime smoke through `solve()` on `dcop_graphcoloring_3` with oneagent
+  distribution and a short timeout returned a valid assignment.
+
+Closure:
+
+- Keep relation-level helpers such as `assignment_cost()` unchanged as in the
+  completed DSA/MGM passes.
+- If ADSA is revisited later, start a new focused plan before changing
+  asynchronous message timing or periodic scheduling behavior.
