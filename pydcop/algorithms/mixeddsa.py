@@ -408,6 +408,9 @@ class MixedDsaComputation(VariableComputation):
 
     def _send_value(self):
         self.new_cycle()
+        if self.stop_cycle and self.cycle_count >= self.stop_cycle:
+            self.finished()
+            return
         for n in self._neighbors:
             msg = MixedDsaMessage(self.current_value)
             self.post_msg(n, msg)
@@ -441,11 +444,13 @@ class MixedDsaComputation(VariableComputation):
         for v in concerned_vars:
             if hasattr(v, 'cost_for_val'):
                 cost += v.cost_for_val(assignment[v.name])
+        if self._variable not in concerned_vars:
+            cost += self._variable.cost_for_val(assignment[self.name])
 
         hard_violated = list()
         for f in hards:
             c_cost = f(**_filter_assignment(assignment, f.dimensions))
-            if c_cost == INFINITY:
+            if c_cost in [INFINITY, -INFINITY]:
                 hard_violated.append(f)
                 # We do not set the cost to infinity yet, so that we can
                 # favorize solutions with the lowest cost (without counting
@@ -468,7 +473,7 @@ class MixedDsaComputation(VariableComputation):
         'dcop_cost' otherwise.
         """
         if nb_violated_constraints:
-            return INFINITY
+            return INFINITY if self.mode == 'min' else -INFINITY
         return dcop_cost
 
     def exists_violated_soft_constraint(self, assignment=None) -> bool:
