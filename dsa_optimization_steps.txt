@@ -1,0 +1,38 @@
+# DSA Optimization Steps
+
+## Status
+
+Started May 2026. Keep changes small and behavior-preserving.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/dsa.py tests/unit/test_algorithms_dsa.py`
+
+Both passed before edits.
+
+## Step 1: Memory Accounting and Violation Check Cleanup
+
+Completed:
+
+- Fixed `computation_memory()` to exclude the computation variable by exact
+  variable-name equality, instead of substring membership.
+- Added regression coverage for similarly-prefixed variable names such as
+  `v1` and `v10`.
+- Reused the current cycle assignment across DSA-B violated-constraint checks
+  instead of copying and extending it once per constraint.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/dsa.py tests/unit/test_algorithms_dsa.py`
+
+## Possible Next Steps
+
+- Profile `evaluate_cycle()` on a generated constraints-hypergraph instance.
+- Inspect whether repeated `filter_assignment_dict()` calls in
+  `exists_violated_constraint()` are significant before changing the code.
+- Consider targeted API/CLI DSA checks if future edits touch message flow or
+  stop-cycle behavior.

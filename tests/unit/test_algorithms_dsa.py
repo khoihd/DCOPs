@@ -75,6 +75,16 @@ def test_computation_memory_two_constraints():
     assert dsa.computation_memory(v1_node) == dsa.UNIT_SIZE * 3
 
 
+def test_computation_memory_uses_exact_variable_names():
+    v1 = Variable('v1', list(range(10)))
+    v10 = Variable('v10', list(range(10)))
+    c1 = constraint_from_str('c1', ' v1 == v10', [v1, v10])
+    v10_node = VariableComputationNode(v10, [c1])
+
+    assert set(v10_node.neighbors) == {'v1'}
+    assert dsa.computation_memory(v10_node) == dsa.UNIT_SIZE
+
+
 def test_footprint_on_computation_object(monkeypatch):
     v1 = Variable('v1', [0, 1, 2, 3, 4])
     v2 = Variable('v2', [0, 1, 2, 3, 4])

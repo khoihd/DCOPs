@@ -159,7 +159,7 @@ def computation_memory(computation: VariableComputationNode) -> float:
             n
             for link in computation.links
             for n in link.nodes
-            if n not in computation.name
+            if n != computation.name
         )
     )
     return len(neighbors) * UNIT_SIZE
@@ -426,9 +426,12 @@ class DsaComputation(VariableComputation):
         assignment
         :return: a boolean
         """
-        for c in self.constraints:
+        asgt = self.current_cycle
+        if self.name not in asgt:
             asgt = self.current_cycle.copy()
             asgt[self.name] = self.current_value
+
+        for c in self.constraints:
             const = c(**filter_assignment_dict(asgt, c.dimensions))
             if const != self.best_constraints_costs[c.name]:
                 return True

@@ -35,12 +35,28 @@ Recent verification used:
 
 ## Future Candidates
 
+### pydcop/algorithms/dsa.py
+
+Status: first focused pass started.
+
+Detailed plan:
+- `dsa_optimization_steps.txt`
+
+Recent verification used:
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/dsa.py tests/unit/test_algorithms_dsa.py`
+
+Notes:
+- Fixed exact-neighbor memory accounting for similarly-prefixed variable names.
+- Avoided repeated assignment copies in DSA-B violated-constraint checks.
+
 ### pydcop/algorithms/
 
 Status: DPOP complete; other algorithm modules remain future candidates.
 
 Detailed plans:
 - `dpop_optimization_steps.txt`
+- `dsa_optimization_steps.txt`
 
 Suggested approach:
 - Pick one algorithm at a time.
