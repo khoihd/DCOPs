@@ -101,17 +101,31 @@
   local evaluation now reuses relation assignments/value lookups, supports
   best-improvement scans without violated-list allocation, and fixes exact-name
   memory accounting.
-- `optimization_tracker.md` now lists only completed items under Status and
-  records remaining algorithm candidates under Current Next Step.
+- Dynamic MaxSum optimization is complete and tracked in
+  `maxsum_dynamic_optimization_steps.txt`; the focused pass cached relation
+  scope/value-update lookups while leaving dynamic graph behavior unchanged.
+- MixedDSA optimization is complete and tracked in
+  `mixeddsa_optimization_steps.txt`; local assignment/cost evaluation was
+  tightened, exact-name memory accounting was fixed, and focused tests were
+  added.
+- NCBB optimization is complete and tracked in `ncbb_optimization_steps.txt`;
+  initialization-phase ancestor/child lookups are cached, ancestor constraints
+  are precomputed, and adjacent synchronous message dispatch issues were fixed.
+- SyncBB optimization is complete and tracked in `syncbb_optimization_steps.txt`;
+  assignment evaluation now precomputes path constraints and avoids generic
+  assignment-cost calls in the inner loop.
+- `optimization_tracker.md` now lists all currently covered algorithm
+  candidates as completed.
 
 ## Next Steps
-- No active optimization pass is planned. Pick one remaining algorithm at a
-  time and create a focused `*_optimization_steps.txt` plan before changing it.
-- Remaining algorithm candidates:
-  - `pydcop/algorithms/maxsum_dynamic.py`
-  - `pydcop/algorithms/mixeddsa.py`
-  - `pydcop/algorithms/ncbb.py`
-  - `pydcop/algorithms/syncbb.py`
+- No active optimization pass is planned. All algorithm candidates previously
+  listed in `optimization_tracker.md` now have focused optimization passes.
+- If starting another optimization effort, pick one file or subsystem at a
+  time and create/update a focused `*_optimization_steps.txt` plan before
+  changing it.
+- The current `todo.md` includes a broader item to optimize commonly used
+  files with overheads; treat that as a new focused planning pass rather than
+  an extension of the completed algorithm work.
 - If revisiting completed modules, prefer a new focused plan rather than
   reviving removed or intentionally deferred polish.
 - Focused checks already recorded in `optimization_tracker.md` include:
@@ -125,6 +139,8 @@
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsatuto.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_gdba.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_maxsum.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dynamic_maxsum.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mixeddsa.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_ncbb.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_syncbb.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
@@ -146,6 +162,10 @@
 - `pydcop/algorithms/dba.py` — completed DBA optimization pass.
 - `pydcop/algorithms/dsatuto.py` — completed DSA tutorial optimization pass.
 - `pydcop/algorithms/gdba.py` — completed GDBA optimization pass.
+- `pydcop/algorithms/maxsum_dynamic.py` — completed Dynamic MaxSum pass.
+- `pydcop/algorithms/mixeddsa.py` — completed MixedDSA optimization pass.
+- `pydcop/algorithms/ncbb.py` — completed NCBB initialization pass.
+- `pydcop/algorithms/syncbb.py` — completed SyncBB assignment-evaluation pass.
 - `tests/unit/test_algorithms_dpop.py` — DPOP message-flow unit tests.
 - `tests/api/test_api_solve_dpop.py` — DPOP API oracle checks.
 - `dpop_optimization_steps.txt` — current DPOP optimization plan.
@@ -157,6 +177,10 @@
 - `dba_optimization_steps.txt` — completed DBA optimization plan.
 - `dsatuto_optimization_steps.txt` — completed DSA tutorial optimization plan.
 - `gdba_optimization_steps.txt` — completed GDBA optimization plan.
+- `maxsum_dynamic_optimization_steps.txt` — completed Dynamic MaxSum plan.
+- `mixeddsa_optimization_steps.txt` — completed MixedDSA optimization plan.
+- `ncbb_optimization_steps.txt` — completed NCBB optimization plan.
+- `syncbb_optimization_steps.txt` — completed SyncBB optimization plan.
 - `optimization_tracker.md` — high-level optimization tracker.
 - `pydcop/dcop/relations.py` — optimized relation primitives.
 - `relation_optimization_steps.txt` — completed relation optimization plan.
