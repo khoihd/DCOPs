@@ -29,9 +29,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 from pydcop.algorithms import AlgorithmDef, ComputationDef
+from pydcop.algorithms import dsatuto
 from pydcop.algorithms.dsatuto import DsaMessage, DsaTutoComputation
 from pydcop.computations_graph.constraints_hypergraph import VariableComputationNode
 from pydcop.dcop.objects import Variable
@@ -62,6 +63,19 @@ def test_build_computation_default_params():
     assert computation.constraints == []
 
 
+def test_build_computation_factory():
+    v1 = Variable("v1", [0, 1])
+    comp_def = ComputationDef(
+        VariableComputationNode(v1, []),
+        AlgorithmDef.build_with_default_param("dsatuto"),
+    )
+
+    computation = dsatuto.build_computation(comp_def)
+
+    assert isinstance(computation, DsaTutoComputation)
+    assert computation.variable == v1
+
+
 def test_dsa_tuto_message_properties():
     message = DsaMessage("red")
 
@@ -89,6 +103,28 @@ def test_select_and_send_random_value_when_starting():
     message_sender.assert_called_once_with(
         "v1", "v2", expected_message, None, None
     )
+
+
+def test_start_sends_initial_value_to_all_neighbors():
+    v1 = Variable("v1", [0, 1, 2])
+    v2 = Variable("v2", [0, 1, 2])
+    v3 = Variable("v3", [0, 1, 2])
+    c1 = constraint_from_str("c1", "abs(v1 - v2 + v3)", [v1, v2, v3])
+    computation = _computation(v1, [c1])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.start()
+
+    expected_message = _cycle_message(computation.current_value)
+    message_sender.assert_has_calls(
+        [
+            call("v1", "v2", expected_message, None, None),
+            call("v1", "v3", expected_message, None, None),
+        ],
+        any_order=True,
+    )
+    assert message_sender.call_count == 2
 
 
 def test_on_new_cycle_selects_better_value_in_min_mode(monkeypatch):
@@ -127,3 +163,88 @@ def test_on_new_cycle_selects_better_value_in_max_mode(monkeypatch):
     message_sender.assert_called_once_with(
         "v1", "v2", _cycle_message(2), None, None
     )
+
+
+def test_on_new_cycle_keeps_value_when_probability_blocks_change(monkeypatch):
+    v1 = Variable("v1", [0, 1, 2])
+    v2 = Variable("v2", [0, 1, 2])
+    c1 = constraint_from_str("c1", "abs(v1 - v2)", [v1, v2])
+    computation = _computation(v1, [c1])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.value_selection(2, 9)
+    monkeypatch.setattr("pydcop.algorithms.dsatuto.random.random", lambda: 0.5)
+
+    computation.on_new_cycle({"v2": (DsaMessage(0), None)}, 0)
+
+    assert computation.current_value == 2
+    assert computation.current_cost == 9
+    message_sender.assert_called_once_with(
+        "v1", "v2", _cycle_message(2), None, None
+    )
+
+
+def test_on_new_cycle_keeps_value_when_no_min_improvement(monkeypatch):
+    v1 = Variable("v1", [0, 1, 2])
+    v2 = Variable("v2", [0, 1, 2])
+    c1 = constraint_from_str("c1", "abs(v1 - v2)", [v1, v2])
+    computation = _computation(v1, [c1])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.value_selection(0, 0)
+    monkeypatch.setattr("pydcop.algorithms.dsatuto.random.random", lambda: 0.0)
+
+    computation.on_new_cycle({"v2": (DsaMessage(0), None)}, 0)
+
+    assert computation.current_value == 0
+    assert computation.current_cost == 0
+    message_sender.assert_called_once_with(
+        "v1", "v2", _cycle_message(0), None, None
+    )
+
+
+def test_on_new_cycle_keeps_value_when_no_max_improvement(monkeypatch):
+    v1 = Variable("v1", [0, 1, 2])
+    v2 = Variable("v2", [0, 1, 2])
+    c1 = constraint_from_str("c1", "v1 + v2", [v1, v2])
+    computation = _computation(v1, [c1], mode="max")
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.value_selection(2, 2)
+    monkeypatch.setattr("pydcop.algorithms.dsatuto.random.random", lambda: 0.0)
+
+    computation.on_new_cycle({"v2": (DsaMessage(0), None)}, 0)
+
+    assert computation.current_value == 2
+    assert computation.current_cost == 2
+    message_sender.assert_called_once_with(
+        "v1", "v2", _cycle_message(2), None, None
+    )
+
+
+def test_on_new_cycle_uses_all_neighbor_messages(monkeypatch):
+    v1 = Variable("v1", [0, 1, 2])
+    v2 = Variable("v2", [0, 1, 2])
+    v3 = Variable("v3", [0, 1, 2])
+    c1 = constraint_from_str("c1", "abs(v1 - v2 - v3)", [v1, v2, v3])
+    computation = _computation(v1, [c1])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.value_selection(0, 3)
+    monkeypatch.setattr("pydcop.algorithms.dsatuto.random.random", lambda: 0.0)
+
+    computation.on_new_cycle(
+        {"v2": (DsaMessage(1), None), "v3": (DsaMessage(1), None)}, 0
+    )
+
+    assert computation.current_value == 2
+    assert computation.current_cost == 0
+    expected_message = _cycle_message(2)
+    message_sender.assert_has_calls(
+        [
+            call("v1", "v2", expected_message, None, None),
+            call("v1", "v3", expected_message, None, None),
+        ],
+        any_order=True,
+    )
+    assert message_sender.call_count == 2

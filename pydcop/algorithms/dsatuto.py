@@ -63,6 +63,10 @@ GRAPH_TYPE = "constraints_hypergraph"
 DsaMessage = message_type("dsa_value", ["value"])
 
 
+def build_computation(comp_def: ComputationDef) -> VariableComputation:
+    return DsaTutoComputation(comp_def)
+
+
 class DsaTutoComputation(SynchronousComputationMixin, VariableComputation):
     """
     A very simple DSA implementation.
