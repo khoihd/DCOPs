@@ -111,6 +111,16 @@ def test_computation_memory_counts_duplicate_neighbor_once():
     assert dba.computation_memory(v1_node) == dba.UNIT_SIZE
 
 
+def test_computation_memory_uses_exact_variable_names():
+    v1 = Variable('v1', [0, 1])
+    v10 = Variable('v10', [0, 1])
+    c1 = constraint_from_str('c1', ' v1 == v10', [v1, v10])
+    v10_node = VariableComputationNode(v10, [c1])
+
+    assert set(v10_node.neighbors) == {'v1'}
+    assert dba.computation_memory(v10_node) == dba.UNIT_SIZE
+
+
 def test_footprint_on_computation_object(monkeypatch):
     v1 = Variable('v1', [0, 1])
     v2 = Variable('v2', [0, 1])
@@ -234,6 +244,8 @@ def test_compute_eval_value_counts_violated_constraints_and_weights():
 
     assert computation.compute_eval_value(1, [c1, c2]) == (1, [1])
     assert computation.compute_eval_value(0, [c1, c2]) == (1, [0])
+    assert computation.compute_eval_value(
+        1, [c1, c2], collect_violated=False) == (1, None)
 
     computation._increase_weights([1])
 
@@ -251,6 +263,20 @@ def test_compute_best_improvement_returns_all_best_values():
 
     assert best_values == [1, 2]
     assert best_eval == 0
+
+
+def test_improve_keeps_direct_call_violated_constraint_fallback():
+    v1 = Variable('v1', [0, 1])
+    c1 = UnaryFunctionRelation(
+        'c1', v1, lambda x: 0 if x == 1 else dba.INFINITY
+    )
+    computation = _dba_computation(v1, [c1])
+    computation.value_selection(0)
+    computation.__cost__, _ = computation.compute_eval_value(0, [c1])
+
+    computation.improve([c1])
+
+    assert computation._violated_constraints == [0]
 
 
 def test_select_and_send_random_value_when_starting():

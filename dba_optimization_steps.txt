@@ -1,0 +1,40 @@
+# DBA Optimization Steps
+
+## Status
+
+Complete. No further DBA optimization is planned in this pass.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dba.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/dba.py tests/unit/test_algorithms_dba.py`
+
+Both passed before edits.
+
+## Step 1: Local Evaluation and Memory Accounting Cleanup
+
+Completed:
+
+- Fix `computation_memory()` to exclude the computation variable by exact
+  variable-name equality.
+- Avoid the generic assignment filtering helper in the OK-message reduction
+  loop by using precomputed relation dimension names.
+- Avoid evaluating the current value twice in the OK/improve transition.
+- Allow best-improvement scans to skip violated-constraint list construction.
+- Add focused regression coverage for exact-name memory accounting and the
+  skipped violated-list path.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dba.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/dba.py tests/unit/test_algorithms_dba.py`
+- `conda run -n khoihd python -m pytest tests/dcop_cli/test_solve.py -k dba`
+
+Closure:
+
+- Keep DBA message ordering, termination detection, and breakout weight
+  semantics unchanged.
+- If DBA is revisited later, start a new focused plan before changing
+  improvement tie behavior or end-message propagation.

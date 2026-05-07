@@ -107,7 +107,7 @@ from pydcop.infrastructure.computations import Message, VariableComputation, \
 from pydcop.computations_graph.constraints_hypergraph import \
     VariableComputationNode
 from pydcop.dcop.objects import Variable
-from pydcop.dcop.relations import RelationProtocol, filter_assignment_dict
+from pydcop.dcop.relations import RelationProtocol
 
 INFINITY = 10000
 
@@ -146,7 +146,7 @@ def computation_memory(computation: VariableComputationNode) -> float:
 
     """
     neighbors = set((n for link in computation.links for n in link.nodes
-                     if n not in computation.name))
+                     if n != computation.name))
     return len(neighbors) * UNIT_SIZE
 
 
@@ -307,13 +307,16 @@ class DbaComputation(VariableComputation):
         self.__postponed_ok_messages__ = []
 
         self.__constraints__ = list(constraints)
-        self.__constraints_weights__ = [1 for _ in constraints]
+        self.__constraints_weights__ = [1 for _ in self.__constraints__]
+        self.__constraint_dimensions__ = [
+            tuple(v.name for v in c.dimensions) for c in self.__constraints__
+        ]
         self._violated_constraints = []
         # The algorithm starts in "ok?" mode
         self._mode = 'starting'
         # some constraints might be unary, and our variable can have several
         # constraints involving the same variable
-        self._neighbors = set([v.name for c in constraints
+        self._neighbors = set([v.name for c in self.__constraints__
                                for v in c.dimensions if v != variable])
         # Agent view of its neighbors resp. for ok and improve modes
         self._neighbors_values = {}
@@ -375,15 +378,19 @@ class DbaComputation(VariableComputation):
             # Replace all variables except its own variable with the values
             # received from neighbors
             reduced_cs = []
-            for c in self.constraints:
-                asgt = filter_assignment_dict(self._neighbors_values,
-                                              c.dimensions)
+            for c, dimensions in zip(self.constraints,
+                                     self.__constraint_dimensions__):
+                asgt = {
+                    v_name: self._neighbors_values[v_name]
+                    for v_name in dimensions
+                    if v_name in self._neighbors_values
+                }
                 reduced_cs.append(c.slice(asgt))
 
-            self.__cost__, _ = self.compute_eval_value(self.current_value,
-                                                          reduced_cs)
+            self.__cost__, violated_constraints = self.compute_eval_value(
+                self.current_value, reduced_cs)
             # Compute and send best improvement to neighbors
-            self.improve(reduced_cs)
+            self.improve(reduced_cs, violated_constraints)
 
             self._go_to_wait_improve_mode()
         else:
@@ -393,7 +400,7 @@ class DbaComputation(VariableComputation):
                 'neighbors are %s',
                 self.name, self._neighbors_values, self.neighbors)
 
-    def improve(self, relations):
+    def improve(self, relations, violated_constraints=None):
         current_eval = self.__cost__
         bests, best_eval = self._compute_best_improvement(relations)
 
@@ -412,8 +419,10 @@ class DbaComputation(VariableComputation):
             self._can_move = False
             self._quasi_local_minimum = True
 
-        _, self._violated_constraints = self.compute_eval_value(
-            self.current_value, relations)
+        if violated_constraints is None:
+            _, violated_constraints = self.compute_eval_value(
+                self.current_value, relations)
+        self._violated_constraints = violated_constraints
 
         self._send_improve(current_eval)
 
@@ -433,7 +442,8 @@ class DbaComputation(VariableComputation):
         best_vals = []
         best_eval = INFINITY
         for v in self.variable.domain:
-            curr_eval, _ = self.compute_eval_value(v, relations)
+            curr_eval, _ = self.compute_eval_value(
+                v, relations, collect_violated=False)
             if curr_eval < best_eval:
                 best_eval = curr_eval
                 best_vals = [v]
@@ -447,7 +457,7 @@ class DbaComputation(VariableComputation):
             msg = DbaOkMessage(self.current_value)
             self.post_msg(n, msg)
 
-    def compute_eval_value(self, val, relations):
+    def compute_eval_value(self, val, relations, collect_violated=True):
         """
         This function compute the evaluation value (the number of violated
         constraints) regarding the current assignment.
@@ -469,14 +479,13 @@ class DbaComputation(VariableComputation):
         The evaluation value for the given assignment and the list
         of indices of the violated constraints for this value
         """
-        i = 0
         new_eval_value = 0
-        violated_constraints = []
-        for rel in relations:
+        violated_constraints = [] if collect_violated else None
+        for i, rel in enumerate(relations):
             if rel(val) >= INFINITY:
-                violated_constraints.append(i)
+                if collect_violated:
+                    violated_constraints.append(i)
                 new_eval_value += self.__constraints_weights__[i]
-            i += 1
         return new_eval_value, violated_constraints
 
     def _go_to_wait_improve_mode(self):
