@@ -29,14 +29,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import operator
 import random
 
-import functools
 from typing import List, Tuple
 
-from pydcop.dcop.relations import RelationProtocol, generate_assignment_as_dict, \
-    filter_assignment_dict
+from pydcop.dcop.relations import RelationProtocol, generate_assignment_as_dict
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef
 from pydcop.infrastructure.computations import Message, VariableComputation, \
@@ -87,7 +84,7 @@ def computation_memory(computation: VariableComputationNode) -> float :
 
     """
     neighbors = set((n for link in computation.links for n in link.nodes
-                     if n not in computation.name))
+                     if n != computation.name))
     return len(neighbors) * UNIT_SIZE
 
 
@@ -113,6 +110,14 @@ def communication_load(src: VariableComputationNode, target: str) -> float:
         The size of messages sent from the src variable to the target variable.
     """
     return  UNIT_SIZE + HEADER_SIZE
+
+
+def _filter_assignment(assignment, dimensions):
+    return {
+        variable.name: assignment[variable.name]
+        for variable in dimensions
+        if variable.name in assignment
+    }
 
 
 algo_params = [
@@ -164,7 +169,7 @@ class MixedDsaComputation(VariableComputation):
     """
 
     def __init__(self, variable, constraints, variant='B', proba_hard=0.7,
-                 proba_soft=0.7, mode='min', comp_def=None):
+                 proba_soft=0.7, mode='min', stop_cycle=0, comp_def=None):
         """
 
         :param variable a variable object for which this computation is
@@ -187,6 +192,7 @@ class MixedDsaComputation(VariableComputation):
         self.proba_soft = proba_soft
         self.variant = variant
         self.mode = mode
+        self.stop_cycle = stop_cycle
         # some constraints might be unary, and our variable can have several
         # constraints involving the same variable
         self._neighbors = set([v.name for c in constraints
@@ -206,9 +212,9 @@ class MixedDsaComputation(VariableComputation):
             variables = [v for v in c.dimensions if v != self._variable]
             boundary = None
             for asgt in generate_assignment_as_dict(variables):
-                rel = c.slice(filter_assignment_dict(asgt, c.dimensions))
                 for val in self._variable.domain:
-                    rel_val = rel(val)
+                    asgt[self.name] = val
+                    rel_val = c(**_filter_assignment(asgt, c.dimensions))
                     if boundary is None:
                         boundary = rel_val
                     elif self.mode == 'max' and rel_val > boundary:
@@ -326,7 +332,7 @@ class MixedDsaComputation(VariableComputation):
                                          self.variable.name,
                                          self.current_value,
                                          nb_violated_cons, dcop_cost)
-                    elif self.exists_violated_soft_constraint() and\
+                    elif self.exists_violated_soft_constraint(current_asgt) and\
                                     self.variant in ['B', 'C']:
                         if len(bests) > 1 and self.proba_soft > random.random():
                             bests.remove(self.current_value)
@@ -422,18 +428,23 @@ class MixedDsaComputation(VariableComputation):
         softs = self.soft_constraints if soft_cons is None else soft_cons
         hards = self.hard_constraints if hard_cons is None else hard_cons
         # Cost for constraints:
-        cost = functools.reduce(operator.add, [f(**filter_assignment_dict(
-            assignment, f.dimensions)) for f in softs], 0)
+        cost = 0
+        concerned_vars = set()
+        for f in softs:
+            cost += f(**_filter_assignment(assignment, f.dimensions))
+            concerned_vars.update(f.dimensions)
+
+        for f in hards:
+            concerned_vars.update(f.dimensions)
+
         # Cost for variable, if any:
-        concerned_vars = set(v for c in softs for v in c.dimensions)
-        concerned_vars.update(v for c in hards for v in c.dimensions)
         for v in concerned_vars:
             if hasattr(v, 'cost_for_val'):
                 cost += v.cost_for_val(assignment[v.name])
 
         hard_violated = list()
         for f in hards:
-            c_cost = f(**filter_assignment_dict(assignment, f.dimensions))
+            c_cost = f(**_filter_assignment(assignment, f.dimensions))
             if c_cost == INFINITY:
                 hard_violated.append(f)
                 # We do not set the cost to infinity yet, so that we can
@@ -460,16 +471,18 @@ class MixedDsaComputation(VariableComputation):
             return INFINITY
         return dcop_cost
 
-    def exists_violated_soft_constraint(self) -> bool:
+    def exists_violated_soft_constraint(self, assignment=None) -> bool:
         """
         Tells if there is a violated soft constraint regarding the current
         assignment
         :return: a boolean
         """
+        if assignment is None:
+            assignment = self._neighbors_values.copy()
+            assignment[self.name] = self.current_value
+
         for c in self.soft_constraints:
-            asgt = self._neighbors_values.copy()
-            asgt[self.name] = self.current_value
-            const = c(filter_assignment_dict(asgt, c.dimensions))
+            const = c(**_filter_assignment(assignment, c.dimensions))
             if const != self.__optimum_dict__[c.name]:
                 return True
         return False

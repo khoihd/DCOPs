@@ -1,0 +1,41 @@
+# Mixed DSA Optimization Steps
+
+## Status
+
+Complete for this focused pass.
+
+## Baseline
+
+Initial focused check:
+
+- `conda run -n khoihd ruff check pydcop/algorithms/mixeddsa.py`
+
+MixedDSA did not have a dedicated unit test file before this pass. While
+preparing coverage, `build_computation()` was found to pass the declared
+`stop_cycle` parameter to a constructor that did not accept it.
+
+## Step 1: Local Assignment and Cost Cleanup
+
+Completed:
+
+- Fixed computation memory accounting to exclude the local variable by exact
+  name instead of substring membership.
+- Accepted the declared `stop_cycle` parameter in `MixedDsaComputation`.
+- Replaced repeated generic assignment filtering with a small local helper for
+  relation-dimension assignments.
+- Avoided relation slicing during hard/soft constraint classification.
+- Avoided list allocation and `reduce()` in `_compute_dcop_cost()`.
+- Reused the current assignment when checking violated soft constraints.
+- Added focused MixedDSA unit coverage for build defaults, memory accounting,
+  hard/soft cost separation, and matrix-relation soft violation checks.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mixeddsa.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/mixeddsa.py tests/unit/test_algorithms_mixeddsa.py`
+
+Notes:
+
+- This pass keeps MixedDSA message timing and cycle behavior unchanged.
+- Further work should treat algorithmic variant behavior separately from local
+  hot-path cleanup.
