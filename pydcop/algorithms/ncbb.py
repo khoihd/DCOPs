@@ -162,13 +162,17 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
 
         # parent and pseudo-parents:
         self._ancestors = list(self._pseudo_parents)
-        self._ancestors.append(self._parent)
+        if self._parent is not None:
+            self._ancestors.append(self._parent)
+        self._ancestor_names = set(self._ancestors)
+        self._children_names = set(self._children)
 
         # Children and pseudo-children:
         self._descendants = self._pseudo_children + self._children
 
         # Raise an exception if we pass a non-binary constraint
         self._constraints = []
+        self._ancestor_constraints = []
         for r in computation_definition.node.constraints:
             if r.arity != 2:
                 raise ComputationException(
@@ -177,6 +181,8 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
                     f"NCBB implementation only supports binary constraints."
                 )
             self._constraints.append(r)
+            if any(v.name in self._ancestor_names for v in r.dimensions):
+                self._ancestor_constraints.append(r)
 
         self._parents_values = {}
         self._children_costs = {}
@@ -201,7 +207,7 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
     def _search_cost_msg_registration(self, variable_name, recv_msg, t):
         pass
 
-    @register("ncbb_stop")
+    @register("stop")
     def _stop_msg_registration(self, variable_name, recv_msg, t):
         pass
 
@@ -229,7 +235,7 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
         if not messages:
             return
 
-        msg_types = {msg.type for (sender, msg) in messages.items()}
+        msg_types = {msg.type for msg, _ in messages.values()}
 
         if len(msg_types) != 1:
             raise ComputationException(
@@ -260,7 +266,7 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
         elif msg_type == "cost":
 
             for sender, (message, t) in messages.items():
-                self.cost_phase(sender, message.value)
+                self.cost_phase(sender, message.cost)
 
         elif msg_type == "update_value":
             # Receiving a value message from one of our ancestors
@@ -276,7 +282,7 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
         return
 
     def value_phase(self, sender, value):
-        if sender not in self._ancestors:
+        if sender not in self._ancestor_names:
             raise ComputationException(
                 f"Received at {self.name} value from {sender}, "
                 f"which is not an ancestor: {self._ancestors}"
@@ -291,14 +297,11 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
         if len(self._parents_values) == len(self._ancestors):
             # Select our own value greedily.
             # For this, we only take into account the constraints with our ancestrors
-            ancestors_constraints = []
-            for c in self._constraints:
-                for v in c.scope_names:
-                    if v in self._ancestors:
-                        ancestors_constraints.append(c)
-                        break
             values, cost = find_optimal(
-                self.variable, self._parents_values, ancestors_constraints, self._mode
+                self.variable,
+                self._parents_values,
+                self._ancestor_constraints,
+                self._mode,
             )
             self.value_selection(values[0])
             self._upper_bound = cost
@@ -316,7 +319,7 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
     def cost_phase(self, sender, cost):
         # compute the upper-bound for the subtree rooted at this variable.
 
-        if sender not in self._children:
+        if sender not in self._children_names:
             raise ComputationException(
                 f"Received cost at {self.name} from {sender}, "
                 f"which is not a children: {self._children}"

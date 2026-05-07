@@ -1,0 +1,42 @@
+# NCBB Optimization Steps
+
+## Status
+
+Complete for this focused pass.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_ncbb.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/ncbb.py tests/unit/test_algorithms_ncbb.py`
+
+Both passed before edits.
+
+## Step 1: Initialization-Phase Lookup Cleanup
+
+Completed:
+
+- Cached ancestor and child name sets for membership checks in value and cost
+  phases.
+- Cached constraints involving ancestors during initialization instead of
+  rebuilding that list for every completed value context.
+- Kept root ancestor state empty instead of storing a `None` parent sentinel.
+- Fixed synchronous cycle message type scanning to use the actual
+  `(message, timestamp)` map shape.
+- Fixed cost message dispatch to read `CostMessage.cost`.
+- Registered the stop handler under the actual `StopMessage` type.
+- Added focused regression coverage for cached ancestor constraints and cost
+  message cycle dispatch.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_ncbb.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/ncbb.py tests/unit/test_algorithms_ncbb.py`
+
+Notes:
+
+- This pass intentionally leaves the incomplete NCBB search-phase stubs
+  unchanged.
+- Further NCBB work should be a behavior-focused implementation pass, not a
+  local optimization pass.

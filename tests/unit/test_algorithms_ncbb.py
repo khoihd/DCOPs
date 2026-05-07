@@ -214,12 +214,15 @@ def test_create_computations(toy_pb):
     comp_a = get_computation_instance(toy_pb, "A")
 
     assert comp_a.is_root
+    assert comp_a._ancestors == []
+    assert comp_a._ancestor_constraints == []
     assert set(comp_a._descendants) == {"D", "B", "C"}
 
     comp_d = get_computation_instance(toy_pb, "D")
     assert not comp_d.is_root
     assert comp_d._parent == "B"
     assert set(comp_d._ancestors) == {"A", "B"}
+    assert {c.name for c in comp_d._ancestor_constraints} == {"c3", "c4"}
 
 
 def test_select_value_at_root_simple_variable(three_variables_pb):
@@ -361,3 +364,12 @@ def test_cost_msg_at_root(toy_pb):
     comp_a.cost_phase("C", 0)
 
     assert comp_a._upper_bound == 3
+
+
+def test_on_new_cycle_dispatches_cost_message(toy_pb):
+    comp_b = get_computation_instance(toy_pb, "B")
+    comp_b.cost_phase = MagicMock()
+
+    comp_b.on_new_cycle({"D": (CostMessage(2), 0)}, 1)
+
+    comp_b.cost_phase.assert_called_once_with("D", 2)
