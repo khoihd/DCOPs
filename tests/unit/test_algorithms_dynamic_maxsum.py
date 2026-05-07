@@ -31,11 +31,34 @@
 
 import types
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
+import pytest
+
+from pydcop.algorithms import AlgorithmDef, ComputationDef
+from pydcop.algorithms.maxsum import MaxSumMessage
 from pydcop.algorithms.maxsum_dynamic import DynamicFunctionFactorComputation
-from pydcop.dcop.objects import Variable
-from pydcop.dcop.relations import AsNAryFunctionRelation
+from pydcop.algorithms.maxsum_dynamic import (
+    DynamicFactorComputation,
+    DynamicFactorVariableComputation,
+    FactorWithReadOnlyVariableComputation,
+)
+from pydcop.computations_graph.factor_graph import FactorComputationNode
+from pydcop.dcop.objects import ExternalVariable
+from pydcop.dcop.objects import Variable, VariableDomain
+from pydcop.dcop.relations import (
+    AsNAryFunctionRelation,
+    ConditionalRelation,
+    NAryFunctionRelation,
+)
+from pydcop.infrastructure.computations import Message
+
+
+def _factor_comp_def(factor):
+    algo_def = AlgorithmDef.build_with_default_param(
+        "amaxsum", params={"noise": 0}
+    )
+    return ComputationDef(FactorComputationNode(factor), algo_def)
 
 #
 class DynamicFunctionFactorComputationTest(unittest.TestCase):
@@ -127,28 +150,184 @@ class DynamicFunctionFactorComputationTest(unittest.TestCase):
 
         self.assertRaises(ValueError, f.change_factor_function, phi2)
 
-    def test_change_function_wrong_dimensions_var(self):
-        domain = list(range(10))
-        x1 = Variable("x1", domain)
-        x2 = Variable("x2", domain)
-        x3 = Variable("x3", domain)
 
-        @AsNAryFunctionRelation(x1, x2)
-        def phi(x1_, x2_):
-            return x1_ + x2_
+def test_dynamic_function_change_sends_updated_costs():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
 
-        @AsNAryFunctionRelation(x1, x3)
-        def phi2(x1_, x3_):
-            return x1_ + x3_
+    @AsNAryFunctionRelation(x1, x2)
+    def phi(x1_, x2_):
+        return x1_ + x2_
 
-        comp_def = MagicMock()
-        comp_def.algo.algo = "amaxsum"
-        comp_def.algo.mode = "min"
-        comp_def.node.factor = phi
+    @AsNAryFunctionRelation(x1, x2)
+    def phi2(x1_, x2_):
+        return x1_ + 2 * x2_
 
-        f = DynamicFunctionFactorComputation(comp_def=comp_def)
+    computation = DynamicFunctionFactorComputation(comp_def=_factor_comp_def(phi))
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
 
-        # Monkey patch post_msg method with dummy mock to avoid error:
-        f.post_msg = types.MethodType(lambda w, x, y, z: None, f)
+    msg_count, msg_size = computation.change_factor_function(phi2)
 
-        self.assertRaises(ValueError, f.change_factor_function, phi2)
+    assert computation.name == "phi"
+    assert computation.factor == phi2
+    assert msg_count == 2
+    assert msg_size == 8
+    message_sender.assert_has_calls(
+        [
+            call("phi", "x1", MaxSumMessage({0: 0, 1: 1}), None, None),
+            call("phi", "x2", MaxSumMessage({0: 0, 1: 2}), None, None),
+        ],
+        any_order=True,
+    )
+
+
+def test_read_only_factor_waits_for_value_then_slices_relation():
+    x = Variable("x", [0, 1])
+    sensor = Variable("sensor", [False, True])
+
+    @AsNAryFunctionRelation(x, sensor)
+    def rule(x_, sensor_):
+        return x_ if sensor_ else 10 - x_
+
+    computation = FactorWithReadOnlyVariableComputation(rule, [sensor])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    assert computation.factor.dimensions == [x]
+    assert computation.factor(x=0) == 0
+    assert computation.factor(x=1) == 0
+
+    result = computation._on_new_var_value_msg(
+        "sensor", Message("VARIABLE_VALUE", True), None
+    )
+
+    assert computation.factor.dimensions == [x]
+    assert computation.factor(x=0) == 0
+    assert computation.factor(x=1) == 1
+    assert result["num_msg_out"] == 1
+    assert result["size_msg_out"] == 4
+    message_sender.assert_called_once_with(
+        "rule", "x", MaxSumMessage({0: 0, 1: 1}), None, None
+    )
+
+
+def test_read_only_factor_rejects_read_only_variable_outside_scope():
+    x = Variable("x", [0, 1])
+    sensor = Variable("sensor", [False, True])
+
+    @AsNAryFunctionRelation(x)
+    def rule(x_):
+        return x_
+
+    with pytest.raises(ValueError, match="Read only sensor variable"):
+        FactorWithReadOnlyVariableComputation(rule, [sensor])
+
+
+def test_dynamic_factor_sends_add_and_remove_when_external_scope_changes():
+    x = Variable("x", [0, 1])
+    bool_domain = VariableDomain("boolean", "boolean", [False, True])
+    external = ExternalVariable("external", bool_domain, False)
+    condition = NAryFunctionRelation(lambda external: external, [external], name="cond")
+
+    @AsNAryFunctionRelation(x)
+    def active_rule(x_):
+        return x_
+
+    relation = ConditionalRelation(condition, active_rule, name="dynamic_rule")
+    computation = DynamicFactorComputation(relation)
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    assert computation.name == "dynamic_rule"
+    assert computation.factor.dimensions == []
+
+    computation._on_new_var_value_msg(
+        "external", Message("VARIABLE_VALUE", True), None
+    )
+
+    assert computation.factor == active_rule
+    message_sender.assert_called_once_with(
+        "dynamic_rule", "x", Message("ADD", {0: 0, 1: 1}), None, None
+    )
+
+    message_sender.reset_mock()
+    computation._on_new_var_value_msg(
+        "external", Message("VARIABLE_VALUE", False), None
+    )
+
+    assert computation.factor.dimensions == []
+    message_sender.assert_called_once_with(
+        "dynamic_rule", "x", Message("REMOVE", None), None, None
+    )
+
+
+def test_dynamic_variable_processes_add_message_as_factor_costs():
+    variable = Variable("x", [0, 1])
+    computation = DynamicFactorVariableComputation(variable, ["old_factor"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation._on_add_msg("new_factor", Message("ADD", {0: 5, 1: 0}), None)
+
+    assert computation.factors == ["old_factor", "new_factor"]
+    assert computation._costs == {"new_factor": {0: 5, 1: 0}}
+    assert computation.current_value == 1
+    assert computation.current_cost == 0
+    message_sender.assert_called_once_with(
+        "x", "old_factor", MaxSumMessage({0: 2.5, 1: -2.5}), None, None
+    )
+
+
+def test_dynamic_variable_removes_factor_and_recomputes_remaining_messages():
+    variable = Variable("x", [0, 1])
+    computation = DynamicFactorVariableComputation(
+        variable, ["old_factor", "removed_factor"]
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._costs["old_factor"] = {0: 3, 1: 0}
+    computation._costs["removed_factor"] = {0: 0, 1: 10}
+    computation._prev_messages["old_factor"] = ({0: 1, 1: -1}, 1)
+
+    msg_count, msg_size = computation._on_remove_msg(
+        "removed_factor", Message("REMOVE", None), None
+    )
+
+    assert computation.factors == ["old_factor"]
+    assert computation._costs == {"old_factor": {0: 3, 1: 0}}
+    assert dict(computation._prev_messages) == {
+        "old_factor": ({0: 0.0, 1: 0.0}, 1)
+    }
+    assert computation.current_value == 1
+    assert computation.current_cost == 0
+    assert msg_count == 1
+    assert msg_size == 4
+    message_sender.assert_called_once_with(
+        "x", "old_factor", MaxSumMessage({0: 0.0, 1: 0.0}), None, None
+    )
+
+
+def test_change_function_wrong_dimensions_var():
+    domain = list(range(10))
+    x1 = Variable("x1", domain)
+    x2 = Variable("x2", domain)
+    x3 = Variable("x3", domain)
+
+    @AsNAryFunctionRelation(x1, x2)
+    def phi(x1_, x2_):
+        return x1_ + x2_
+
+    @AsNAryFunctionRelation(x1, x3)
+    def phi2(x1_, x3_):
+        return x1_ + x3_
+
+    comp_def = MagicMock()
+    comp_def.algo.algo = "amaxsum"
+    comp_def.algo.mode = "min"
+    comp_def.node.factor = phi
+
+    f = DynamicFunctionFactorComputation(comp_def=comp_def)
+
+    with pytest.raises(ValueError):
+        f.change_factor_function(phi2)

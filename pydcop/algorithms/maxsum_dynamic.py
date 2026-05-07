@@ -30,16 +30,41 @@
 
 
 
-from pydcop.infrastructure.computations import Message, register
+from pydcop.algorithms import AlgorithmDef, ComputationDef
+from pydcop.algorithms import maxsum
 from pydcop.algorithms.amaxsum import MaxSumFactorComputation, MaxSumVariableComputation
 from pydcop.algorithms.maxsum import MaxSumMessage
+from pydcop.computations_graph.factor_graph import (
+    FactorComputationNode,
+    VariableComputationNode,
+)
 from pydcop.dcop.relations import NeutralRelation
+from pydcop.infrastructure.computations import Message, register
 
 
 def _same_dimensions(dimensions, other_dimensions):
     if len(dimensions) != len(other_dimensions):
         return False
     return set(dimensions) == set(other_dimensions)
+
+
+def _amaxsum_def():
+    return AlgorithmDef.build_with_default_param("amaxsum", params={"noise": 0})
+
+
+def _factor_comp_def(factor):
+    return ComputationDef(FactorComputationNode(factor), _amaxsum_def())
+
+
+def _variable_comp_def(variable, factor_names):
+    return ComputationDef(
+        VariableComputationNode(variable, factor_names), _amaxsum_def()
+    )
+
+
+def _set_msg_sender(computation, msg_sender):
+    if msg_sender is not None:
+        computation.message_sender = msg_sender
 
 
 class DynamicFunctionFactorComputation(MaxSumFactorComputation):
@@ -59,21 +84,10 @@ class DynamicFunctionFactorComputation(MaxSumFactorComputation):
      factor computation object with non-changing factors,
      if change_factor_function is never called it works the same.
 
-     FIXME
-     -----
-
-     This class does not work since the refactoring of maxsum implementation
-
      Parameters
      ----------
-     factor: a factor object
-     name: string
-        an optional string, if not given the name of the factor will be used
-        as the name of the computation
-    msg_sender: Callable[[str, str, Message, int]
-        A callable that can be used to send messages
-    logger : a logger
-        optional
+     comp_def:
+        Computation definition for the factor node.
 
 
      """
@@ -96,9 +110,22 @@ class DynamicFunctionFactorComputation(MaxSumFactorComputation):
             )
 
         # Dimensions are ok, change factor computation object and emit cost
-        # messages
+        # messages.
         self.factor = fn
-        # return self._init_msg() # FIXME
+        self.variables = fn.dimensions
+        return self._send_current_costs(self.variables)
+
+    def _send_current_costs(self, variables):
+        msg_count, msg_size = 0, 0
+        for v in variables:
+            costs_v = maxsum.factor_costs_for_var(
+                self.factor, v, self._costs, self.mode
+            )
+            msg = MaxSumMessage(costs_v)
+            self.post_msg(v.name, msg)
+            msg_count += 1
+            msg_size += msg.size
+        return msg_count, msg_size
 
     def __str__(self):
         return "Maxsum dynamic function Factor computation for " + self.factor.name
@@ -145,14 +172,17 @@ class FactorWithReadOnlyVariableComputation(DynamicFunctionFactorComputation):
         # We start with a neutral relation until we have all values from
         # the read-only variables the condition depends on:
         self._sliced_relation = NeutralRelation(writable_vars, name=self._relation.name)
-        super().__init__(self._sliced_relation, name=name, msg_sender=msg_sender)
+        super().__init__(comp_def=_factor_comp_def(self._sliced_relation))
+        if name is not None:
+            self._name = name
+        _set_msg_sender(self, msg_sender)
 
     def on_start(self):
         # when starting, subscribe to all sensor variable used in the
         # condition of the rule
         for v in self._read_only_variables:
-            self._msg_sender.post_msg(self.name, v.name, Message("SUBSCRIBE", None))
-        super().on_start()
+            self.post_msg(v.name, Message("SUBSCRIBE", None))
+        return super().on_start()
 
     @register("VARIABLE_VALUE")
     def _on_new_var_value_msg(self, var_name, msg, t):
@@ -223,7 +253,9 @@ class DynamicFactorComputation(MaxSumFactorComputation):
         if self._external_variables:
             self._current_relation = self._relation.slice(self._external_values)
 
-        super().__init__(self._current_relation, name=name, msg_sender=msg_sender)
+        super().__init__(comp_def=_factor_comp_def(self._current_relation))
+        self._name = name if name is not None else relation.name
+        _set_msg_sender(self, msg_sender)
 
     def on_start(self):
         # subscribe to external variable
@@ -234,7 +266,7 @@ class DynamicFactorComputation(MaxSumFactorComputation):
     def change_factor_function(self, fn):
         msg_count, msg_size = 0, 0
 
-        factor_dimensions = self._factor.dimensions
+        factor_dimensions = self.factor.dimensions
         fn_dimensions = fn.dimensions
         factor_dimension_set = set(factor_dimensions)
         fn_dimension_set = set(fn_dimensions)
@@ -244,15 +276,17 @@ class DynamicFactorComputation(MaxSumFactorComputation):
             # Dimensions have not changed, simply change factor object and emit
             # cost messages
             self.logger.info("Function change with no change in " "factor's dimension")
-            self._factor = fn
-            msg_count, msg_size = self._init_msg()
+            self.factor = fn
+            self.variables = fn.dimensions
+            msg_count, msg_size = self._send_current_costs(self.variables)
         else:
             self.logger.info(
                 "Function change with new variables %s and " "removed variables %s",
                 var_added,
                 var_removed,
             )
-            self._factor = fn
+            self.factor = fn
+            self.variables = fn.dimensions
             for v in var_removed:
                 if v.name in self._costs:
                     del self._costs[v.name]
@@ -303,11 +337,13 @@ class DynamicFactorComputation(MaxSumFactorComputation):
         msg_count, msg_size = 0, 0
         msg_debug = {}
         for v in var_added:
-            costs_v = self._costs_for_var(v)
-            msg = MaxSumMessage("ADD", {"costs": costs_v})
-            self._msg_sender.post_msg(self.name, v.name, msg)
+            costs_v = maxsum.factor_costs_for_var(
+                self.factor, v, self._costs, self.mode
+            )
+            msg = Message("ADD", costs_v)
+            self.post_msg(v.name, msg)
             msg_debug[v.name] = costs_v
-            msg_size += msg.size
+            msg_size += MaxSumMessage(costs_v).size
             msg_count += 1
 
         debug = ["ADD VAR MSG {} ".format(self.name)]
@@ -329,8 +365,8 @@ class DynamicFactorComputation(MaxSumFactorComputation):
         msg_count, msg_size = 0, 0
 
         for v in var_removed:
-            msg = MaxSumMessage("REMOVE", {})
-            self._msg_sender.post_msg(self.name, v.name, msg)
+            msg = Message("REMOVE", None)
+            self.post_msg(v.name, msg)
             msg_size += msg.size
             msg_count += 1
         debug = ["REMOVE VAR INIT MSG {} ".format(self.name)]
@@ -341,16 +377,16 @@ class DynamicFactorComputation(MaxSumFactorComputation):
         return msg_count, msg_size
 
     def subscribe(self, variable):
-        self._msg_sender.post_msg(self.name, variable.name, Message("SUBSCRIBE", None))
+        self.post_msg(variable.name, Message("SUBSCRIBE", None))
 
     def unsubscribe(self, variable):
-        self._msg_sender.post_msg(self.name, variable.name, Message("SUBSCRIBE", None))
+        self.post_msg(variable.name, Message("SUBSCRIBE", None))
 
     def __str__(self):
-        return "Maxsum dynamic Factor computation for " + self._factor.name
+        return "Maxsum dynamic Factor computation for " + self.factor.name
 
     def __repr__(self):
-        return "Maxsum dynamic Factor computation for " + self._factor.name
+        return "Maxsum dynamic Factor computation for " + self.factor.name
 
 
 class DynamicFactorVariableComputation(MaxSumVariableComputation):
@@ -365,7 +401,12 @@ class DynamicFactorVariableComputation(MaxSumVariableComputation):
     """
 
     def __init__(self, variable, factor_names, msg_sender=None):
-        super().__init__(variable, factor_names=factor_names, msg_sender=msg_sender)
+        super().__init__(comp_def=_variable_comp_def(variable, factor_names))
+        _set_msg_sender(self, msg_sender)
+
+    @property
+    def factors(self):
+        return self._factors
 
     @register("REMOVE")
     def _on_remove_msg(self, factor_name, msg, t):
@@ -390,19 +431,49 @@ class DynamicFactorVariableComputation(MaxSumVariableComputation):
             self._prev_messages.clear()
 
         # Select a new value.
-        self._current_value, self._current_cost = self._select_value()
+        self.value_selection(
+            *maxsum.select_value(self.variable, self._costs, self.mode)
+        )
         self.logger.debug(
             "On Remove msg,  Variable %s select value %s with " "cost %s",
             self.name,
-            self._current_value,
-            self._current_cost,
+            self.current_value,
+            self.current_cost,
         )
 
         # Do not send init cost, we may still have costs from other factors !
-        msg_count, msg_size = self._compute_and_send_costs(self.factors)
+        return self._compute_and_send_costs(self._factors)
 
     @register("ADD")
     def _on_add_msg(self, factor_name, msg, t):
         self.logger.debug("Received ADD msg from %s : %s ", factor_name, msg.content)
         self._factors.append(factor_name)
-        return self._on_cost_msg(factor_name, msg)
+        return self._on_maxsum_msg(
+            factor_name, MaxSumMessage(msg.content), t
+        )
+
+    def _compute_and_send_costs(self, factor_names):
+        msg_count, msg_size = 0, 0
+        for f_name in factor_names:
+            costs_f = maxsum.costs_for_factor(
+                self.variable, f_name, self._factors, self._costs
+            )
+            prev_costs, count = self._prev_messages[f_name]
+
+            if self.damping_nodes in ["vars", "both"]:
+                costs_f = maxsum.apply_damping(costs_f, prev_costs, self.damping)
+
+            if not maxsum.approx_match(costs_f, prev_costs, self.stability_coef):
+                msg = MaxSumMessage(costs_f)
+                self.post_msg(f_name, msg)
+                self._prev_messages[f_name] = costs_f, 1
+                msg_count += 1
+                msg_size += msg.size
+            elif count < maxsum.SAME_COUNT:
+                msg = MaxSumMessage(costs_f)
+                self.post_msg(f_name, msg)
+                self._prev_messages[f_name] = costs_f, count + 1
+                msg_count += 1
+                msg_size += msg.size
+
+        return msg_count, msg_size
