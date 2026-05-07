@@ -405,42 +405,40 @@ def factor_costs_for_var(factor: Constraint, variable: Variable, recv_costs, mod
 
     """
     # TODO: support passing list of valid assignment as param
-    costs = {}
+    variable_name = variable.name
+    costs = {
+        d: float("inf") if mode == "min" else -float("inf")
+        for d in variable.domain
+    }
     other_vars = factor.dimensions[:]
     other_vars.remove(variable)
-    for d in variable.domain:
+    for assignment in generate_assignment_as_dict(other_vars):
+        sum_cost = 0
+        # sum of the costs from all other variables
+        for another_var, var_value in assignment.items():
+            if another_var in recv_costs:
+                if var_value not in recv_costs[another_var]:
+                    continue
+                sum_cost += recv_costs[another_var][var_value]
+            else:
+                # we have not received yet costs from variable v
+                pass
+
         # for each value d in the domain of v, calculate min cost (a)
         # where a is any assignment where v = d
         # cost (a) = f(a) + sum( costvar())
         # where costvar is the cost received from our other variables
-
-        optimal_value = float("inf") if mode == "min" else -float("inf")
-
-        for assignment in generate_assignment_as_dict(other_vars):
-            assignment[variable.name] = d
+        for d in variable.domain:
+            assignment[variable_name] = d
             f_val = factor(**assignment)
 
-            sum_cost = 0
-            # sum of the costs from all other variables
-            for another_var, var_value in assignment.items():
-                if another_var == variable.name:
-                    continue
-                if another_var in recv_costs:
-                    if var_value not in recv_costs[another_var]:
-                        continue
-                    sum_cost += recv_costs[another_var][var_value]
-                else:
-                    # we have not received yet costs from variable v
-                    pass
-
             current_val = f_val + sum_cost
-            if (optimal_value > current_val and mode == "min") or (
-                optimal_value < current_val and mode == "max"
+            if (costs[d] > current_val and mode == "min") or (
+                costs[d] < current_val and mode == "max"
             ):
+                costs[d] = current_val
 
-                optimal_value = current_val
-
-        costs[d] = optimal_value
+        assignment.pop(variable_name, None)
 
     return costs
 
@@ -600,21 +598,19 @@ def select_value(
     """
 
     # Select a value from the domain, based on the variable cost and
-    # the costs received from neighbor factors
-    d_costs = {d: variable.cost_for_val(d) for d in variable.domain}
-    for d in variable.domain:
-        for f_costs in costs.values():
-            d_costs[d] += f_costs[d]
-
-    from operator import itemgetter
-
-    # print(f" ### On selecting value for {variable.name} : {d_costs}")
-    if mode == "min":
-        optimal_d = min(d_costs.items(), key=itemgetter(1))
-    else:
-        optimal_d = max(d_costs.items(), key=itemgetter(1))
-
-    return optimal_d[0], optimal_d[1]
+    # the costs received from neighbor factors.
+    opt_func = min if mode == "min" else max
+    return opt_func(
+        (
+            (
+                d,
+                variable.cost_for_val(d)
+                + sum(f_costs[d] for f_costs in costs.values()),
+            )
+            for d in variable.domain
+        ),
+        key=lambda item: item[1],
+    )
 
 
 def costs_for_factor(
@@ -644,21 +640,19 @@ def costs_for_factor(
     Dict:
         a dict containing a cost for each value in the domain of the variable
     """
-    # If our variable has integrated costs, add them
-    msg_costs = {d: variable.cost_for_val(d) for d in variable.domain}
-
+    msg_costs = {}
     sum_cost = 0
+    other_costs = [costs[f] for f in factors if f != factor and f in costs]
     for d in variable.domain:
-        for f in factors:
-            if f == factor or f not in costs:
-                continue
-            # [f for f in factors if f != factor and f in costs]:
-            f_costs = costs[f]
+        # If our variable has integrated costs, add them
+        msg_cost = variable.cost_for_val(d)
+        for f_costs in other_costs:
             if d not in f_costs:
                 continue
             c = f_costs[d]
             sum_cost += c
-            msg_costs[d] += c
+            msg_cost += c
+        msg_costs[d] = msg_cost
 
     # Experimentally, when we do not normalize costs the algorithm takes
     # more cycles to stabilize
@@ -666,9 +660,7 @@ def costs_for_factor(
 
     # Normalize costs with the average cost, to avoid exploding costs
     avg_cost = sum_cost / len(msg_costs)
-    normalized_msg_costs = {
-        d: c - avg_cost for d, c in msg_costs.items()
-    }
+    normalized_msg_costs = {d: c - avg_cost for d, c in msg_costs.items()}
 
     return normalized_msg_costs
 

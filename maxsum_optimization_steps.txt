@@ -1,0 +1,45 @@
+# MaxSum and AMaxSum Optimization Steps
+
+## Status
+
+Complete. No further MaxSum or AMaxSum optimization is planned in this pass.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/maxsum.py pydcop/algorithms/amaxsum.py tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
+
+Both passed before edits.
+
+## Step 1: Shared Helper Hot-Path Cleanup
+
+Completed:
+
+- Optimize `factor_costs_for_var()` by scanning assignments of the other
+  variables once and evaluating all target-domain values inside that scan.
+- Optimize `select_value()` without materializing an intermediate value-cost
+  dict.
+- Optimize `costs_for_factor()` by preselecting the other factor cost tables
+  once per message.
+- Add focused regression coverage for the optimized shared helpers.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/maxsum.py pydcop/algorithms/amaxsum.py tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
+- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py -k maxsum`
+- AMaxSum runtime smoke through `solve()` on `dcop_graphcoloring_3` with
+  adhoc distribution and a short timeout returned a valid assignment.
+
+Notes:
+
+- AMaxSum delegates computation memory, communication load, parameters, and
+  core cost helpers to MaxSum, so shared helper changes apply to both
+  algorithms.
+- Keep message timing, damping semantics, and relation-level helper behavior
+  unchanged in this pass.
+- If either algorithm is revisited later, start a new focused plan before
+  changing asynchronous message suppression, synchronous cycle timing, or
+  normalization semantics.
