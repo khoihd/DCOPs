@@ -296,7 +296,7 @@ class Mgm2OfferMessage(Message):
     def __eq__(self, other):
         if type(other) is not Mgm2OfferMessage:
             return False
-        if self.offers == other.offers:
+        if self.offers == other.offers and self.is_offering == other.is_offering:
             return True
         return False
 
@@ -914,7 +914,19 @@ class Mgm2Computation(VariableComputation):
                 for n, val in self._neighbors_gains.items()
                 if n != self._partner.name
             ]
-            if neigh_gains == [] or self._potential_gain > max(neigh_gains):
+            if neigh_gains:
+                best_neighbor_gain = (
+                    max(neigh_gains)
+                    if self._mode == "min"
+                    else min(neigh_gains)
+                )
+            else:
+                best_neighbor_gain = None
+            if best_neighbor_gain is None or (
+                self._mode == "min" and self._potential_gain > best_neighbor_gain
+            ) or (
+                self._mode == "max" and self._potential_gain < best_neighbor_gain
+            ):
                 if self.logger.isEnabledFor(logging.INFO):
                     self.logger.info(
                         f"Commited and best gain : GO for "
@@ -933,8 +945,15 @@ class Mgm2Computation(VariableComputation):
             self._enter_state("go?")
 
         else:
-            max_neighbors = max(list(self._neighbors_gains.values()))
-            if self._potential_gain > max_neighbors:
+            neighbor_gains = list(self._neighbors_gains.values())
+            best_neighbor_gain = (
+                max(neighbor_gains)
+                if self._mode == "min"
+                else min(neighbor_gains)
+            )
+            if (self._mode == "min" and self._potential_gain > best_neighbor_gain) or (
+                self._mode == "max" and self._potential_gain < best_neighbor_gain
+            ):
                 if self.logger.isEnabledFor(logging.INFO):
                     self.logger.info(
                         f"Local gain is best, {self.name} unilaterally changes its "
@@ -944,15 +963,19 @@ class Mgm2Computation(VariableComputation):
                     self._potential_value, self.current_cost - self._potential_gain
                 )
 
-            elif self._potential_gain == max_neighbors:
+            elif self._potential_gain == best_neighbor_gain:
                 ties = sorted(
-                    [k for k, v in self._neighbors_gains.items() if v == max_neighbors]
+                    [
+                        k
+                        for k, v in self._neighbors_gains.items()
+                        if v == best_neighbor_gain
+                    ]
                     + [self.name]
                 )
                 if ties[0] == self.name:
                     if self.logger.isEnabledFor(logging.INFO):
                         self.logger.info(
-                            f"Won tie-break on gain {max_neighbors} "
+                            f"Won tie-break on gain {best_neighbor_gain} "
                             f"with variable order: {ties}"
                         )
                     self.value_selection(
@@ -961,7 +984,7 @@ class Mgm2Computation(VariableComputation):
                 else:
                     if self.logger.isEnabledFor(logging.INFO):
                         self.logger.info(
-                            f"Lost tie-break on gain {max_neighbors} "
+                            f"Lost tie-break on gain {best_neighbor_gain} "
                             f"with variable order: {ties}"
                         )
 
@@ -1062,4 +1085,7 @@ class Mgm2Computation(VariableComputation):
 
     @lru_cache(maxsize=512)
     def _compute_cost(self, **kwargs):
-        return assignment_cost(kwargs, self._constraints)
+        cost = assignment_cost(kwargs, self._constraints, consider_variable_cost=True)
+        if not any(self.variable in c.dimensions for c in self._constraints):
+            cost += self.variable.cost_for_val(kwargs[self.variable.name])
+        return cost

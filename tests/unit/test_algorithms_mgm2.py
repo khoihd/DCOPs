@@ -48,7 +48,7 @@ from pydcop.algorithms.mgm2 import (
     Mgm2ResponseMessage,
     Mgm2GoMessage,
 )
-from pydcop.dcop.objects import Variable
+from pydcop.dcop.objects import Variable, VariableWithCostFunc
 from tests.unit.test_algorithms_dpop import DummySender
 
 
@@ -101,6 +101,12 @@ def test_computation_memory_uses_exact_variable_names():
     assert mgm2.computation_memory(v10_node) == mgm2.UNIT_SIZE * 2
 
 
+def test_offer_message_equality_includes_offer_flag():
+    assert Mgm2OfferMessage({}, False) == Mgm2OfferMessage({}, False)
+    assert Mgm2OfferMessage({}, True) == Mgm2OfferMessage({}, True)
+    assert Mgm2OfferMessage({}, False) != Mgm2OfferMessage({}, True)
+
+
 def test_no_neighbors():
     x1 = Variable("x1", list(range(10)))
     cost_x1 = constraint_from_str("cost_x1", "x1 *2 ", [x1])
@@ -121,6 +127,40 @@ def test_no_neighbors():
     computation.on_start()
     computation.value_selection.assert_called_once_with(9, 18)
     computation.finished.assert_called_once_with()
+
+
+def test_no_neighbors_uses_integrated_variable_cost():
+    x1 = VariableWithCostFunc("x1", list(range(5)), lambda x: abs(x - 3))
+
+    computation = Mgm2Computation(
+        ComputationDef(
+            VariableComputationNode(x1, []),
+            AlgorithmDef.build_with_default_param("mgm2"),
+        )
+    )
+
+    vals, cost = computation._compute_best_value()
+
+    assert vals == [3]
+    assert cost == 0
+
+
+def test_compute_cost_includes_integrated_variable_cost_once():
+    x1 = VariableWithCostFunc("x1", [0, 1], lambda x: 10 if x == 1 else 0)
+    x2 = VariableWithCostFunc("x2", [0, 1], lambda x: 5 if x == 1 else 0)
+
+    @AsNAryFunctionRelation(x1, x2)
+    def phi(x1_, x2_):
+        return x1_ + x2_
+
+    computation = Mgm2Computation(
+        ComputationDef(
+            VariableComputationNode(x1, [phi]),
+            AlgorithmDef.build_with_default_param("mgm2"),
+        )
+    )
+
+    assert computation._compute_cost(**{"x1": 1, "x2": 1}) == 17
 
 
 class TestsValueComputation(unittest.TestCase):
@@ -1390,3 +1430,101 @@ class TestsHandleMessage(unittest.TestCase):
         self.assertFalse(computation._can_move)
         self.assertIsNone(computation._potential_value)
         self.assertIsNotNone(computation.current_value)
+
+
+def test_gain_all_received_applies_better_unilateral_gain_in_max_mode():
+    x1 = Variable("x1", list(range(2)))
+    x2 = Variable("x2", list(range(2)))
+    x3 = Variable("x3", list(range(2)))
+
+    @AsNAryFunctionRelation(x1, x2, x3)
+    def phi(x1_, x2_, x3_):
+        return x1_ + x2_ + x3_
+
+    computation = Mgm2Computation(
+        ComputationDef(
+            VariableComputationNode(x1, [phi]),
+            AlgorithmDef.build_with_default_param("mgm2", mode="max"),
+        )
+    )
+    computation.message_sender = MagicMock()
+    computation._state = "gain"
+    computation.__value__ = 0
+    computation.__cost__ = 0
+    computation._potential_gain = -4
+    computation._potential_value = 1
+    computation._neighbors_gains["x3"] = -2
+
+    computation.on_gain_msg("x2", Mgm2GainMessage(-3), 1)
+
+    assert computation.current_value == 1
+    assert computation.current_cost == 4
+    assert computation._state == "value"
+
+
+def test_committed_gain_uses_best_neighbor_gain_in_max_mode():
+    x1 = Variable("x1", list(range(2)))
+    x2 = Variable("x2", list(range(2)))
+    x3 = Variable("x3", list(range(2)))
+
+    @AsNAryFunctionRelation(x1, x2, x3)
+    def phi(x1_, x2_, x3_):
+        return x1_ + x2_ + x3_
+
+    computation = Mgm2Computation(
+        ComputationDef(
+            VariableComputationNode(x1, [phi]),
+            AlgorithmDef.build_with_default_param("mgm2", mode="max"),
+        )
+    )
+    computation.message_sender = MagicMock()
+    computation._state = "gain"
+    computation.__value__ = 0
+    computation.__cost__ = 0
+    computation._committed = True
+    computation._partner = x3
+    computation._potential_gain = -4
+    computation._potential_value = 1
+    computation._neighbors_gains["x3"] = -4
+
+    computation.on_gain_msg("x2", Mgm2GainMessage(-2), 1)
+
+    assert computation._can_move
+    assert computation._state == "go?"
+    computation.message_sender.assert_called_once_with(
+        "x1", "x3", Mgm2GoMessage(True), None, None
+    )
+
+
+def test_committed_gain_rejects_better_neighbor_gain_in_max_mode():
+    x1 = Variable("x1", list(range(2)))
+    x2 = Variable("x2", list(range(2)))
+    x3 = Variable("x3", list(range(2)))
+
+    @AsNAryFunctionRelation(x1, x2, x3)
+    def phi(x1_, x2_, x3_):
+        return x1_ + x2_ + x3_
+
+    computation = Mgm2Computation(
+        ComputationDef(
+            VariableComputationNode(x1, [phi]),
+            AlgorithmDef.build_with_default_param("mgm2", mode="max"),
+        )
+    )
+    computation.message_sender = MagicMock()
+    computation._state = "gain"
+    computation.__value__ = 0
+    computation.__cost__ = 0
+    computation._committed = True
+    computation._partner = x3
+    computation._potential_gain = -1
+    computation._potential_value = 1
+    computation._neighbors_gains["x3"] = -1
+
+    computation.on_gain_msg("x2", Mgm2GainMessage(-2), 1)
+
+    assert not computation._can_move
+    assert computation._state == "go?"
+    computation.message_sender.assert_called_once_with(
+        "x1", "x3", Mgm2GoMessage(False), None, None
+    )
