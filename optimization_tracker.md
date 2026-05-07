@@ -16,6 +16,7 @@ in the file-specific `*_optimization_steps.txt` documents.
 - `pydcop/algorithms/dba.py`
 - `pydcop/algorithms/dsatuto.py`
 - `pydcop/algorithms/gdba.py`
+- `pydcop/algorithms/maxsum_dynamic.py`
 
 ## Detailed Notes
 
@@ -29,12 +30,12 @@ in the file-specific `*_optimization_steps.txt` documents.
 - `dba_optimization_steps.txt`
 - `dsatuto_optimization_steps.txt`
 - `gdba_optimization_steps.txt`
+- `maxsum_dynamic_optimization_steps.txt`
 
 ## Current Next Step
 
 No active optimization pass is planned. Remaining algorithm candidates:
 
-- `pydcop/algorithms/maxsum_dynamic.py`
 - `pydcop/algorithms/mixeddsa.py`
 - `pydcop/algorithms/ncbb.py`
 - `pydcop/algorithms/syncbb.py`
@@ -53,6 +54,7 @@ Pick one file at a time and start a new focused plan before changing it.
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsatuto.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_gdba.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_maxsum.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dynamic_maxsum.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_ncbb.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_syncbb.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`

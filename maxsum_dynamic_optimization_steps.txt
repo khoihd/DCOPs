@@ -1,0 +1,37 @@
+# Dynamic MaxSum Optimization Steps
+
+## Status
+
+Complete for this focused pass.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dynamic_maxsum.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/maxsum_dynamic.py tests/unit/test_algorithms_dynamic_maxsum.py`
+
+Both passed before edits.
+
+## Step 1: Dynamic Scope and Value-Update Cleanup
+
+Completed:
+
+- Replaced repeated relation-dimension membership scans with set-based scope
+  comparisons.
+- Cached read-only variable names and counts for incoming value messages.
+- Cached external variable values and update only the changed value before
+  slicing.
+- Built debug log lines with list joins instead of repeated string
+  concatenation.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dynamic_maxsum.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/maxsum_dynamic.py tests/unit/test_algorithms_dynamic_maxsum.py`
+
+Notes:
+
+- This pass intentionally keeps dynamic graph update behavior unchanged.
+- Some dynamic factor/variable code still uses older MaxSum helper names and
+  should be revisited separately if dynamic graph mutation is restored.

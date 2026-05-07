@@ -36,6 +36,12 @@ from pydcop.algorithms.maxsum import MaxSumMessage
 from pydcop.dcop.relations import NeutralRelation
 
 
+def _same_dimensions(dimensions, other_dimensions):
+    if len(dimensions) != len(other_dimensions):
+        return False
+    return set(dimensions) == set(other_dimensions)
+
+
 class DynamicFunctionFactorComputation(MaxSumFactorComputation):
     """
     This is a specialisation of the computation performed for factor in the
@@ -83,14 +89,7 @@ class DynamicFunctionFactorComputation(MaxSumFactorComputation):
         """
         # Make sure the new function has the same dimension as the
         # previous one.
-        if len(self.factor.dimensions) != len(fn.dimensions):
-            raise ValueError(
-                "Dimensions must be the same when changing "
-                "function in DynamicFunctionFactorComputation"
-            )
-        diff1 = [v for v in self.factor.dimensions if v not in fn.dimensions]
-        diff2 = [v for v in fn.dimensions if v not in self.factor.dimensions]
-        if diff1 or diff2:
+        if not _same_dimensions(self.factor.dimensions, fn.dimensions):
             raise ValueError(
                 "Dimensions must be the same when changing "
                 "function in DynamicFunctionFactorComputation"
@@ -125,13 +124,18 @@ class FactorWithReadOnlyVariableComputation(DynamicFunctionFactorComputation):
 
     def __init__(self, relation, read_only_variables, name=None, msg_sender=None):
         self._relation = relation
-        self._read_only_variables = read_only_variables
+        self._read_only_variables = tuple(read_only_variables)
+        self._read_only_variable_names = frozenset(
+            v.name for v in self._read_only_variables
+        )
+        self._read_only_variable_count = len(self._read_only_variables)
         self._read_only_values = {}
 
         # make sure the list of read-only variable is valid
+        relation_dimensions = set(relation.dimensions)
         writable_vars = relation.dimensions[:]
-        for v in read_only_variables:
-            if v not in relation.dimensions:
+        for v in self._read_only_variables:
+            if v not in relation_dimensions:
                 raise ValueError(
                     "Read only {} variable must be in relation "
                     "scope {}".format(v.name, relation.dimensions)
@@ -155,13 +159,13 @@ class FactorWithReadOnlyVariableComputation(DynamicFunctionFactorComputation):
         msg_count, msg_size = 0, 0
 
         value = msg.content
-        if var_name not in [v.name for v in self._read_only_variables]:
+        if var_name not in self._read_only_variable_names:
             self.logger.error("Unexpected value from %s - %s ", var_name, value)
         self.logger.debug("Received new value for %s - %s ", var_name, value)
 
         self._read_only_values[var_name] = value
 
-        if len(self._read_only_variables) == len(self._read_only_values):
+        if self._read_only_variable_count == len(self._read_only_values):
 
             new_sliced = self._relation.slice(self._read_only_values)
 
@@ -212,12 +216,12 @@ class DynamicFactorComputation(MaxSumFactorComputation):
         for v in relation.dimensions:
             if hasattr(v, "value"):
                 self._external_variables[v.name] = v
+        self._external_values = {
+            v.name: v.value for v in self._external_variables.values()
+        }
 
         if self._external_variables:
-            external_values = {
-                v.name: v.value for v in self._external_variables.values()
-            }
-            self._current_relation = self._relation.slice(external_values)
+            self._current_relation = self._relation.slice(self._external_values)
 
         super().__init__(self._current_relation, name=name, msg_sender=msg_sender)
 
@@ -230,8 +234,12 @@ class DynamicFactorComputation(MaxSumFactorComputation):
     def change_factor_function(self, fn):
         msg_count, msg_size = 0, 0
 
-        var_removed = [v for v in self._factor.dimensions if v not in fn.dimensions]
-        var_added = [v for v in fn.dimensions if v not in self._factor.dimensions]
+        factor_dimensions = self._factor.dimensions
+        fn_dimensions = fn.dimensions
+        factor_dimension_set = set(factor_dimensions)
+        fn_dimension_set = set(fn_dimensions)
+        var_removed = [v for v in factor_dimensions if v not in fn_dimension_set]
+        var_added = [v for v in fn_dimensions if v not in factor_dimension_set]
         if not var_removed and not var_added:
             # Dimensions have not changed, simply change factor object and emit
             # cost messages
@@ -274,8 +282,8 @@ class DynamicFactorComputation(MaxSumFactorComputation):
         self.logger.debug("Received new value for %s - %s ", var_name, value)
 
         self._external_variables[var_name].value = value
-        external_values = {v.name: v.value for v in self._external_variables.values()}
-        new_sliced = self._relation.slice(external_values)
+        self._external_values[var_name] = value
+        new_sliced = self._relation.slice(self._external_values)
 
         if hash(new_sliced) != hash(self._current_relation):
             self.logger.info("Changing factor function %s ", self.name)
@@ -302,10 +310,10 @@ class DynamicFactorComputation(MaxSumFactorComputation):
             msg_size += msg.size
             msg_count += 1
 
-        debug = "ADD VAR MSG {} \n".format(self.name)
+        debug = ["ADD VAR MSG {} ".format(self.name)]
         for dest, msg in msg_debug.items():
-            debug += "  * {} -> {} : {}\n".format(self.name, dest, msg)
-        self.logger.info(debug + "\n")
+            debug.append("  * {} -> {} : {}".format(self.name, dest, msg))
+        self.logger.info("\n".join(debug) + "\n")
 
         return msg_count, msg_size
 
@@ -325,10 +333,10 @@ class DynamicFactorComputation(MaxSumFactorComputation):
             self._msg_sender.post_msg(self.name, v.name, msg)
             msg_size += msg.size
             msg_count += 1
-        debug = "REMOVE VAR INIT MSG {} \n".format(self.name)
+        debug = ["REMOVE VAR INIT MSG {} ".format(self.name)]
         for dest in var_removed:
-            debug += "  * {} -> {} \n".format(self.name, dest)
-        self.logger.info(debug + "\n")
+            debug.append("  * {} -> {} ".format(self.name, dest))
+        self.logger.info("\n".join(debug) + "\n")
 
         return msg_count, msg_size
 
