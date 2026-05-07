@@ -21,8 +21,20 @@ in the file-specific `*_optimization_steps.txt` documents.
 
 ## Current Next Step
 
-No active optimization pass is planned. Start a new focused plan before
-revisiting any completed module.
+No active optimization pass is planned. Remaining algorithm candidates:
+
+- `pydcop/algorithms/adsa.py`
+- `pydcop/algorithms/amaxsum.py`
+- `pydcop/algorithms/dba.py`
+- `pydcop/algorithms/dsatuto.py`
+- `pydcop/algorithms/gdba.py`
+- `pydcop/algorithms/maxsum.py`
+- `pydcop/algorithms/maxsum_dynamic.py`
+- `pydcop/algorithms/mixeddsa.py`
+- `pydcop/algorithms/ncbb.py`
+- `pydcop/algorithms/syncbb.py`
+
+Pick one file at a time and start a new focused plan before changing it.
 
 ## Focused Checks
 
@@ -30,6 +42,13 @@ revisiting any completed module.
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_amaxsum.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dba.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsatuto.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_gdba.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_maxsum.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_ncbb.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_syncbb.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
 
 Use targeted Ruff checks with the touched source and test files, for example:
