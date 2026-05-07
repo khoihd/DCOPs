@@ -1,4 +1,3 @@
-- Optimize algorithms
 - Write more tests for the algorithms
 - Optimize commonly used files with overheads
 - Optimize instance generator
