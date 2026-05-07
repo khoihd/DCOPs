@@ -29,10 +29,42 @@ Verification:
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py`
 - `conda run -n khoihd ruff check pydcop/algorithms/dsa.py tests/unit/test_algorithms_dsa.py`
 
-## Possible Next Steps
+## Step 2: Profile `evaluate_cycle()`
 
-- Profile `evaluate_cycle()` on a generated constraints-hypergraph instance.
-- Inspect whether repeated `filter_assignment_dict()` calls in
-  `exists_violated_constraint()` are significant before changing the code.
+Completed:
+
+- Added `profiling/profile_dsa_evaluate_cycle.py`.
+- The profiler builds DSA computations directly, prepares complete neighbor
+  assignments, and times the actual `evaluate_cycle()` path.
+- It records aggregate timings for wrapped helper calls:
+  `find_optimal()`, `assignment_cost()`, `filter_assignment_dict()`, and
+  `exists_violated_constraint()`.
+- It also supports `--cprofile` for cumulative stack timings.
+
+Sample runs:
+
+- `conda run -n khoihd python profiling/profile_dsa_evaluate_cycle.py`
+- `conda run -n khoihd python profiling/profile_dsa_evaluate_cycle.py --case generated --repeat 200 --neighbors 8 --constraints 24 --domain-size 8 --max-arity 4 --variant B --cprofile`
+- `conda run -n khoihd python profiling/profile_dsa_evaluate_cycle.py --case generated --repeat 200 --neighbors 8 --constraints 24 --domain-size 8 --max-arity 4 --variant A`
+- `conda run -n khoihd python profiling/profile_dsa_evaluate_cycle.py --case graph-coloring --repeat 200 --variant B`
+
+Observed:
+
+- In generated cases, `find_optimal()` dominates `evaluate_cycle()` time.
+- `assignment_cost()` is visible but much smaller than `find_optimal()`.
+- `exists_violated_constraint()` and `filter_assignment_dict()` are small in
+  the sampled graph-coloring and generated cases.
+- Message posting overhead was small compared with relation evaluation.
+
+Verification:
+
+- `conda run -n khoihd ruff check profiling/profile_dsa_evaluate_cycle.py`
+
+Possible next steps:
+
+- Avoid changing DSA message flow based on current profiling.
+- If optimizing further, look first at the relation-evaluation work driven by
+  `find_optimal()`, and verify with API/CLI checks because this can affect
+  tie behavior.
 - Consider targeted API/CLI DSA checks if future edits touch message flow or
   stop-cycle behavior.

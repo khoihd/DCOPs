@@ -45,10 +45,13 @@ Detailed plan:
 Recent verification used:
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py`
 - `conda run -n khoihd ruff check pydcop/algorithms/dsa.py tests/unit/test_algorithms_dsa.py`
+- `conda run -n khoihd ruff check profiling/profile_dsa_evaluate_cycle.py`
 
 Notes:
 - Fixed exact-neighbor memory accounting for similarly-prefixed variable names.
 - Avoided repeated assignment copies in DSA-B violated-constraint checks.
+- Added `profiling/profile_dsa_evaluate_cycle.py`; sampled profiles point at
+  `find_optimal()` / relation evaluation as the main `evaluate_cycle()` cost.
 
 ### pydcop/algorithms/
 

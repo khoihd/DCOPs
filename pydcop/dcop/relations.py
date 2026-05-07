@@ -929,6 +929,14 @@ class NAryMatrixRelation(AbstractBaseRelation, SimpleRepr):
         return False
 
     def __hash__(self):
+        """Return the existing lightweight hash for matrix relations.
+
+        This intentionally keeps hashing based on ``str(self._m)``. A more
+        complete content hash would be more expensive for large matrices and
+        can affect behavior in code that relies on current hash/equality
+        expectations, so it is left unchanged unless profiling or a failing
+        benchmark shows a concrete need.
+        """
         # Hack : hashing str(self._m) is not perfect, as it does not take
         # into account the full numpy.ndarray, but it should be enough and
         # is much faster. hash collision are not dramatic in our case.
@@ -1523,6 +1531,12 @@ def assignment_cost(
     """
     Compute the cost of an assignment over a set of constraints.
 
+    This helper intentionally remains a generic constraint loop. It is shared
+    by several algorithms and preserves the current missing-value fallback
+    through ``kwargs`` and variable-cost handling. Any likely improvement is a
+    constant-factor optimization with behavior risk, so keep it unchanged
+    unless profiling shows a concrete hotspot.
+
     Parameters
     ----------
     assignment: Dict[str, Any]
@@ -1637,6 +1651,12 @@ def find_optimal(
 
     Find the best values for `variable` for the set of `constraints`, given an
     assignment for all other variables these constraints depends on.
+    This helper intentionally performs a generic exhaustive scan of the
+    variable domain: arbitrary constraints do not expose enough structure to
+    skip candidate values safely. Its complexity is therefore
+    O(|domain(variable)| * assignment_cost). It is left unchanged unless
+    profiling shows a concrete need for a behavior-preserving constant-factor
+    optimization.
 
     Parameters
     ----------
