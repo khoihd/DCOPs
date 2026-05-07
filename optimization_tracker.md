@@ -1,123 +1,66 @@
 # Optimization Tracker
 
-This file tracks optimization work by source file. Keep detailed, file-specific
-plans in separate notes when the work becomes large.
+Concise index of optimization work. Keep detailed plans and verification notes
+in the file-specific `*_optimization_steps.txt` documents.
 
-## Completed
+## Status
 
-### pydcop/dcop/relations.py
-
-Status: optimized and reviewed.
-
-Detailed plan:
-- `relation_optimization_steps.txt`
-
-Recent verification used:
-- `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
-- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_base.py`
-- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py`
-- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
-- `conda run -n khoihd python -m pytest tests/unit/test_dcop_lp_oracle.py`
-- `conda run -n khoihd ruff check pydcop/dcop/relations.py tests/unit/test_dcop_relations.py`
-
-### pydcop/algorithms/dpop.py
-
-Status: optimized through Step 4; Step 5 intentionally skipped.
-
-Detailed plan:
-- `dpop_optimization_steps.txt`
-
-Recent verification used:
-- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
-- `conda run -n khoihd python -m pytest tests/api/test_api_solve_dpop.py`
-- `conda run -n khoihd python -m pytest tests/dcop_cli/test_solve.py`
-- `conda run -n khoihd ruff check pydcop/algorithms/dpop.py`
-
-## Future Candidates
-
-### pydcop/algorithms/dsa.py
-
-Status: first focused pass complete.
-
-Detailed plan:
-- `dsa_optimization_steps.txt`
-
-Recent verification used:
-- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py`
-- `conda run -n khoihd ruff check pydcop/algorithms/dsa.py tests/unit/test_algorithms_dsa.py`
-- `conda run -n khoihd ruff check profiling/profile_dsa_evaluate_cycle.py`
-
-Notes:
-- Fixed exact-neighbor memory accounting for similarly-prefixed variable names.
-- Avoided repeated assignment copies in DSA-B violated-constraint checks.
-- Added `profiling/profile_dsa_evaluate_cycle.py`; sampled profiles point at
-  `find_optimal()` / relation evaluation as the main `evaluate_cycle()` cost.
-
-### pydcop/algorithms/mgm.py
-
-Status: first focused pass complete.
-
-Detailed plan:
-- `mgm_optimization_steps.txt`
-
-Recent verification used:
-- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
-- `conda run -n khoihd ruff check pydcop/algorithms/mgm.py tests/unit/test_algorithms_mgm.py`
-- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/dcop_cli/test_solve.py -k mgm`
-- `conda run -n khoihd ruff check profiling/profile_mgm_compute_best_value.py`
-
-Notes:
-- Fixed exact-neighbor memory accounting for similarly-prefixed variable names.
-- Fixed `break_mode: random` tie handling to use random tie-break numbers.
-- Added message-property and state-transition guardrail tests before future
-  MGM message-flow changes.
-- Added `profiling/profile_mgm_compute_best_value.py`; sampled profiles point
-  at sliced relation evaluation in `_compute_best_value()`.
-- `assignment_cost()` and `find_optimal()` are excluded from the MGM pass based
-  on their relation docstrings.
-
-### pydcop/algorithms/mgm2.py
-
-Status: first focused step complete.
-
-Detailed plan:
-- `mgm2_optimization_steps.txt`
-
-Recent verification used:
-- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
-- `conda run -n khoihd ruff check pydcop/algorithms/mgm2.py tests/unit/test_algorithms_mgm2.py`
-- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/api/test_api_graph.py -k mgm2`
-
-Notes:
-- Fixed exact-neighbor memory accounting for similarly-prefixed variable names.
-- Keep shared relation helper optimization out of scope unless there is a
-  separate relation-focused plan.
-
-### pydcop/algorithms/
-
-Status: DPOP complete; other algorithm modules remain future candidates.
-
-Detailed plans:
-- `dpop_optimization_steps.txt`
-- `dsa_optimization_steps.txt`
-- `mgm_optimization_steps.txt`
-- `mgm2_optimization_steps.txt`
-
-Suggested approach:
-- Pick one algorithm at a time.
-- Start with tests and profiling/benchmarks before changing behavior.
-- Prefer message-flow, computation-memory, and local hot-loop cleanup over broad
-  rewrites.
-- Keep changes isolated by algorithm module and run that module's focused tests.
-
-Possible first files:
+- `pydcop/dcop/relations.py`
+  - Complete.
+  - Optimized/reviewed.
+  - Deferred `assignment_cost()`, `find_optimal()`, and
+    `NAryMatrixRelation.__hash__()` are documented in code.
+- `pydcop/algorithms/dpop.py`
+  - Complete.
+  - Optimized through Step 4; the earlier planned Step 5 was removed from
+    scope.
+  - Future DPOP work should start from a new focused plan.
 - `pydcop/algorithms/dsa.py`
+  - Complete.
+  - Memory accounting fix, DSA-B assignment-copy cleanup, profiler added.
+  - Relation helper optimization excluded.
+  - No further DSA optimization planned; future work should start from a new
+    focused plan.
 - `pydcop/algorithms/mgm.py`
+  - Complete.
+  - Memory accounting fix, random tie fix, message/state guardrails, profiler
+    added.
+  - Relation helper optimization excluded.
+  - No further MGM optimization planned; future work should start from a new
+    focused plan.
 - `pydcop/algorithms/mgm2.py`
-- `pydcop/algorithms/gdba.py`
+  - In progress.
+  - Step 1 memory accounting fix complete.
+  - Next: profile `_compute_best_value()` / `_compute_offers_to_send()` before
+    local relation changes.
 
-Useful focused tests:
+## Detailed Notes
+
+- `relation_optimization_steps.txt`
+- `dpop_optimization_steps.txt`
+- `dsa_optimization_steps.txt`
+- `mgm_optimization_steps.txt`
+- `mgm2_optimization_steps.txt`
+
+## Current Next Step
+
+Continue with `pydcop/algorithms/mgm2.py`.
+
+Recommended next work:
+- Profile `_compute_best_value()` and `_compute_offers_to_send()`.
+- Keep `assignment_cost()` out of scope unless there is a separate
+  relation-focused plan.
+- Prefer small message-flow, computation-memory, and local hot-loop changes
+  over broad rewrites.
+
+## Focused Checks
+
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
 - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
-- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_gdba.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
+- `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
+
+Use targeted Ruff checks with the touched source and test files, for example:
+
+- `conda run -n khoihd ruff check pydcop/algorithms/mgm2.py tests/unit/test_algorithms_mgm2.py`

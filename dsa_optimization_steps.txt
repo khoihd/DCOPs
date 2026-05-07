@@ -2,7 +2,7 @@
 
 ## Status
 
-Started May 2026. Keep changes small and behavior-preserving.
+Complete. No further DSA optimization is planned in this pass.
 
 ## Baseline
 
@@ -63,13 +63,10 @@ Verification:
 
 - `conda run -n khoihd ruff check profiling/profile_dsa_evaluate_cycle.py`
 
-Possible next steps:
+Closure:
 
 - Avoid changing DSA message flow based on current profiling.
 - Do not optimize `find_optimal()` or `assignment_cost()` as part of the DSA
   pass; they are shared, behavior-sensitive relation helpers.
-- If optimizing DSA further, look for DSA-local improvements that preserve the
-  existing relation helper behavior and verify with API/CLI checks because tie
-  behavior can be affected.
-- Consider targeted API/CLI DSA checks if future edits touch message flow or
-  stop-cycle behavior.
+- If DSA is revisited later, start a new focused plan and verify with API/CLI
+  checks because tie behavior can be affected.

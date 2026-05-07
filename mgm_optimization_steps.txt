@@ -2,8 +2,7 @@
 
 ## Status
 
-Started May 2026. Keep changes small and behavior-preserving unless fixing a
-focused bug with coverage.
+Complete. No further MGM optimization is planned in this pass.
 
 ## Baseline
 
@@ -88,7 +87,10 @@ Verification:
 
 - `conda run -n khoihd ruff check profiling/profile_mgm_compute_best_value.py`
 
-Possible next steps:
+Closure:
 
-- Keep `assignment_cost()` and `find_optimal()` out of scope unless there is a
-  separate relation-focused plan.
+- `assignment_cost()` and `find_optimal()` will not be optimized as part of
+  this MGM pass. Their docstrings document why they remain generic,
+  behavior-sensitive relation helpers.
+- If MGM is revisited later, start a new focused plan before changing message
+  flow or local relation evaluation.
