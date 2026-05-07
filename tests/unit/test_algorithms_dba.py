@@ -301,3 +301,183 @@ def test_select_and_send_random_value_when_starting():
         any_order=True,
     )
     assert message_sender.call_count == 2
+
+
+def test_ok_message_received_outside_ok_mode_is_postponed():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str(
+        'c1', f'0 if v1 == v2 else {dba.INFINITY}', [v1, v2]
+    )
+    computation = _dba_computation(v1, [c1])
+    computation._mode = 'improve'
+
+    computation._on_ok_msg('v2', DbaOkMessage(1), None)
+
+    assert computation._neighbors_values == {}
+    assert computation.__postponed_ok_messages__ == [
+        ('v2', DbaOkMessage(1))
+    ]
+
+
+def test_postponed_ok_message_is_processed_when_returning_to_ok_mode():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str(
+        'c1', f'0 if v1 == v2 else {dba.INFINITY}', [v1, v2]
+    )
+    computation = _dba_computation(v1, [c1])
+    computation.message_sender = MagicMock()
+    computation.value_selection(0)
+    computation.__postponed_ok_messages__.append(('v2', DbaOkMessage(1)))
+
+    computation._go_to_wait_ok_mode()
+
+    assert computation._in_wait_improve_mode()
+    assert computation.__postponed_ok_messages__ == []
+    assert computation._neighbors_values == {'v2': 1}
+    assert computation._my_improve == 1
+    assert computation._can_move
+    assert computation._new_value == 1
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', DbaImproveMessage(1, 1, 0), None, None
+    )
+
+
+def test_improve_message_received_outside_improve_mode_is_postponed():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str(
+        'c1', f'0 if v1 == v2 else {dba.INFINITY}', [v1, v2]
+    )
+    computation = _dba_computation(v1, [c1])
+    computation._mode = 'ok'
+
+    computation._on_improve_msg('v2', DbaImproveMessage(1, 1, 0), None)
+
+    assert computation._neighbors_improvements == {}
+    assert computation.__postponed_improve_messages__ == [
+        ('v2', DbaImproveMessage(1, 1, 0))
+    ]
+
+
+def test_postponed_improve_message_is_processed_in_improve_mode():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str(
+        'c1', f'0 if v1 == v2 else {dba.INFINITY}', [v1, v2]
+    )
+    computation = _dba_computation(v1, [c1])
+    computation.message_sender = MagicMock()
+    computation.value_selection(0)
+    computation.__cost__ = 1
+    computation._my_improve = 1
+    computation._can_move = True
+    computation._new_value = 1
+    computation._consistent = False
+    computation.__postponed_improve_messages__.append(
+        ('v2', DbaImproveMessage(0, 1, 0))
+    )
+
+    computation._go_to_wait_improve_mode()
+
+    assert computation._in_wait_ok_mode()
+    assert computation.__postponed_improve_messages__ == []
+    assert computation._neighbors_improvements == {}
+    assert computation.current_value == 1
+    assert computation.current_cost == 0
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', DbaOkMessage(1), None, None
+    )
+
+
+def test_equal_improvement_tie_break_prevents_larger_name_from_moving():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str(
+        'c1', f'0 if v1 == v2 else {dba.INFINITY}', [v1, v2]
+    )
+    computation = _dba_computation(v2, [c1])
+    computation.message_sender = MagicMock()
+    computation.value_selection(0)
+    computation.__cost__ = 1
+    computation._mode = 'improve'
+    computation._my_improve = 1
+    computation._can_move = True
+    computation._new_value = 1
+    computation._consistent = False
+
+    computation._on_improve_msg('v1', DbaImproveMessage(1, 1, 0), None)
+
+    assert computation._in_wait_ok_mode()
+    assert not computation._can_move
+    assert computation.current_value == 0
+    computation.message_sender.assert_called_once_with(
+        'v2', 'v1', DbaOkMessage(0), None, None
+    )
+
+
+def test_send_ok_increases_weights_in_quasi_local_minimum():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str(
+        'c1', f'v1 * 0 + v2 * 0 + {dba.INFINITY}', [v1, v2]
+    )
+    computation = _dba_computation(v1, [c1])
+    computation.message_sender = MagicMock()
+    computation.value_selection(0)
+    computation._consistent = False
+    computation._quasi_local_minimum = True
+    computation._violated_constraints = [0]
+
+    computation._send_ok()
+
+    assert computation.__constraints_weights__ == [2]
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', DbaOkMessage(0), None, None
+    )
+
+
+def test_send_ok_finishes_when_consistent_for_max_distance():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', '0 if v1 == v2 else 10000', [v1, v2])
+    computation = _dba_computation(v1, [c1], params={'max_distance': 1})
+    computation.message_sender = MagicMock()
+    computation.finished = MagicMock()
+    computation.value_selection(0)
+    computation._consistent = True
+
+    computation._send_ok()
+
+    assert computation._mode == 'finished'
+    assert computation._termination_counter == 1
+    computation.finished.assert_called_once_with()
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', DbaEndMessage(), None, None
+    )
+
+
+def test_end_message_is_propagated_once():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', '0 if v1 == v2 else 10000', [v1, v2])
+    computation = _dba_computation(v1, [c1])
+    computation.message_sender = MagicMock()
+    computation.finished = MagicMock()
+
+    computation._on_end_msg('v2', DbaEndMessage(), None)
+
+    assert computation._mode == 'finished'
+    computation.finished.assert_called_once_with()
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', DbaEndMessage(), None, None
+    )
+
+    computation.message_sender.reset_mock()
+    computation.finished.reset_mock()
+
+    computation._on_end_msg('v2', DbaEndMessage(), None)
+
+    computation.message_sender.assert_not_called()
+    computation.finished.assert_not_called()
