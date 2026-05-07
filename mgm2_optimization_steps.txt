@@ -1,0 +1,37 @@
+# MGM2 Optimization Steps
+
+## Status
+
+Started May 2026. Keep changes small and behavior-preserving unless fixing a
+focused bug with coverage.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/mgm2.py tests/unit/test_algorithms_mgm2.py`
+
+Both passed before edits.
+
+## Step 1: Memory Accounting
+
+Completed:
+
+- Fixed `computation_memory()` to exclude the computation variable by exact
+  variable-name equality, instead of substring membership.
+- Added regression coverage for similarly-prefixed variable names such as
+  `v1` and `v10`.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/mgm2.py tests/unit/test_algorithms_mgm2.py`
+- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/api/test_api_graph.py -k mgm2`
+
+Possible next steps:
+
+- Profile `_compute_best_value()` and `_compute_offers_to_send()` before
+  touching local relation evaluation.
+- Keep `assignment_cost()` out of scope unless there is a separate
+  relation-focused plan.

@@ -85,7 +85,7 @@ def computation_memory(computation: VariableComputationNode) -> float:
         n
         for link in computation.links
         for n in link.nodes
-        if n not in computation.name
+        if n != computation.name
     )
     return len(neighbors) * 2 * UNIT_SIZE
 

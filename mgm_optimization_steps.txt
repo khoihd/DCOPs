@@ -76,6 +76,13 @@ Observed:
   constraints are simple and string-backed.
 - `filter_assignment_dict()` is visible but small in the sampled cases.
 - Relation-level helper optimization remains out of scope for this MGM pass.
+- `assignment_cost()` is excluded from this pass based on its docstring: it
+  intentionally remains a generic constraint loop shared by several algorithms,
+  preserving missing-value fallback through `kwargs` and variable-cost
+  handling.
+- `find_optimal()` is excluded from this pass based on its docstring: it
+  intentionally performs a generic exhaustive domain scan because arbitrary
+  constraints do not expose enough structure to skip candidate values safely.
 
 Verification:
 
@@ -83,5 +90,5 @@ Verification:
 
 Possible next steps:
 
-- Keep relation-level helpers such as `assignment_cost()` and `find_optimal()`
-  out of scope unless there is a separate relation-focused plan.
+- Keep `assignment_cost()` and `find_optimal()` out of scope unless there is a
+  separate relation-focused plan.

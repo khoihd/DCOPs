@@ -73,6 +73,25 @@ Notes:
   MGM message-flow changes.
 - Added `profiling/profile_mgm_compute_best_value.py`; sampled profiles point
   at sliced relation evaluation in `_compute_best_value()`.
+- `assignment_cost()` and `find_optimal()` are excluded from the MGM pass based
+  on their relation docstrings.
+
+### pydcop/algorithms/mgm2.py
+
+Status: first focused step complete.
+
+Detailed plan:
+- `mgm2_optimization_steps.txt`
+
+Recent verification used:
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/mgm2.py tests/unit/test_algorithms_mgm2.py`
+- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/api/test_api_graph.py -k mgm2`
+
+Notes:
+- Fixed exact-neighbor memory accounting for similarly-prefixed variable names.
+- Keep shared relation helper optimization out of scope unless there is a
+  separate relation-focused plan.
 
 ### pydcop/algorithms/
 
@@ -82,6 +101,7 @@ Detailed plans:
 - `dpop_optimization_steps.txt`
 - `dsa_optimization_steps.txt`
 - `mgm_optimization_steps.txt`
+- `mgm2_optimization_steps.txt`
 
 Suggested approach:
 - Pick one algorithm at a time.

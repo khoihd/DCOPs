@@ -92,6 +92,15 @@ def test_computation_memory_two_constraints():
     assert mgm2.computation_memory(v1_node) == mgm2.UNIT_SIZE * 3 * 2
 
 
+def test_computation_memory_uses_exact_variable_names():
+    v1 = Variable("v1", list(range(10)))
+    v10 = Variable("v10", list(range(10)))
+    c1 = constraint_from_str("c1", " v1 == v10", [v1, v10])
+    v10_node = VariableComputationNode(v10, [c1])
+
+    assert mgm2.computation_memory(v10_node) == mgm2.UNIT_SIZE * 2
+
+
 def test_no_neighbors():
     x1 = Variable("x1", list(range(10)))
     cost_x1 = constraint_from_str("cost_x1", "x1 *2 ", [x1])
