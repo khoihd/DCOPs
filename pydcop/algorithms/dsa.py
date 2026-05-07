@@ -135,6 +135,10 @@ algo_params = [
 ]
 
 
+def build_computation(comp_def: ComputationDef) -> VariableComputation:
+    return DsaComputation(comp_def)
+
+
 def computation_memory(computation: VariableComputationNode) -> float:
     """Return the memory footprint of a DSA computation.
 
