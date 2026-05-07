@@ -1,0 +1,40 @@
+# GDBA Optimization Steps
+
+## Status
+
+Complete. No further GDBA optimization is planned in this pass.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_gdba.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/gdba.py tests/unit/test_algorithms_gdba.py`
+
+Both passed before edits.
+
+## Step 1: Memory Accounting and Evaluation Cleanup
+
+Completed:
+
+- Fix `computation_memory()` to use computation links and exact variable-name
+  equality.
+- Avoid rebuilding and filtering the same assignment twice per relation during
+  `compute_eval_value()`.
+- Allow best-improvement scans to skip violated-constraint list construction.
+- Add focused regression coverage for memory accounting and the skipped
+  violated-list path.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_gdba.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/gdba.py tests/unit/test_algorithms_gdba.py`
+- GDBA runtime smoke through `solve()` on `dcop_graphcoloring_3` with oneagent
+  distribution and a short timeout returned a valid assignment.
+
+Notes:
+
+- Keep GDBA variant behavior, modifier increase modes, tie-breaking, and
+  message flow unchanged in this pass.
+- If GDBA is revisited later, start a new focused plan before changing
+  improvement comparison, modifier growth, or violation semantics.

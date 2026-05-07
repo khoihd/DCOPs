@@ -35,9 +35,7 @@ GDBA Algorithm
 
 """
 
-import functools
 import logging
-import operator
 import random
 from collections import defaultdict
 
@@ -51,7 +49,6 @@ from pydcop.dcop.relations import (
     RelationProtocol,
     NAryMatrixRelation,
     generate_assignment_as_dict,
-    filter_assignment_dict,
     optimal_cost_value)
 
 __author__ = "Pierre Nagellen, Pierre Rust"
@@ -94,9 +91,9 @@ def computation_memory(computation: VariableComputationNode) -> float:
     neighbors = set(
         (
             n
-            for link in computation.neighbors
+            for link in computation.links
             for n in link.nodes
-            if n not in computation.name
+            if n != computation.name
         )
     )
     return len(neighbors) * UNIT_SIZE
@@ -405,7 +402,7 @@ class GdbaComputation(VariableComputation):
         best_vals = list()
         best_eval = None
         for v in self.variable.domain:
-            curr_eval = self.compute_eval_value(v)[0]
+            curr_eval = self.compute_eval_value(v, collect_violated=False)[0]
             if best_eval is None:
                 best_eval = curr_eval
                 best_vals = [v]
@@ -428,7 +425,7 @@ class GdbaComputation(VariableComputation):
             self.post_msg(n.name, msg)
             self.logger.debug("%s has sent %s to %s", self.name, msg, n.name)
 
-    def compute_eval_value(self, val):
+    def compute_eval_value(self, val, collect_violated=True):
         """
         This function computes the effective cost of the current assignment
         for the agent's variable.
@@ -440,25 +437,25 @@ class GdbaComputation(VariableComputation):
         of indices of the violated constraints for this value
         """
         new_eval_value = 0
-        violated_constraints = []
+        violated_constraints = [] if collect_violated else None
         vars_with_cost = set()
         for c in self.__constraints__:
             (rel_mat, _, _) = c
+            assignment = self._assignment_for_relation(rel_mat, val)
+            rel_value = rel_mat.get_value_for_assignment(assignment)
             for v in rel_mat.dimensions:
                 if hasattr(v, "cost_for_val"):
                     if v.name != self.name:
                         vars_with_cost.update([(v, self._neighbors_values[v.name])])
                     else:
                         vars_with_cost.update([(v, self.current_value)])
-            if self._is_violated(c, val):
-                violated_constraints.append(rel_mat)
-            new_eval_value += self._eff_cost(rel_mat, val)
+            if self._is_value_violated(c, rel_value):
+                if collect_violated:
+                    violated_constraints.append(rel_mat)
+            new_eval_value += self._eff_cost_for_assignment(
+                rel_mat, rel_value, assignment)
 
-            vars_cost = functools.reduce(
-                operator.add,
-                [v.cost_for_val(v_val) for (v, v_val) in vars_with_cost],
-                0,
-            )
+            vars_cost = sum(v.cost_for_val(v_val) for (v, v_val) in vars_with_cost)
             new_eval_value += vars_cost
 
         return new_eval_value, violated_constraints
@@ -560,18 +557,30 @@ class GdbaComputation(VariableComputation):
         :param val: the value of the agent variable to evaluate the violation
         :return: True (resp. False) if the constraint is (rep. not) violated
         """
-        m, min_val, max_val = rel
-        # Keep only the assignment of variables present in the constraint
-        global_asgt = self._neighbors_values.copy()
-        global_asgt[self.name] = val
-        tmp_assignment = filter_assignment_dict(global_asgt, m.dimensions)
+        m, _, _ = rel
+        assignment = self._assignment_for_relation(m, val)
+        rel_value = m.get_value_for_assignment(assignment)
+        return self._is_value_violated(rel, rel_value)
 
+    def _is_value_violated(
+        self, rel: Tuple[NAryMatrixRelation, float, float], rel_value
+    ) -> bool:
+        _, min_val, max_val = rel
         if self._violation_mode == "NZ":
-            return m.get_value_for_assignment(tmp_assignment) != 0
+            return rel_value != 0
         elif self._violation_mode == "NM":
-            return m.get_value_for_assignment(tmp_assignment) != min_val
+            return rel_value != min_val
         else:  # self._violation_mode == 'MX'
-            return m.get_value_for_assignment(tmp_assignment) == max_val
+            return rel_value == max_val
+
+    def _assignment_for_relation(self, rel: NAryMatrixRelation, val) -> Dict[str, Any]:
+        assignment = {}
+        for v in rel.dimensions:
+            if v.name == self.name:
+                assignment[v.name] = val
+            else:
+                assignment[v.name] = self._neighbors_values[v.name]
+        return assignment
 
     def _eff_cost(self, rel: NAryMatrixRelation, val) -> float:
         """
@@ -584,13 +593,15 @@ class GdbaComputation(VariableComputation):
         :return: the effective cost of the constraint for the current
         assignment.
         """
-        # Keep only the variables present in the relation rel
-        global_asgt = self._neighbors_values.copy()
-        global_asgt[self.name] = val
-        asgt = filter_assignment_dict(global_asgt, rel.dimensions)
+        assignment = self._assignment_for_relation(rel, val)
+        rel_value = rel.get_value_for_assignment(assignment)
+        return self._eff_cost_for_assignment(rel, rel_value, assignment)
 
-        c = rel.get_value_for_assignment(asgt)
-        modifier = self._get_modifier_for_assignment(rel, asgt)
+    def _eff_cost_for_assignment(
+        self, rel: NAryMatrixRelation, rel_value, assignment: Dict[str, Any]
+    ) -> float:
+        c = rel_value
+        modifier = self._get_modifier_for_assignment(rel, assignment)
         if self._modifier_mode == "A":
             c += modifier
         else:  # modifier_mode == 'M'

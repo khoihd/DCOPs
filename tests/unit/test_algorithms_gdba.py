@@ -34,10 +34,33 @@ from unittest.mock import MagicMock
 
 import numpy
 
+from pydcop.algorithms import gdba
 from pydcop.algorithms.gdba import GdbaComputation
+from pydcop.computations_graph.constraints_hypergraph import \
+    VariableComputationNode
 from pydcop.dcop.objects import Variable
 from pydcop.dcop.relations import AsNAryFunctionRelation, NAryMatrixRelation, \
-    UnaryFunctionRelation, NAryFunctionRelation
+    UnaryFunctionRelation, NAryFunctionRelation, constraint_from_str
+
+
+class TestGdbaInfrastructure(unittest.TestCase):
+    def test_computation_memory_one_constraint(self):
+        v1 = Variable('v1', [0, 1])
+        v2 = Variable('v2', [0, 1])
+        v3 = Variable('v3', [0, 1])
+        c1 = constraint_from_str('c1', ' v1 + v2 == v3', [v1, v2, v3])
+        v1_node = VariableComputationNode(v1, [c1])
+
+        self.assertEqual(gdba.computation_memory(v1_node), gdba.UNIT_SIZE * 2)
+
+    def test_computation_memory_uses_exact_variable_names(self):
+        v1 = Variable('v1', [0, 1])
+        v10 = Variable('v10', [0, 1])
+        c1 = constraint_from_str('c1', ' v1 == v10', [v1, v10])
+        v10_node = VariableComputationNode(v10, [c1])
+
+        self.assertEqual(set(v10_node.neighbors), {'v1'})
+        self.assertEqual(gdba.computation_memory(v10_node), gdba.UNIT_SIZE)
 
 
 class GdbaAlgoTest(unittest.TestCase):
@@ -91,9 +114,13 @@ class TestsCostComputation(unittest.TestCase):
 
         eval0, _ = g.compute_eval_value(0)
         eval1, _ = g.compute_eval_value(1)
+        eval1_no_violations, violations = g.compute_eval_value(
+            1, collect_violated=False)
 
         self.assertEqual(eval0, 1)
         self.assertEqual(eval1, 0)
+        self.assertEqual(eval1_no_violations, 0)
+        self.assertIsNone(violations)
 
     def test_compute_eval_3_ary(self):
         domain = list(range(3))
