@@ -1,3 +1,3 @@
-- Write more tests for the algorithms
+- Verify the correctness of the implementation with the provided paper
 - Optimize commonly used files with overheads
 - Optimize instance generator
