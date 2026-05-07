@@ -2,8 +2,7 @@
 
 ## Status
 
-Started May 2026. Keep changes small and behavior-preserving unless fixing a
-focused bug with coverage.
+Complete. No further MGM2 optimization is planned in this pass.
 
 ## Baseline
 
@@ -37,7 +36,7 @@ Completed:
 - The profiler builds MGM2 computations directly and times
   `_compute_best_value()` and `_compute_offers_to_send()`.
 - It records aggregate timings for wrapped helper calls:
-  `assignment_cost()`, `_compute_cost()`, and `generate_assignment_as_dict()`.
+  `assignment_cost()` and `_compute_cost()`.
 - It supports production-like cache behavior by default, plus
   `--clear-cache-per-repeat` for cold-cache measurements.
 - It also supports `--cprofile` for cumulative stack timings.
@@ -55,7 +54,6 @@ Observed:
 - Production `_compute_cost()` caching greatly reduces repeated
   `assignment_cost()` calls across repeated candidate assignments.
 - With a cold cache, `assignment_cost()` dominates local evaluation time.
-- `generate_assignment_as_dict()` overhead is negligible in the sampled cases.
 - `assignment_cost()` remains out of scope for this MGM2 pass based on its
   relation docstring.
 
@@ -63,9 +61,37 @@ Verification:
 
 - `conda run -n khoihd ruff check profiling/profile_mgm2_local_eval.py`
 
-Possible next steps:
+## Step 3: Direct Offer Candidate Iteration
 
-- Keep `assignment_cost()` out of scope unless there is a separate
-  relation-focused plan.
-- Consider only MGM2-local changes that preserve `_compute_cost()` cache
-  behavior.
+Completed:
+
+- Replaced `generate_assignment_as_dict([self.variable, self._partner])` in
+  `_compute_offers_to_send()` with direct nested iteration over the variable
+  and partner domains.
+- Cached local references for `current_cost`, `mode`, `self.name`, and
+  `partner.name`.
+- Preserved the call to `_compute_cost(**partial_asgt)` so existing
+  `lru_cache` behavior remains intact.
+- Updated `profiling/profile_mgm2_local_eval.py` because offer generation no
+  longer calls `generate_assignment_as_dict()`.
+
+Observed:
+
+- Production-cache generated sample remained behavior-compatible and slightly
+  faster in the sampled run.
+- Cold-cache profile still shows `assignment_cost()` as the dominant cost,
+  which remains out of scope.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/mgm2.py tests/unit/test_algorithms_mgm2.py profiling/profile_mgm2_local_eval.py`
+- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/api/test_api_graph.py -k mgm2`
+
+Closure:
+
+- `assignment_cost()` will not be optimized as part of this MGM2 pass. Its
+  docstring documents why it remains a generic, behavior-sensitive relation
+  helper.
+- If MGM2 is revisited later, start a new focused plan and preserve
+  `_compute_cost()` cache behavior.

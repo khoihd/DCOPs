@@ -149,7 +149,6 @@ CASES: dict[str, CaseFactory] = {
 @contextmanager
 def profile_mgm2_operations(stats: list[OperationStats]) -> Iterator[None]:
     original_assignment_cost = mgm2.assignment_cost
-    original_generate_assignment_as_dict = mgm2.generate_assignment_as_dict
     original_compute_cost = mgm2.Mgm2Computation._compute_cost
 
     def time_call(operation: str, func: Callable, *args, **kwargs):
@@ -163,14 +162,6 @@ def profile_mgm2_operations(stats: list[OperationStats]) -> Iterator[None]:
             "assignment_cost", original_assignment_cost, *args, **kwargs
         )
 
-    def profiled_generate_assignment_as_dict(*args, **kwargs):
-        return time_call(
-            "generate_assignment_as_dict",
-            original_generate_assignment_as_dict,
-            *args,
-            **kwargs,
-        )
-
     def profiled_compute_cost(self, **kwargs):
         return time_call("compute_cost", original_compute_cost, self, **kwargs)
 
@@ -179,13 +170,11 @@ def profile_mgm2_operations(stats: list[OperationStats]) -> Iterator[None]:
         profiled_compute_cost.cache_clear = cache_clear
 
     mgm2.assignment_cost = profiled_assignment_cost
-    mgm2.generate_assignment_as_dict = profiled_generate_assignment_as_dict
     mgm2.Mgm2Computation._compute_cost = profiled_compute_cost
     try:
         yield
     finally:
         mgm2.assignment_cost = original_assignment_cost
-        mgm2.generate_assignment_as_dict = original_generate_assignment_as_dict
         mgm2.Mgm2Computation._compute_cost = original_compute_cost
 
 

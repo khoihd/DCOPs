@@ -29,12 +29,13 @@ in the file-specific `*_optimization_steps.txt` documents.
   - No further MGM optimization planned; future work should start from a new
     focused plan.
 - `pydcop/algorithms/mgm2.py`
-  - In progress.
-  - Step 1 memory accounting fix complete.
+  - Complete.
+  - Step 1 memory accounting fix complete; Step 3 direct offer iteration
+    complete.
   - Local evaluation profiler added; `_compute_offers_to_send()` dominates
     sampled local work.
   - `assignment_cost()` remains out of scope; preserve `_compute_cost()` cache
-    behavior in future MGM2-local changes.
+    behavior if MGM2 is revisited later.
 
 ## Detailed Notes
 
@@ -46,15 +47,8 @@ in the file-specific `*_optimization_steps.txt` documents.
 
 ## Current Next Step
 
-Continue with `pydcop/algorithms/mgm2.py`.
-
-Recommended next work:
-- Keep `assignment_cost()` out of scope unless there is a separate
-  relation-focused plan.
-- Consider only MGM2-local changes that preserve `_compute_cost()` cache
-  behavior.
-- Prefer small message-flow, computation-memory, and local hot-loop changes
-  over broad rewrites.
+No active optimization pass is planned. Start a new focused plan before
+revisiting any completed module.
 
 ## Focused Checks
 

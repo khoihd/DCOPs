@@ -50,7 +50,6 @@ from pydcop.infrastructure.computations import Message, VariableComputation, reg
 from pydcop.computations_graph.constraints_hypergraph import VariableComputationNode
 from pydcop.dcop.relations import (
     find_dependent_relations,
-    generate_assignment_as_dict,
     assignment_cost,
 )
 
@@ -537,22 +536,27 @@ class Mgm2Computation(VariableComputation):
         """
         partial_asgt = self._neighbors_values.copy()
         offers = dict()
+        my_name = self.name
+        partner = self._partner
+        partner_name = partner.name
+        current_cost = self.current_cost
+        mode = self._mode
 
-        for limited_asgt in generate_assignment_as_dict([self.variable, self._partner]):
-            partial_asgt.update(limited_asgt)
-            cost = self._compute_cost(**partial_asgt)
-            if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(
-                    f"looking for offer : {partial_asgt} - cost {cost}"
-                    f" current {self.current_cost} {self._mode}"
-                )
+        for my_value in self.variable.domain:
+            partial_asgt[my_name] = my_value
+            for partner_value in partner.domain:
+                partial_asgt[partner_name] = partner_value
+                cost = self._compute_cost(**partial_asgt)
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug(
+                        f"looking for offer : {partial_asgt} - cost {cost}"
+                        f" current {current_cost} {mode}"
+                    )
 
-            if (self.current_cost > cost and self._mode == "min") or (
-                self.current_cost < cost and self._mode == "max"
-            ):
-                offers[(limited_asgt[self.name], limited_asgt[self._partner.name])] = (
-                    self.current_cost - cost
-                )
+                if (current_cost > cost and mode == "min") or (
+                    current_cost < cost and mode == "max"
+                ):
+                    offers[(my_value, partner_value)] = current_cost - cost
         return offers
 
     def _find_best_offer(
