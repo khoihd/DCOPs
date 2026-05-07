@@ -1,0 +1,40 @@
+# DSA Tutorial Optimization Steps
+
+## Status
+
+Complete. No further DSA tutorial optimization is planned in this pass.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsatuto.py tests/unit/test_algorithms_objects.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/dsatuto.py tests/unit/test_algorithms_dsatuto.py`
+- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py -k dsatuto`
+
+All passed before edits. `tests/unit/test_algorithms_dsatuto.py` was effectively
+empty before this pass.
+
+## Step 1: Focused Coverage and Cycle Evaluation Cleanup
+
+Completed:
+
+- Add focused unit coverage for tutorial computation creation, message
+  behavior, startup sending, and min/max cycle value changes.
+- Keep the tutorial's intentionally omitted footprint/load helpers unchanged.
+- Make cycle improvement detection respect both min and max modes.
+- Store the selected best cost when changing value so computation state stays
+  consistent with the evaluated move.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsatuto.py tests/unit/test_algorithms_objects.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/dsatuto.py tests/unit/test_algorithms_dsatuto.py`
+- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py -k dsatuto`
+
+Closure:
+
+- Keep the tutorial implementation intentionally small and avoid adding
+  footprint/load helpers, parameters, or DSA variants here.
+- If DSA-tuto is revisited later, preserve its role as readable tutorial code
+  before adding production-style behavior.

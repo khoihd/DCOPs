@@ -108,17 +108,23 @@ class DsaTutoComputation(SynchronousComputationMixin, VariableComputation):
 
         current_cost = assignment_cost(assignment, self.constraints)
         # Compute best local cost, based on current neighbors values:
-        arg_min, min_cost = find_optimal(
+        best_values, best_cost = find_optimal(
             self.variable, assignment, self.constraints, self.mode
         )
 
         self.logger.debug(
-            f"Evaluate cycle {self.cycle_count}: current cost {current_cost} - best cost {min_cost}"
+            f"Evaluate cycle {self.cycle_count}: current cost {current_cost} - best cost {best_cost}"
         )
 
-        if current_cost - min_cost > 0 and 0.5 > random.random():
-            self.value_selection(arg_min[0])
-            self.logger.debug(f"Select new value {arg_min} for better cost {min_cost} ")
+        improvement = current_cost - best_cost
+        if self.mode == "max":
+            improvement = best_cost - current_cost
+
+        if improvement > 0 and 0.5 > random.random():
+            self.value_selection(best_values[0], best_cost)
+            self.logger.debug(
+                f"Select new value {best_values} for better cost {best_cost} "
+            )
         else:
             self.logger.debug(f"Do not change value {self.current_value}")
 

@@ -14,6 +14,7 @@ in the file-specific `*_optimization_steps.txt` documents.
 - `pydcop/algorithms/maxsum.py`
 - `pydcop/algorithms/amaxsum.py`
 - `pydcop/algorithms/dba.py`
+- `pydcop/algorithms/dsatuto.py`
 
 ## Detailed Notes
 
@@ -25,12 +26,12 @@ in the file-specific `*_optimization_steps.txt` documents.
 - `adsa_optimization_steps.txt`
 - `maxsum_optimization_steps.txt`
 - `dba_optimization_steps.txt`
+- `dsatuto_optimization_steps.txt`
 
 ## Current Next Step
 
 No active optimization pass is planned. Remaining algorithm candidates:
 
-- `pydcop/algorithms/dsatuto.py`
 - `pydcop/algorithms/gdba.py`
 - `pydcop/algorithms/maxsum_dynamic.py`
 - `pydcop/algorithms/mixeddsa.py`
