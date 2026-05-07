@@ -29,6 +29,13 @@
   `optimization_archive/optimization_tracker.md`.
 - All algorithm candidates previously listed there now have focused
   optimization passes and file-specific notes.
+- Algorithm behavior test expansion is now underway. Recent completed passes:
+  ADSA, AMaxSum, DBA, DPOP, DSA, DSA tutorial, and GDBA.
+- Small production fixes made during that test pass:
+  - `dsa.py` and `dsatuto.py` now expose `build_computation()`.
+  - `dpop.computation_memory()` now raises the intended `ValueError` for
+    non-pseudotree inputs without a `type` attribute.
+  - GDBA now records the winning local move cost as `__cost__ - _my_improve`.
 
 ## Completed Optimization Passes
 - Relations: `pydcop/dcop/relations.py`,
@@ -65,6 +72,8 @@
 
 ## Next Steps
 - No active optimization pass is planned.
+- Continue adding algorithm behavior tests. The next likely target is
+  `pydcop/algorithms/maxsum_dynamic.py`.
 - `todo.md` includes a broader item to optimize commonly used files with
   overheads; treat that as a new focused planning pass.
 - For any new optimization, pick one file or subsystem, update/create a focused
