@@ -32,7 +32,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from pydcop.algorithms import ComputationDef, AlgorithmDef
-from pydcop.algorithms.ncbb import NcbbAlgo, ValueMessage, CostMessage
+from pydcop.algorithms import ncbb
+from pydcop.algorithms.ncbb import NcbbAlgo, ValueMessage, CostMessage, SearchMessage
 from pydcop.computations_graph.pseudotree import build_computation_graph
 from pydcop.dcop.objects import Variable, Domain
 from pydcop.dcop.relations import constraint_from_str
@@ -137,17 +138,28 @@ def toy_pb():
     return g
 
 
-def get_computation_instance(graph, name):
+def get_computation_instance(graph, name, mode="min"):
     # Get the computation node for x1
     comp_node = graph.computation(name)
 
     # Create the ComputationDef and computation instance
-    algo_def = AlgorithmDef.build_with_default_param("ncbb")
+    algo_def = AlgorithmDef.build_with_default_param("ncbb", mode=mode)
     comp_def = ComputationDef(comp_node, algo_def)
     comp = NcbbAlgo(comp_def)
     comp._msg_sender = MagicMock()
 
     return comp
+
+
+def test_build_computation_returns_ncbb_instance(single_variable_pb):
+    comp_node = single_variable_pb.computation("x1")
+    algo_def = AlgorithmDef.build_with_default_param("ncbb")
+    comp_def = ComputationDef(comp_node, algo_def)
+
+    comp = ncbb.build_computation(comp_def)
+
+    assert isinstance(comp, NcbbAlgo)
+    assert comp.name == "x1"
 
 
 def test_create_computation_no_links(single_variable_pb):
@@ -310,6 +322,34 @@ def test_select_value_in_dfs_two_ancestors(toy_pb):
     # comp._msg_sender.assert_any_call("B", "D", msg, None, None)
 
 
+def test_value_phase_waits_for_all_ancestors(toy_pb):
+    comp = get_computation_instance(toy_pb, "D")
+
+    comp.value_phase("A", "R")
+
+    assert comp.current_value is None
+    assert comp._upper_bound is None
+    comp.message_sender.assert_not_called()
+
+
+def test_value_phase_rejects_non_ancestor_sender(toy_pb):
+    comp = get_computation_instance(toy_pb, "B")
+
+    with pytest.raises(ComputationException) as comp_exc:
+        comp.value_phase("C", "R")
+
+    assert "which is not an ancestor" in str(comp_exc.value)
+
+
+def test_value_phase_uses_algorithm_mode_for_greedy_selection(toy_pb):
+    comp = get_computation_instance(toy_pb, "B", mode="max")
+
+    comp.value_phase("A", "R")
+
+    assert comp.current_value == "R"
+    assert comp._upper_bound == 5
+
+
 def test_cost_msg_from_leaf(toy_pb):
     comp_c = get_computation_instance(toy_pb, "C")
     comp_c.start()
@@ -366,6 +406,45 @@ def test_cost_msg_at_root(toy_pb):
     assert comp_a._upper_bound == 3
 
 
+def test_cost_phase_rejects_non_child_sender(toy_pb):
+    comp = get_computation_instance(toy_pb, "B")
+    comp._upper_bound = 0
+
+    with pytest.raises(ComputationException) as comp_exc:
+        comp.cost_phase("C", 1)
+
+    assert "which is not a children" in str(comp_exc.value)
+
+
+def test_root_enters_search_after_all_children_report_costs(toy_pb):
+    comp_a = get_computation_instance(toy_pb, "A")
+    comp_a._upper_bound = 0
+    comp_a.search = MagicMock()
+
+    comp_a.cost_phase("B", 3)
+
+    assert comp_a.phase == "INIT"
+    comp_a.search.assert_not_called()
+
+    comp_a.cost_phase("C", 2)
+
+    assert comp_a._upper_bound == 5
+    assert comp_a.phase == "SEARCH"
+    comp_a.search.assert_called_once_with()
+
+
+def test_on_new_cycle_dispatches_value_messages(toy_pb):
+    comp_d = get_computation_instance(toy_pb, "D")
+    comp_d.value_phase = MagicMock()
+
+    comp_d.on_new_cycle(
+        {"A": (ValueMessage("R"), 0), "B": (ValueMessage("B"), 0)}, 1
+    )
+
+    comp_d.value_phase.assert_any_call("A", "R")
+    comp_d.value_phase.assert_any_call("B", "B")
+
+
 def test_on_new_cycle_dispatches_cost_message(toy_pb):
     comp_b = get_computation_instance(toy_pb, "B")
     comp_b.cost_phase = MagicMock()
@@ -373,3 +452,33 @@ def test_on_new_cycle_dispatches_cost_message(toy_pb):
     comp_b.on_new_cycle({"D": (CostMessage(2), 0)}, 1)
 
     comp_b.cost_phase.assert_called_once_with("D", 2)
+
+
+def test_on_new_cycle_rejects_mixed_message_types(toy_pb):
+    comp_b = get_computation_instance(toy_pb, "B")
+
+    with pytest.raises(ComputationException) as comp_exc:
+        comp_b.on_new_cycle(
+            {"A": (ValueMessage("R"), 0), "D": (CostMessage(2), 0)}, 1
+        )
+
+    assert "Several types of messages received" in str(comp_exc.value)
+
+
+def test_on_new_cycle_rejects_init_messages_during_search(toy_pb):
+    comp_b = get_computation_instance(toy_pb, "B")
+    comp_b.phase = "SEARCH"
+
+    with pytest.raises(ComputationException) as comp_exc:
+        comp_b.on_new_cycle({"D": (CostMessage(2), 0)}, 1)
+
+    assert "cost messages received" in str(comp_exc.value)
+
+
+def test_on_new_cycle_rejects_search_messages_during_init(toy_pb):
+    comp_b = get_computation_instance(toy_pb, "B")
+
+    with pytest.raises(ComputationException) as comp_exc:
+        comp_b.on_new_cycle({"A": (SearchMessage(5), 0)}, 1)
+
+    assert "search messages received" in str(comp_exc.value)
