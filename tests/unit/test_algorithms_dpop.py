@@ -29,6 +29,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 
@@ -36,13 +38,23 @@ import pydcop.dcop.relations
 from pydcop.algorithms import AlgorithmDef, ComputationDef, dpop
 from pydcop.algorithms.dpop import DpopMessage
 from pydcop.computations_graph.pseudotree import PseudoTreeLink, PseudoTreeNode
-from pydcop.dcop.objects import Variable
+from pydcop.dcop.objects import Variable, VariableWithCostFunc
 from pydcop.dcop.relations import NAryMatrixRelation, AsNAryFunctionRelation
 
 
 def test_communication_load_not_implemented():
     with pytest.raises(NotImplementedError, match="communication_load"):
         dpop.communication_load()
+
+
+def test_build_computation_factory_creates_dpop_algo():
+    variable = Variable("x0", ["a", "b"])
+    computation = dpop.build_computation(dpop_computation_def(variable, [], []))
+
+    assert isinstance(computation, dpop.DpopAlgo)
+    assert computation.variable == variable
+    assert computation.is_root
+    assert computation.is_leaf
 
 
 def test_computation_memory_root():
@@ -80,6 +92,22 @@ def test_computation_memory_parent_and_pseudo_parent_separator():
     )
 
     assert dpop.computation_memory(node) == 30
+
+
+def test_computation_memory_rejects_invalid_node_type():
+    with pytest.raises(ValueError, match="PseudoTreeComputation"):
+        dpop.computation_memory(object())
+
+
+def test_computation_memory_requires_separator_variable_in_constraints():
+    x0 = Variable("x0", ["a", "b"])
+    x1 = Variable("x1", ["a", "b", "c"])
+    node = PseudoTreeNode(
+        x1, constraints=[], links=[PseudoTreeLink("parent", x1.name, x0.name)]
+    )
+
+    with pytest.raises(ValueError, match="separator variable x0"):
+        dpop.computation_memory(node)
 
 
 def test_dpop_message_util_size():
@@ -186,6 +214,113 @@ def test_constructor_orders_local_constraints_by_join_size():
         binary_relation,
         large_relation,
     ]
+
+
+def test_stop_condition_changes_after_value_selection():
+    variable = Variable("x0", ["a", "b"])
+    computation = dpop.DpopAlgo(dpop_computation_def(variable, [], []))
+
+    assert computation.stop_condition() == dpop.ALGO_CONTINUE
+
+    computation.value_selection("a", 0)
+
+    assert computation.stop_condition() == dpop.ALGO_STOP
+
+
+def test_select_value_and_finish_stops_and_marks_finished():
+    variable = Variable("x0", ["a", "b"])
+    computation = dpop.DpopAlgo(dpop_computation_def(variable, [], []))
+    computation.stop = MagicMock()
+    computation.finished = MagicMock()
+
+    computation.select_value_and_finish("b", 12.5)
+
+    assert computation.current_value == "b"
+    assert computation.current_cost == 12.5
+    computation.stop.assert_called_once_with()
+    computation.finished.assert_called_once_with()
+
+
+def test_root_leaf_selects_optimal_value_from_local_constraint():
+    x0 = Variable("x0", ["a", "b"])
+    unary_relation = NAryMatrixRelation([x0], np.array([5, 1]), name="unary")
+    computation = dpop.DpopAlgo(
+        dpop_computation_def(x0, [unary_relation], [], mode="min")
+    )
+    computation.stop = MagicMock()
+    computation.finished = MagicMock()
+
+    computation.on_start()
+
+    assert computation.current_value == "b"
+    assert computation.current_cost == 1.0
+    computation.stop.assert_called_once_with()
+    computation.finished.assert_called_once_with()
+
+
+def test_root_leaf_selects_optimal_value_from_variable_cost():
+    x0 = VariableWithCostFunc(
+        "x0", ["a", "b"], lambda value: 5 if value == "a" else 1
+    )
+    computation = dpop.DpopAlgo(dpop_computation_def(x0, [], [], mode="min"))
+    computation.stop = MagicMock()
+    computation.finished = MagicMock()
+
+    computation.on_start()
+
+    assert computation.current_value == "b"
+    assert computation.current_cost == 1.0
+    computation.stop.assert_called_once_with()
+    computation.finished.assert_called_once_with()
+
+
+def test_unexpected_util_sender_raises():
+    x0 = Variable("x0", ["a", "b"])
+    x1 = Variable("x1", ["a", "b"])
+    x2 = Variable("x2", ["a", "b"])
+    computation = dpop.DpopAlgo(
+        dpop_computation_def(
+            x0,
+            constraints=[],
+            links=[PseudoTreeLink("children", x0.name, x1.name)],
+        )
+    )
+    util = NAryMatrixRelation([x0], np.array([0, 1]))
+
+    with pytest.raises(ValueError, match="not in list"):
+        computation._on_util_message(x2.name, DpopMessage("UTIL", util), 0)
+
+
+def test_intermediate_node_sends_util_after_child_message():
+    x0 = Variable("x0", ["a", "b"])
+    x1 = Variable("x1", ["a", "b"])
+    x2 = Variable("x2", ["a", "b"])
+    parent_relation = NAryMatrixRelation(
+        [x0, x1], np.array([[1, 2], [4, 3]]), name="parent_relation"
+    )
+    computation = dpop.DpopAlgo(
+        dpop_computation_def(
+            x1,
+            constraints=[parent_relation],
+            links=[
+                PseudoTreeLink("parent", x1.name, x0.name),
+                PseudoTreeLink("children", x1.name, x2.name),
+            ],
+        )
+    )
+    sender = DummySender()
+    computation.message_sender = sender
+    child_util = NAryMatrixRelation([x1], np.array([10, 0]), name="child_util")
+
+    computation._on_util_message(x2.name, DpopMessage("UTIL", child_util), 0)
+
+    assert computation._waited_children == []
+    assert computation._children_separator == {x2.name: [x1]}
+    assert sender.util_sender_var == x1.name
+    assert sender.util_dest_var == x0.name
+    assert sender.util_msg_data.dimensions == [x0]
+    assert sender.util_msg_data("a") == 11
+    assert sender.util_msg_data("b") == 14
 
 
 def test_value_message_preserves_child_separator_order():

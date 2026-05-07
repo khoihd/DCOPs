@@ -82,7 +82,7 @@ def computation_memory(computation):
     the computation's own variable. Its dimensions are the computation variable
     and its separator: parent plus pseudo-parents in the DFS pseudo-tree.
     """
-    if computation.type != "PseudoTreeComputation":
+    if getattr(computation, "type", None) != "PseudoTreeComputation":
         raise ValueError(
             "dpop computation_memory only supports PseudoTreeComputation, "
             "invalid computation: {}".format(computation)
