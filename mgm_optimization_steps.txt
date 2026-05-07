@@ -33,10 +33,25 @@ Verification:
 - `conda run -n khoihd ruff check pydcop/algorithms/mgm.py tests/unit/test_algorithms_mgm.py`
 - `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/dcop_cli/test_solve.py -k mgm`
 
+## Step 2: Message and State-Transition Guardrails
+
+Completed:
+
+- Added message-property coverage for `MgmValueMessage` and `MgmGainMessage`.
+- Added focused state-transition tests for postponing value messages outside
+  value state and gain messages outside gain state.
+- Added coverage that `_wait_for_gains()` processes postponed gain messages.
+- Added coverage that `_wait_for_values()` sends the current value and
+  processes postponed value messages.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/mgm.py tests/unit/test_algorithms_mgm.py`
+- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/dcop_cli/test_solve.py -k mgm`
+
 Possible next steps:
 
-- Add message-property and state-transition tests before changing MGM message
-  flow.
 - Profile `_compute_best_value()` before touching local relation evaluation.
 - Keep relation-level helpers such as `assignment_cost()` and `find_optimal()`
   out of scope unless there is a separate relation-focused plan.

@@ -68,6 +68,8 @@ Recent verification used:
 Notes:
 - Fixed exact-neighbor memory accounting for similarly-prefixed variable names.
 - Fixed `break_mode: random` tie handling to use random tie-break numbers.
+- Added message-property and state-transition guardrail tests before future
+  MGM message-flow changes.
 
 ### pydcop/algorithms/
 

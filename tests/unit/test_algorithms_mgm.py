@@ -28,12 +28,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from unittest.mock import MagicMock, call
+
 from pydcop.dcop.objects import Variable
 from pydcop.algorithms import AlgorithmDef, ComputationDef, mgm
-from pydcop.algorithms.mgm import MgmComputation
+from pydcop.algorithms.mgm import MgmComputation, MgmGainMessage, MgmValueMessage
 from pydcop.computations_graph.constraints_hypergraph \
     import VariableComputationNode
 from pydcop.dcop.relations import constraint_from_str
+
+
+def _mgm_computation_with_two_neighbors():
+    v1 = Variable('v1', list(range(10)))
+    v2 = Variable('v2', list(range(10)))
+    v3 = Variable('v3', list(range(10)))
+    c1 = constraint_from_str('c1', ' v1 == v2', [v1, v2])
+    c2 = constraint_from_str('c2', ' v1 == v3', [v1, v3])
+    comp_def = ComputationDef(
+        VariableComputationNode(v1, [c1, c2]),
+        AlgorithmDef.build_with_default_param('mgm')
+    )
+    return MgmComputation(comp_def)
 
 
 def test_communication_load():
@@ -75,6 +90,91 @@ def test_computation_memory_uses_exact_variable_names():
     v10_node = VariableComputationNode(v10, [c1])
 
     assert mgm.computation_memory(v10_node) == mgm.UNIT_SIZE
+
+
+def test_mgm_value_message_properties():
+    message = MgmValueMessage(3)
+
+    assert message.type == 'mgm_value'
+    assert message.value == 3
+    assert message.size == 1
+    assert str(message) == 'MgmValueMessage(3)'
+    assert repr(message) == 'MgmValueMessage(3)'
+    assert message == MgmValueMessage(3)
+    assert message != MgmValueMessage(4)
+    assert message != object()
+
+
+def test_mgm_gain_message_properties():
+    message = MgmGainMessage(5, 0.4)
+
+    assert message.type == 'mgm_gain'
+    assert message.value == 5
+    assert message.random_nb == 0.4
+    assert message.size == 1
+    assert str(message) == 'MgmGainMessage(5)'
+    assert repr(message) == 'MgmGainMessage(5)'
+    assert message == MgmGainMessage(5, 0.9)
+    assert message != MgmGainMessage(4, 0.4)
+    assert message != object()
+
+
+def test_value_message_is_postponed_outside_value_state():
+    computation = _mgm_computation_with_two_neighbors()
+    message = MgmValueMessage(2)
+    computation._state = 'gain'
+
+    computation._on_value_msg('v2', message, None)
+
+    assert computation._neighbors_values == {}
+    assert computation.__postponed_value_messages__ == [('v2', message)]
+
+
+def test_gain_message_is_postponed_outside_gain_state():
+    computation = _mgm_computation_with_two_neighbors()
+    message = MgmGainMessage(2)
+    computation._state = 'values'
+
+    computation._on_gain_msg('v2', message, None)
+
+    assert computation._neighbors_gains == {}
+    assert computation.__postponed_gain_messages__ == [('v2', message)]
+
+
+def test_wait_for_gains_processes_postponed_gain_messages():
+    computation = _mgm_computation_with_two_neighbors()
+    message = MgmGainMessage(2, 0.4)
+    computation.__postponed_gain_messages__.append(('v2', message))
+
+    computation._wait_for_gains()
+
+    assert computation._state == 'gain'
+    assert computation._neighbors_gains == {'v2': (2, 0.4)}
+    assert computation.__postponed_gain_messages__ == []
+
+
+def test_wait_for_values_sends_value_and_processes_postponed_value_messages():
+    computation = _mgm_computation_with_two_neighbors()
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.value_selection(3, 0)
+    message = MgmValueMessage(2)
+    computation.__postponed_value_messages__.append(('v2', message))
+
+    computation._wait_for_values()
+
+    assert computation._state == 'values'
+    assert computation._neighbors_values == {'v2': 2}
+    assert computation.__postponed_value_messages__ == []
+    expected_message = MgmValueMessage(3)
+    assert message_sender.call_count == 2
+    message_sender.assert_has_calls(
+        [
+            call('v1', 'v2', expected_message, None, None),
+            call('v1', 'v3', expected_message, None, None),
+        ],
+        any_order=True,
+    )
 
 
 def test_random_break_mode_uses_random_numbers():
