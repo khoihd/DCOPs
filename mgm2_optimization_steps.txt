@@ -29,9 +29,43 @@ Verification:
 - `conda run -n khoihd ruff check pydcop/algorithms/mgm2.py tests/unit/test_algorithms_mgm2.py`
 - `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/api/test_api_graph.py -k mgm2`
 
+## Step 2: Profile Local Evaluation
+
+Completed:
+
+- Added `profiling/profile_mgm2_local_eval.py`.
+- The profiler builds MGM2 computations directly and times
+  `_compute_best_value()` and `_compute_offers_to_send()`.
+- It records aggregate timings for wrapped helper calls:
+  `assignment_cost()`, `_compute_cost()`, and `generate_assignment_as_dict()`.
+- It supports production-like cache behavior by default, plus
+  `--clear-cache-per-repeat` for cold-cache measurements.
+- It also supports `--cprofile` for cumulative stack timings.
+
+Sample runs:
+
+- `conda run -n khoihd python profiling/profile_mgm2_local_eval.py`
+- `conda run -n khoihd python profiling/profile_mgm2_local_eval.py --operation both --case generated --repeat 200 --neighbors 8 --constraints 24 --domain-size 8 --max-arity 4 --cprofile`
+- `conda run -n khoihd python profiling/profile_mgm2_local_eval.py --operation both --case graph-coloring --repeat 200`
+- `conda run -n khoihd python profiling/profile_mgm2_local_eval.py --operation both --case generated --repeat 50 --neighbors 8 --constraints 24 --domain-size 8 --max-arity 4 --clear-cache-per-repeat`
+
+Observed:
+
+- `_compute_offers_to_send()` dominates the combined local-evaluation profile.
+- Production `_compute_cost()` caching greatly reduces repeated
+  `assignment_cost()` calls across repeated candidate assignments.
+- With a cold cache, `assignment_cost()` dominates local evaluation time.
+- `generate_assignment_as_dict()` overhead is negligible in the sampled cases.
+- `assignment_cost()` remains out of scope for this MGM2 pass based on its
+  relation docstring.
+
+Verification:
+
+- `conda run -n khoihd ruff check profiling/profile_mgm2_local_eval.py`
+
 Possible next steps:
 
-- Profile `_compute_best_value()` and `_compute_offers_to_send()` before
-  touching local relation evaluation.
 - Keep `assignment_cost()` out of scope unless there is a separate
   relation-focused plan.
+- Consider only MGM2-local changes that preserve `_compute_cost()` cache
+  behavior.

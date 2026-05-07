@@ -31,8 +31,10 @@ in the file-specific `*_optimization_steps.txt` documents.
 - `pydcop/algorithms/mgm2.py`
   - In progress.
   - Step 1 memory accounting fix complete.
-  - Next: profile `_compute_best_value()` / `_compute_offers_to_send()` before
-    local relation changes.
+  - Local evaluation profiler added; `_compute_offers_to_send()` dominates
+    sampled local work.
+  - `assignment_cost()` remains out of scope; preserve `_compute_cost()` cache
+    behavior in future MGM2-local changes.
 
 ## Detailed Notes
 
@@ -47,9 +49,10 @@ in the file-specific `*_optimization_steps.txt` documents.
 Continue with `pydcop/algorithms/mgm2.py`.
 
 Recommended next work:
-- Profile `_compute_best_value()` and `_compute_offers_to_send()`.
 - Keep `assignment_cost()` out of scope unless there is a separate
   relation-focused plan.
+- Consider only MGM2-local changes that preserve `_compute_cost()` cache
+  behavior.
 - Prefer small message-flow, computation-memory, and local hot-loop changes
   over broad rewrites.
 
