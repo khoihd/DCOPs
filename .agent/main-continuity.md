@@ -1,191 +1,89 @@
 # Main Continuity
 
 ## Project
-- Name: DCOP
-- Origin: private continuation derived from Orange-OpenSource pyDcop.
+- DCOP is a private continuation derived from Orange-OpenSource pyDcop.
 - Current goal: stabilize and understand the codebase before structural
   modernization.
-
-## Working Rules
-- Work conservatively; keep changes small and targeted.
-- Preserve behavior unless a task explicitly asks to change it.
-- Do not introduce dependencies, rename public APIs, or make broad refactors
-  without approval.
+- Work conservatively: small targeted changes, behavior preserved by default,
+  no new dependencies or broad API/package refactors without approval.
 - Keep original BSD 3-Clause attribution intact.
 
 ## Environment
 - Use the `khoihd` Conda environment explicitly:
-  - `conda run -n khoihd python`
+  - `conda run -n khoihd python ...`
   - `conda run -n khoihd python -m pytest ...`
   - `conda run -n khoihd ruff check ...`
   - `conda run -n khoihd pydcop ...`
 - The project is installed editable in `khoihd`; pytest, Ruff, coverage, PuLP,
   and websocket-server are installed there.
-- Avoid bare `pytest`, `python`, or `pydcop` unless the shell is known to be in
+- Avoid bare `python`, `pytest`, or `pydcop` unless the shell is known to be in
   the intended Conda env.
 
-## Current Focus
-- Python 3.11+ / modern dependency compatibility.
-- CLI/API stabilization through the Conda env.
-- Focused optimization passes for core DCOP algorithms.
-- Oracle-style algorithm correctness tests using known DCOP instances and the
-  PuLP/GLPK oracle in `tests/utils/dcop_oracle.py`.
-
-## Current Status
-- Test-suite stabilization pass completed: the suite is reported passing
-  without skipped tests after modernizing legacy tests and benchmark tests.
-- Recent fixes covered:
-  - `tests/unit/test_agentfw.py`: modernized in-process agent messaging tests.
-  - `tests/unit/test_algorithms_mgm2.py`: updated stale MGM2 offer-handling
-    tests to match current message storage and offer-count semantics.
-  - `pydcop/infrastructure/communication.py` and
-    `tests/unit/test_infra_communication.py`: retry messages are now resent
-    automatically when missing agents register.
-  - `tests/unit/test_dcop_relations.py`: assignment-cost benchmark test now
-    works with or without the optional benchmark fixture.
-  - `tests/unit/test_replication_path_utils.py`: replication path benchmark
-    tests use the current list-of-tuples path table shape.
-- Project-wide declaration newline style was normalized: blank lines immediately
-  after `def`, `async def`, and `class` declarations were removed.
-- Relation optimization in `pydcop/dcop/relations.py` is complete for now.
-  Details live in `relation_optimization_steps.txt`.
-- Deferred relation items: `assignment_cost()`, `find_optimal()`, and
-  `NAryMatrixRelation.__hash__()`.
+## Current State
+- Python support metadata declares Python 3.11+ in setup/docs.
+- Test-suite stabilization was completed earlier, including modernized legacy
+  tests, communication retry behavior, benchmark compatibility, and replication
+  path benchmark shape updates.
+- Project-wide declaration newline style was normalized.
 - High-level optimization tracking lives in `optimization_tracker.md`.
-- Python support metadata now declares Python 3.11+ in `setup.py`, README, and
-  installation docs.
-- DPOP optimization is complete through Step 4 and tracked in
-  `dpop_optimization_steps.txt`; Step 5 was intentionally removed/skipped.
-- DPOP Steps 1-4 are complete:
-  - Baseline DPOP unit/API/Ruff checks were recorded.
-  - Constructor constraint filtering now builds a kept list directly and uses
-    set disjointness for descendant checks.
-  - VALUE forwarding now uses membership checks instead of `KeyError` control
-    flow, with coverage for child separator ordering.
-  - Priority 4 profiling added `profiling/profile_dpop_utils.py`, including
-    fixed and generated cases plus strategy comparison for original,
-    pre-convert, ordered, and pre-convert+ordered local joins.
-  - Production DPOP now orders local constraints by estimated relation
-    footprint/arity after descendant filtering.
-  - `_join_local_constraints()` factors the repeated local-constraint join loop
-    without changing the points where local constraints are joined.
-- `optimization_tracker.md` lists `pydcop/algorithms/dpop.py` as completed.
-- DSA optimization is complete and tracked in `dsa_optimization_steps.txt`;
-  no further DSA optimization is planned.
-- MGM optimization is complete and tracked in `mgm_optimization_steps.txt`;
-  `assignment_cost()` and `find_optimal()` remain intentionally excluded from
-  optimization based on their relation docstrings.
-- MGM2 optimization is complete and tracked in `mgm2_optimization_steps.txt`;
-  `_compute_offers_to_send()` now avoids the generic
-  `generate_assignment_as_dict()` path by iterating the two domains directly.
-- ADSA optimization is complete and tracked in `adsa_optimization_steps.txt`;
-  focused ADSA unit coverage was added and local evaluation now avoids an
-  extra assignment copy, reuses current assignments for DSA-B violation checks,
-  accounts for variable costs consistently, fixes no-neighbor startup value/cost
-  unpacking, and removes unconditional periodic stdout output.
-- MaxSum and AMaxSum shared optimization is complete and tracked in
-  `maxsum_optimization_steps.txt`; shared helper hot paths in
-  `pydcop/algorithms/maxsum.py` now avoid repeated assignment scans and
-  intermediate dictionaries while preserving MaxSum/AMaxSum message timing and
-  normalization semantics.
-- DBA optimization is complete and tracked in `dba_optimization_steps.txt`;
-  local evaluation avoids generic assignment filtering in the OK-message path,
-  avoids double current-value evaluation, supports best-improvement scans
-  without violated-list allocation, and fixes exact-name memory accounting.
-- DSA tutorial optimization is complete and tracked in
-  `dsatuto_optimization_steps.txt`; the tutorial implementation remains small,
-  but cycle improvement detection now respects min/max mode and selected
-  value cost is stored when a move is made. Focused tests were added because
-  the previous unit file was effectively empty.
-- GDBA optimization is complete and tracked in `gdba_optimization_steps.txt`;
-  local evaluation now reuses relation assignments/value lookups, supports
-  best-improvement scans without violated-list allocation, and fixes exact-name
-  memory accounting.
-- Dynamic MaxSum optimization is complete and tracked in
-  `maxsum_dynamic_optimization_steps.txt`; the focused pass cached relation
-  scope/value-update lookups while leaving dynamic graph behavior unchanged.
-- MixedDSA optimization is complete and tracked in
-  `mixeddsa_optimization_steps.txt`; local assignment/cost evaluation was
-  tightened, exact-name memory accounting was fixed, and focused tests were
-  added.
-- NCBB optimization is complete and tracked in `ncbb_optimization_steps.txt`;
-  initialization-phase ancestor/child lookups are cached, ancestor constraints
-  are precomputed, and adjacent synchronous message dispatch issues were fixed.
-- SyncBB optimization is complete and tracked in `syncbb_optimization_steps.txt`;
-  assignment evaluation now precomputes path constraints and avoids generic
-  assignment-cost calls in the inner loop.
-- `optimization_tracker.md` now lists all currently covered algorithm
-  candidates as completed.
+- All algorithm candidates previously listed there now have focused
+  optimization passes and file-specific notes.
+
+## Completed Optimization Passes
+- Relations: `pydcop/dcop/relations.py`,
+  `relation_optimization_steps.txt`.
+- Algorithms: DPOP, DSA, MGM, MGM2, ADSA, MaxSum/AMaxSum, DBA, DSA tutorial,
+  GDBA, Dynamic MaxSum, MixedDSA, NCBB, and SyncBB.
+- Details live in:
+  - `dpop_optimization_steps.txt`
+  - `dsa_optimization_steps.txt`
+  - `mgm_optimization_steps.txt`
+  - `mgm2_optimization_steps.txt`
+  - `adsa_optimization_steps.txt`
+  - `maxsum_optimization_steps.txt`
+  - `dba_optimization_steps.txt`
+  - `dsatuto_optimization_steps.txt`
+  - `gdba_optimization_steps.txt`
+  - `maxsum_dynamic_optimization_steps.txt`
+  - `mixeddsa_optimization_steps.txt`
+  - `ncbb_optimization_steps.txt`
+  - `syncbb_optimization_steps.txt`
+
+## Durable Caveats
+- Leave relation helpers `assignment_cost()`, `find_optimal()`, and
+  `NAryMatrixRelation.__hash__()` alone unless profiling gives a specific
+  reason.
+- DPOP join order, pre-conversion to `NAryMatrixRelation`, and helper
+  extraction can affect intermediate UTIL dimensions, memory, and tie behavior.
+  Use `profiling/profile_dpop_utils.py --case generated --strategy all` before
+  future DPOP join/projection changes.
+- NCBB search-phase stubs remain incomplete; the completed NCBB pass only
+  optimized initialization-phase behavior and nearby dispatch fixes.
+- If revisiting completed modules, start a new focused plan rather than
+  extending old optimization notes casually.
 
 ## Next Steps
-- No active optimization pass is planned. All algorithm candidates previously
-  listed in `optimization_tracker.md` now have focused optimization passes.
-- If starting another optimization effort, pick one file or subsystem at a
-  time and create/update a focused `*_optimization_steps.txt` plan before
-  changing it.
-- The current `todo.md` includes a broader item to optimize commonly used
-  files with overheads; treat that as a new focused planning pass rather than
-  an extension of the completed algorithm work.
-- If revisiting completed modules, prefer a new focused plan rather than
-  reviving removed or intentionally deferred polish.
-- Focused checks already recorded in `optimization_tracker.md` include:
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsa.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_adsa.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_amaxsum.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dba.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsatuto.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_gdba.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_maxsum.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dynamic_maxsum.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mixeddsa.py`
-  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_ncbb.py`
+- No active optimization pass is planned.
+- `todo.md` includes a broader item to optimize commonly used files with
+  overheads; treat that as a new focused planning pass.
+- For any new optimization, pick one file or subsystem, update/create a focused
+  `*_optimization_steps.txt` plan, then run targeted tests and Ruff.
+- Focused checks are listed in `optimization_tracker.md`; common examples:
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_syncbb.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
-- Be careful with DPOP join order, pre-conversion to `NAryMatrixRelation`, and
-  helper extraction: these can affect intermediate UTIL dimensions, memory, and
-  tie behavior.
-- Consider `profiling/profile_dpop_utils.py --case generated --strategy all`
-  when evaluating future DPOP join/projection changes.
-- Leave relation helper changes alone unless profiling gives a specific reason.
+  - `conda run -n khoihd ruff check path/to/file.py path/to/test.py`
 
 ## Important Paths
-- `pydcop/algorithms/dpop.py` — DPOP implementation.
-- `pydcop/algorithms/dsa.py` — completed DSA optimization pass.
-- `pydcop/algorithms/mgm.py` — completed MGM optimization pass.
-- `pydcop/algorithms/mgm2.py` — completed MGM2 optimization pass.
-- `pydcop/algorithms/adsa.py` — completed ADSA optimization pass.
-- `pydcop/algorithms/maxsum.py` — completed shared MaxSum/AMaxSum helper pass.
-- `pydcop/algorithms/amaxsum.py` — AMaxSum implementation using MaxSum helpers.
-- `pydcop/algorithms/dba.py` — completed DBA optimization pass.
-- `pydcop/algorithms/dsatuto.py` — completed DSA tutorial optimization pass.
-- `pydcop/algorithms/gdba.py` — completed GDBA optimization pass.
-- `pydcop/algorithms/maxsum_dynamic.py` — completed Dynamic MaxSum pass.
-- `pydcop/algorithms/mixeddsa.py` — completed MixedDSA optimization pass.
-- `pydcop/algorithms/ncbb.py` — completed NCBB initialization pass.
-- `pydcop/algorithms/syncbb.py` — completed SyncBB assignment-evaluation pass.
-- `tests/unit/test_algorithms_dpop.py` — DPOP message-flow unit tests.
-- `tests/api/test_api_solve_dpop.py` — DPOP API oracle checks.
-- `dpop_optimization_steps.txt` — current DPOP optimization plan.
-- `dsa_optimization_steps.txt` — completed DSA optimization plan.
-- `mgm_optimization_steps.txt` — completed MGM optimization plan.
-- `mgm2_optimization_steps.txt` — completed MGM2 optimization plan.
-- `adsa_optimization_steps.txt` — completed ADSA optimization plan.
-- `maxsum_optimization_steps.txt` — completed shared MaxSum/AMaxSum plan.
-- `dba_optimization_steps.txt` — completed DBA optimization plan.
-- `dsatuto_optimization_steps.txt` — completed DSA tutorial optimization plan.
-- `gdba_optimization_steps.txt` — completed GDBA optimization plan.
-- `maxsum_dynamic_optimization_steps.txt` — completed Dynamic MaxSum plan.
-- `mixeddsa_optimization_steps.txt` — completed MixedDSA optimization plan.
-- `ncbb_optimization_steps.txt` — completed NCBB optimization plan.
-- `syncbb_optimization_steps.txt` — completed SyncBB optimization plan.
-- `optimization_tracker.md` — high-level optimization tracker.
-- `pydcop/dcop/relations.py` — optimized relation primitives.
-- `relation_optimization_steps.txt` — completed relation optimization plan.
-- `tests/utils/known_instances.py` — shared known DCOP cases.
-- `tests/utils/dcop_oracle.py` — PuLP/GLPK DCOP oracle.
+- Core model/YAML: `pydcop/dcop/`.
+- Algorithms: `pydcop/algorithms/`.
+- Computation graphs: `pydcop/computations_graph/`.
+- Runtime/agents/communication: `pydcop/infrastructure/`.
+- CLI: `pydcop/commands/`, `pydcop/dcop_cli.py`, `pydcop/pydcop`.
+- Tests: `tests/unit/`, `tests/api/`, `tests/dcop_cli/`,
+  `tests/instances/`.
+- Oracle/known cases: `tests/utils/known_instances.py`,
+  `tests/utils/dcop_oracle.py`.
+- Tracker: `optimization_tracker.md`.
 
 ## Open Questions
 - What is the primary long-term execution path: CLI, library API, or both?
