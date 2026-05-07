@@ -37,7 +37,7 @@ Recent verification used:
 
 ### pydcop/algorithms/dsa.py
 
-Status: first focused pass started.
+Status: first focused pass complete.
 
 Detailed plan:
 - `dsa_optimization_steps.txt`
@@ -53,6 +53,22 @@ Notes:
 - Added `profiling/profile_dsa_evaluate_cycle.py`; sampled profiles point at
   `find_optimal()` / relation evaluation as the main `evaluate_cycle()` cost.
 
+### pydcop/algorithms/mgm.py
+
+Status: first focused pass complete.
+
+Detailed plan:
+- `mgm_optimization_steps.txt`
+
+Recent verification used:
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/mgm.py tests/unit/test_algorithms_mgm.py`
+- `conda run -n khoihd python -m pytest tests/api/test_api_solve.py tests/dcop_cli/test_solve.py -k mgm`
+
+Notes:
+- Fixed exact-neighbor memory accounting for similarly-prefixed variable names.
+- Fixed `break_mode: random` tie handling to use random tie-break numbers.
+
 ### pydcop/algorithms/
 
 Status: DPOP complete; other algorithm modules remain future candidates.
@@ -60,6 +76,7 @@ Status: DPOP complete; other algorithm modules remain future candidates.
 Detailed plans:
 - `dpop_optimization_steps.txt`
 - `dsa_optimization_steps.txt`
+- `mgm_optimization_steps.txt`
 
 Suggested approach:
 - Pick one algorithm at a time.

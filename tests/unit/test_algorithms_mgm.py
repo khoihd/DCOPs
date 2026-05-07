@@ -29,7 +29,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from pydcop.dcop.objects import Variable
-from pydcop.algorithms import mgm
+from pydcop.algorithms import AlgorithmDef, ComputationDef, mgm
+from pydcop.algorithms.mgm import MgmComputation
 from pydcop.computations_graph.constraints_hypergraph \
     import VariableComputationNode
 from pydcop.dcop.relations import constraint_from_str
@@ -65,3 +66,31 @@ def test_computation_memory_two_constraints():
 
     # here, we have 3 edges , one for each constraint
     assert mgm.computation_memory(v1_node) == mgm.UNIT_SIZE * 3
+
+
+def test_computation_memory_uses_exact_variable_names():
+    v1 = Variable('v1', list(range(10)))
+    v10 = Variable('v10', list(range(10)))
+    c1 = constraint_from_str('c1', ' v1 == v10', [v1, v10])
+    v10_node = VariableComputationNode(v10, [c1])
+
+    assert mgm.computation_memory(v10_node) == mgm.UNIT_SIZE
+
+
+def test_random_break_mode_uses_random_numbers():
+    variable = Variable('b', [0, 1])
+    comp_def = ComputationDef(
+        VariableComputationNode(variable, []),
+        AlgorithmDef.build_with_default_param(
+            'mgm', params={'break_mode': 'random'})
+    )
+    computation = MgmComputation(comp_def)
+    computation.value_selection(0, 10)
+    computation._new_value = 1
+    computation._gain = 5
+    computation._neighbors_gains = {'a': (5, 0.9)}
+    computation._random_nb = 0.1
+
+    computation._break_ties(5)
+
+    assert computation.current_value == 1

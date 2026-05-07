@@ -109,7 +109,7 @@ def computation_memory(computation: VariableComputationNode) -> float:
             n
             for link in computation.links
             for n in link.nodes
-            if n not in computation.name
+            if n != computation.name
         )
     )
     return len(neighbors) * UNIT_SIZE
@@ -547,7 +547,7 @@ class MgmComputation(VariableComputation):
                 )
 
     def _break_ties(self, max_gain):
-        if self.break_mode == random:
+        if self.break_mode == "random":
             ties = sorted(
                 [
                     (rand_nb, name)
