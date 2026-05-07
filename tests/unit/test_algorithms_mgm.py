@@ -28,14 +28,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, patch
 
-from pydcop.dcop.objects import Variable
+from pydcop.dcop.objects import Variable, VariableWithCostFunc
 from pydcop.algorithms import AlgorithmDef, ComputationDef, mgm
 from pydcop.algorithms.mgm import MgmComputation, MgmGainMessage, MgmValueMessage
 from pydcop.computations_graph.constraints_hypergraph \
     import VariableComputationNode
 from pydcop.dcop.relations import constraint_from_str
+
+
+def _comp_def(variable, constraints, mode='min', params=None):
+    return ComputationDef(
+        VariableComputationNode(variable, constraints),
+        AlgorithmDef.build_with_default_param('mgm', mode=mode, params=params),
+    )
 
 
 def _mgm_computation_with_two_neighbors():
@@ -44,11 +51,36 @@ def _mgm_computation_with_two_neighbors():
     v3 = Variable('v3', list(range(10)))
     c1 = constraint_from_str('c1', ' v1 == v2', [v1, v2])
     c2 = constraint_from_str('c2', ' v1 == v3', [v1, v3])
-    comp_def = ComputationDef(
-        VariableComputationNode(v1, [c1, c2]),
-        AlgorithmDef.build_with_default_param('mgm')
+    return MgmComputation(_comp_def(v1, [c1, c2]))
+
+
+def test_build_computation_factory_creates_mgm_computation():
+    variable = Variable('v1', [0, 1])
+
+    computation = mgm.build_computation(_comp_def(variable, []))
+
+    assert isinstance(computation, MgmComputation)
+    assert computation.name == 'v1'
+    assert computation.variable == variable
+
+
+def test_computation_init_from_real_computation_def():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+
+    computation = MgmComputation(
+        _comp_def(v1, [c1], params={'break_mode': 'random', 'stop_cycle': 5})
     )
-    return MgmComputation(comp_def)
+
+    assert computation.name == 'v1'
+    assert computation.utilities == [c1]
+    assert computation.neighbors == {'v2'}
+    assert computation.break_mode == 'random'
+    assert computation.stop_cycle == 5
+    assert computation._state == 'starting'
+    assert computation._neighbors_values == {}
+    assert computation._neighbors_gains == {}
 
 
 def test_communication_load():
@@ -119,6 +151,37 @@ def test_mgm_gain_message_properties():
     assert message != object()
 
 
+def test_start_without_neighbors_selects_optimal_variable_cost_and_finishes():
+    variable = VariableWithCostFunc('v1', [0, 1, 2], lambda value: abs(value - 1))
+    computation = MgmComputation(_comp_def(variable, []))
+    computation.finished = MagicMock()
+
+    computation.start()
+
+    assert computation.current_value == 1
+    assert computation.current_cost == 0
+    computation.finished.assert_called_once_with()
+
+
+def test_start_with_neighbors_sends_initial_value():
+    v1 = Variable('v1', [0, 1], initial_value=0)
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1]))
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.start()
+
+    assert computation.current_value == 0
+    assert computation.current_cost is None
+    assert computation._state == 'values'
+    assert computation.cycle_count == 1
+    message_sender.assert_called_once_with(
+        'v1', 'v2', MgmValueMessage(0), None, None
+    )
+
+
 def test_value_message_is_postponed_outside_value_state():
     computation = _mgm_computation_with_two_neighbors()
     message = MgmValueMessage(2)
@@ -175,6 +238,152 @@ def test_wait_for_values_sends_value_and_processes_postponed_value_messages():
         ],
         any_order=True,
     )
+
+
+def test_value_messages_compute_gain_and_send_gain():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1]))
+    computation.value_selection(0, None)
+    computation._state = 'values'
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    with patch('pydcop.algorithms.mgm.random.choice', return_value=1), patch(
+        'pydcop.algorithms.mgm.random.random', return_value=0.4
+    ):
+        computation._handle_value_message('v2', MgmValueMessage(1))
+
+    assert computation.current_cost == 1
+    assert computation._gain == 1
+    assert computation._new_value == 1
+    assert computation.random_nb == 0.4
+    assert computation._state == 'gain'
+    message_sender.assert_called_once_with(
+        'v1', 'v2', MgmGainMessage(1, 0.4), None, None
+    )
+
+
+def test_compute_best_value_uses_candidate_variable_cost():
+    v1 = VariableWithCostFunc('v1', [0, 1], lambda value: 10 if value == 0 else 0)
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', '0 * v1 + 0 * v2', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1]))
+    computation.value_selection(0, 10)
+    computation._neighbors_values = {'v2': 0}
+
+    values, cost = computation._compute_best_value()
+
+    assert values == [1]
+    assert cost == 0
+
+
+def test_value_messages_compute_negative_gain_in_max_mode():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0])
+    c1 = constraint_from_str('c1', 'v1 + v2', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1], mode='max'))
+    computation.value_selection(0, None)
+    computation._state = 'values'
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    with patch('pydcop.algorithms.mgm.random.choice', return_value=1), patch(
+        'pydcop.algorithms.mgm.random.random', return_value=0.3
+    ):
+        computation._handle_value_message('v2', MgmValueMessage(0))
+
+    assert computation.current_cost == 0
+    assert computation._gain == -1
+    assert computation._new_value == 1
+    assert computation._state == 'gain'
+    message_sender.assert_called_once_with(
+        'v1', 'v2', MgmGainMessage(-1, 0.3), None, None
+    )
+
+
+def test_gain_message_applies_better_min_gain_and_sends_next_value():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1]))
+    computation.value_selection(0, 5)
+    computation._gain = 3
+    computation._new_value = 1
+    computation._state = 'gain'
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation._handle_gain_message('v2', MgmGainMessage(2))
+
+    assert computation.current_value == 1
+    assert computation.current_cost == 2
+    assert computation._state == 'values'
+    assert computation._neighbors_values == {}
+    assert computation._neighbors_gains == {}
+    message_sender.assert_called_once_with(
+        'v1', 'v2', MgmValueMessage(1), None, None
+    )
+
+
+def test_gain_message_keeps_value_when_neighbor_has_better_min_gain():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1]))
+    computation.value_selection(0, 5)
+    computation._gain = 2
+    computation._new_value = 1
+    computation._state = 'gain'
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation._handle_gain_message('v2', MgmGainMessage(3))
+
+    assert computation.current_value == 0
+    assert computation.current_cost == 5
+    message_sender.assert_called_once_with(
+        'v1', 'v2', MgmValueMessage(0), None, None
+    )
+
+
+def test_gain_message_applies_better_max_gain_and_sends_next_value():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'v1 + v2', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1], mode='max'))
+    computation.value_selection(0, 1)
+    computation._gain = -4
+    computation._new_value = 1
+    computation._state = 'gain'
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation._handle_gain_message('v2', MgmGainMessage(-2))
+
+    assert computation.current_value == 1
+    assert computation.current_cost == 5
+    message_sender.assert_called_once_with(
+        'v1', 'v2', MgmValueMessage(1), None, None
+    )
+
+
+def test_send_value_stops_at_stop_cycle_without_posting():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1], params={'stop_cycle': 1}))
+    computation.value_selection(0, 0)
+    computation.finished = MagicMock()
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation._send_value()
+
+    assert computation.cycle_count == 1
+    computation.finished.assert_called_once_with()
+    message_sender.assert_not_called()
 
 
 def test_random_break_mode_uses_random_numbers():

@@ -81,6 +81,10 @@ algo_params = [
 ]
 
 
+def build_computation(comp_def: ComputationDef) -> VariableComputation:
+    return MgmComputation(comp_def)
+
+
 def computation_memory(computation: VariableComputationNode) -> float:
     """Return the memory footprint of a MGM computation.
 
@@ -406,8 +410,8 @@ class MgmComputation(VariableComputation):
         the variable can realize.
 
         """
-        self.__random__ = random.random()
-        msg = MgmGainMessage(self._gain, self.__random__)
+        self._random_nb = random.random()
+        msg = MgmGainMessage(self._gain, self._random_nb)
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"Sends gain message {msg} to {self.neighbors}")
         for n in self.neighbors:
@@ -460,19 +464,19 @@ class MgmComputation(VariableComputation):
             asgt = filter_assignment_dict(self._neighbors_values, c.dimensions)
             reduced_cs.append(c.slice(asgt))
             concerned_vars.update(c.dimensions)
+        neighbor_cost = 0
+        for var in concerned_vars:
+            if var.name != self.name:
+                neighbor_cost += var.cost_for_val(self._neighbors_values[var.name])
+
         var_val, rel_val = find_arg_optimal(
             self.variable,
-            lambda x: functools.reduce(operator.add, [f(x) for f in reduced_cs]),
+            lambda x: functools.reduce(operator.add, [f(x) for f in reduced_cs])
+            + self.variable.cost_for_val(x),
             self._mode,
         )
-        # Add the cost for each variable value if any
-        for var in concerned_vars:
-            if var.name == self.name:
-                rel_val += var.cost_for_val(self.current_value)
-            else:
-                rel_val += var.cost_for_val(self._neighbors_values[var.name])
 
-        return var_val, rel_val
+        return var_val, rel_val + neighbor_cost
 
     # #############################GAIN STATE##################################
     @register("mgm_gain")
@@ -516,23 +520,30 @@ class MgmComputation(VariableComputation):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(f"Has all gains {self._gain}, {gains}")
             # determine if can change value and send ok message to neighbors
-            max_neighbors = max([gain for gain, _ in gains.values()])
-            if self._gain > max_neighbors:
+            neighbor_gains = [gain for gain, _ in gains.values()]
+            best_neighbor_gain = (
+                max(neighbor_gains)
+                if self._mode == "min"
+                else min(neighbor_gains)
+            )
+            if (self._mode == "min" and self._gain > best_neighbor_gain) or (
+                self._mode == "max" and self._gain < best_neighbor_gain
+            ):
                 if self.logger.isEnabledFor(logging.INFO):
                     self.logger.info(
                         f"Selects new value {self._new_value}, "
-                        f"best gain: {self._gain} > {gains}"
+                        f"best gain: {self._gain} vs {gains}"
                     )
                 self.value_selection(self._new_value, self.current_cost - self._gain)
-            elif self._gain == max_neighbors:
+            elif self._gain == best_neighbor_gain:
                 # same gain, break ties through variable ordering to
                 # determine which variable can change its value
-                self._break_ties(max_neighbors)
+                self._break_ties(best_neighbor_gain)
             else:
                 if self.logger.isEnabledFor(logging.INFO):
                     self.logger.info(
                         f"Doe not change value : "
-                        f"not the best gain {self._gain} < {max_neighbors} "
+                        f"not the best gain {self._gain} vs {best_neighbor_gain} "
                     )
 
             self._neighbors_gains.clear()
