@@ -29,9 +29,9 @@
   `optimization_archive/optimization_tracker.md`.
 - All algorithm candidates previously listed there now have focused
   optimization passes and file-specific notes.
-- Algorithm behavior test expansion is now underway. Recent completed passes:
-  ADSA, AMaxSum, DBA, DPOP, DSA, DSA tutorial, GDBA, Dynamic MaxSum,
-  MaxSum, MGM, MGM2, and MixedDSA.
+- Algorithm behavior test expansion has covered ADSA, AMaxSum, DBA, DPOP,
+  DSA, DSA tutorial, GDBA, Dynamic MaxSum, MaxSum, MGM, MGM2, MixedDSA, NCBB,
+  and SyncBB.
 - Small production fixes made during that test pass:
   - `dsa.py` and `dsatuto.py` now expose `build_computation()`.
   - `dpop.computation_memory()` now raises the intended `ValueError` for
@@ -39,6 +39,10 @@
   - GDBA now records the winning local move cost as `__cost__ - _my_improve`.
   - MixedDSA now applies `stop_cycle`, accounts for isolated variable costs,
     and treats both positive and negative infinity as hard violations.
+  - SyncBB now exposes `build_computation()` directly and its terminate
+    message matches actual no-payload usage.
+- `todo.md` now prioritizes verifying implementation correctness against the
+  provided paper.
 
 ## Completed Optimization Passes
 - Relations: `pydcop/dcop/relations.py`,
@@ -68,21 +72,25 @@
   extraction can affect intermediate UTIL dimensions, memory, and tie behavior.
   Use `profiling/profile_dpop_utils.py --case generated --strategy all` before
   future DPOP join/projection changes.
-- NCBB search-phase stubs remain incomplete; the completed NCBB pass only
-  optimized initialization-phase behavior and nearby dispatch fixes.
+- NCBB search-phase stubs remain incomplete. Current tests cover the implemented
+  initialization behavior, message dispatch, phase validation, and root
+  transition into search, but not a real search implementation.
+- SyncBB behavior tests now cover direct message flow, pruning, termination, and
+  solve-level min/max outcomes.
 - If revisiting completed modules, start a new focused plan rather than
   extending old optimization notes casually.
 
 ## Next Steps
 - No active optimization pass is planned.
-- Continue adding algorithm behavior tests. The next likely target is
-  `pydcop/algorithms/ncbb.py`.
-- `todo.md` includes a broader item to optimize commonly used files with
-  overheads; treat that as a new focused planning pass.
+- The current top-level focus in `todo.md` is to verify implementation
+  correctness against the provided paper.
+- `todo.md` also includes optimizing commonly used files with overheads; treat
+  that as a new focused planning pass.
 - For any new optimization, pick one file or subsystem, update/create a focused
   `*_optimization_steps.txt` plan, then run targeted tests and Ruff.
 - Focused checks are listed in
   `optimization_archive/optimization_tracker.md`; common examples:
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_ncbb.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_syncbb.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
   - `conda run -n khoihd ruff check path/to/file.py path/to/test.py`
