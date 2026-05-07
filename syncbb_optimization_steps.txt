@@ -1,0 +1,40 @@
+# SyncBB Optimization Steps
+
+## Status
+
+Complete for this focused pass.
+
+## Baseline
+
+Initial focused checks:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_syncbb.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/syncbb.py tests/unit/test_algorithms_syncbb.py`
+
+Both passed before edits.
+
+## Step 1: Assignment-Cost Hot-Path Cleanup
+
+Completed:
+
+- Avoided rebuilding path-variable constraint lists for every candidate value
+  in `get_next_assignment()`.
+- Added a local path-assignment cost helper for the binary SyncBB path instead
+  of calling the generic `assignment_cost()` helper inside the inner loop.
+- Optimized empty-path handling to return the first candidate before building
+  per-path lookup state.
+- Switched `constraints_for_variable()` to exact dimension-name matching
+  without allocating `scope_names` lists.
+- Added focused coverage for exact variable-name matching.
+
+Verification:
+
+- `conda run -n khoihd python -m pytest tests/unit/test_algorithms_syncbb.py`
+- `conda run -n khoihd ruff check pydcop/algorithms/syncbb.py tests/unit/test_algorithms_syncbb.py`
+
+Notes:
+
+- This pass keeps SyncBB message flow, bound comparisons, and value-ordering
+  semantics unchanged.
+- Further SyncBB work should start a new focused plan before changing pruning
+  behavior or termination messages.

@@ -150,7 +150,7 @@ from typing import Optional, List, Any, Tuple
 
 from pydcop.algorithms import ComputationDef
 from pydcop.dcop.objects import Variable
-from pydcop.dcop.relations import assignment_cost, Constraint
+from pydcop.dcop.relations import Constraint
 from pydcop.infrastructure.computations import (
     VariableComputation,
     register,
@@ -443,19 +443,25 @@ def get_next_assignment(
 
     """
     candidates = get_value_candidates(variable, current_value)
+    if not current_path:
+        if candidates:
+            return candidates[0], 0
+        return None
 
-    found = None
+    variable_name = variable.name
+    path_constraints = [
+        (var, val, elt_cost, constraints_for_variable(constraints, var))
+        for var, val, elt_cost in current_path
+    ]
     for candidate in candidates:
         # Check if assigning candidate value to the variable would cause the global
         # cost to exceed the upper-bound.
         candidate_cost = 0
-        if not current_path:
-            return candidate, 0
-        for var, val, elt_cost in current_path:
-            var_constraints = constraints_for_variable(constraints, var)
+        found = None
+        for var, val, elt_cost, var_constraints in path_constraints:
             # This only works for binary constraints, we could extend it to n-ary constraints
-            ass_cost = assignment_cost(
-                {var: val, variable.name: candidate}, var_constraints
+            ass_cost = _path_assignment_cost(
+                variable_name, candidate, var, val, var_constraints
             )
             candidate_cost += ass_cost
             if mode == "min" and (
@@ -476,7 +482,26 @@ def get_next_assignment(
 def constraints_for_variable(
     constraints: List[Constraint], var: VarName
 ) -> List[Constraint]:
-    return [c for c in constraints if var in c.scope_names]
+    return [c for c in constraints if any(v.name == var for v in c.dimensions)]
+
+
+def _path_assignment_cost(
+    variable_name: VarName,
+    candidate: VarVal,
+    path_var: VarName,
+    path_value: VarVal,
+    constraints: List[Constraint],
+) -> Cost:
+    assignment = {path_var: path_value, variable_name: candidate}
+    cost = 0
+    for constraint in constraints:
+        cost += constraint(
+            **{
+                variable.name: assignment[variable.name]
+                for variable in constraint.dimensions
+            }
+        )
+    return cost
 
 
 def get_value_candidates(

@@ -40,6 +40,7 @@ from pydcop.algorithms import AlgorithmDef, ComputationDef
 from pydcop.algorithms.syncbb import (
     get_value_candidates,
     get_next_assignment,
+    constraints_for_variable,
     SyncBBComputation,
     SyncBBForwardMessage,
 )
@@ -157,6 +158,16 @@ def test_get_next_assignement_empty_path_no_bound(toy_pb):
     assert obtained == ("R", 0)
 
 
+def test_constraints_for_variable_uses_exact_variable_names():
+    v1 = Variable("v1", [0, 1])
+    v10 = Variable("v10", [0, 1])
+    c1 = constraint_from_str("c1", "0 if v1 == v10 else 1", [v1, v10])
+
+    assert constraints_for_variable([c1], "v1") == [c1]
+    assert constraints_for_variable([c1], "v10") == [c1]
+    assert constraints_for_variable([c1], "v") == []
+
+
 def test_get_next_assignment_no_bound(toy_pb):
     variables, constraints = toy_pb
     v_a, v_b, v_c, v_d = variables
@@ -238,4 +249,3 @@ def test_solve_max(toy_pb):
 
     # Note: this is supposed to be exactly the same pb as bellow
     assert assignment == {"vA": "G", "vB": "R", "vC": "R", "vD": "G"}
-
