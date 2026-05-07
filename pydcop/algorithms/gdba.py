@@ -518,7 +518,7 @@ class GdbaComputation(VariableComputation):
                 if winner == self.name:  # covers all cases with self is in
                     # max_list
                     self.value_selection(
-                        self._new_value, self.current_cost + self._my_improve
+                        self._new_value, self.__cost__ - self._my_improve
                     )
             elif maxi == 0:  # No neighbor can improve
                 for c in self._violated_constraints:

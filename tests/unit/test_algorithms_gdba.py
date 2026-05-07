@@ -30,17 +30,38 @@
 
 
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 import numpy
+import pytest
 
-from pydcop.algorithms import gdba
-from pydcop.algorithms.gdba import GdbaComputation
+from pydcop.algorithms import AlgorithmDef, ComputationDef, gdba
+from pydcop.algorithms.gdba import (
+    GdbaComputation,
+    GdbaImproveMessage,
+    GdbaOkMessage,
+)
 from pydcop.computations_graph.constraints_hypergraph import \
     VariableComputationNode
-from pydcop.dcop.objects import Variable
+from pydcop.dcop.objects import Variable, VariableWithCostFunc
 from pydcop.dcop.relations import AsNAryFunctionRelation, NAryMatrixRelation, \
     UnaryFunctionRelation, NAryFunctionRelation, constraint_from_str
+
+
+def _computation_def(variable, constraints=None, params=None, mode="min"):
+    constraints = [] if constraints is None else constraints
+    return ComputationDef(
+        VariableComputationNode(variable, constraints),
+        AlgorithmDef.build_with_default_param(
+            "gdba", params=params, mode=mode
+        ),
+    )
+
+
+def _gdba_computation(variable, constraints=None, params=None, mode="min"):
+    return gdba.build_computation(
+        _computation_def(variable, constraints, params=params, mode=mode)
+    )
 
 
 class TestGdbaInfrastructure(unittest.TestCase):
@@ -480,3 +501,278 @@ class TestIncreaseCost(unittest.TestCase):
         modifiers = g.__constraints_modifiers__[c]
         for _, modifier in modifiers.items():
             self.assertEqual(modifier, 1)
+
+
+def test_communication_load():
+    v1 = Variable('v1', [0, 1])
+    node = VariableComputationNode(v1, [])
+    expected = gdba.HEADER_SIZE + 2 * gdba.UNIT_SIZE
+
+    assert gdba.communication_load(node, 'v2') == expected
+    assert gdba.communication_load(node, 'another_neighbor') == expected
+
+
+def test_build_computation_default_params():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'v1 + v2', [v1, v2])
+
+    computation = _gdba_computation(v1, [c1])
+
+    assert isinstance(computation, GdbaComputation)
+    assert computation.variable == v1
+    assert computation._mode == 'min'
+    assert computation._modifier_mode == 'A'
+    assert computation._violation_mode == 'NZ'
+    assert computation._increase_mode == 'E'
+    assert {v.name for v in computation.neighbors} == {'v2'}
+
+
+def test_build_computation_with_params():
+    v1 = Variable('v1', [0, 1])
+    computation = _gdba_computation(
+        v1,
+        params={'modifier': 'M', 'violation': 'MX', 'increase_mode': 'T'},
+        mode='max',
+    )
+
+    assert computation._mode == 'max'
+    assert computation._modifier_mode == 'M'
+    assert computation._violation_mode == 'MX'
+    assert computation._increase_mode == 'T'
+
+
+def test_gdba_ok_message_properties():
+    message = GdbaOkMessage('red')
+
+    assert message.type == 'gdba_ok'
+    assert message.value == 'red'
+    assert message.size == 1
+    assert str(message) == 'GdbaOkMessage(red)'
+    assert repr(message) == 'GdbaOkMessage(red)'
+    assert message == GdbaOkMessage('red')
+    assert message != GdbaOkMessage('blue')
+    assert message != object()
+
+
+def test_gdba_improve_message_properties():
+    message = GdbaImproveMessage(3)
+
+    assert message.type == 'gdba_improve'
+    assert message.improve == 3
+    assert message.size == 1
+    assert str(message) == 'GdbaImproveMessage(3)'
+    assert repr(message) == 'GdbaImproveMessage(3)'
+    assert message == GdbaImproveMessage(3)
+    assert message != GdbaImproveMessage(4)
+    assert message != object()
+
+
+def test_on_start_without_neighbors_selects_optimal_value_and_finishes():
+    v1 = VariableWithCostFunc('v1', [0, 1, 2], lambda value: abs(value - 2))
+    computation = _gdba_computation(v1, [])
+    computation.finished = MagicMock()
+
+    computation.on_start()
+
+    assert computation.current_value == 2
+    assert computation.current_cost == 0
+    computation.finished.assert_called_once_with()
+
+
+def test_on_start_uses_initial_value_and_sends_to_neighbors():
+    v1 = Variable('v1', [0, 1], initial_value=1)
+    v2 = Variable('v2', [0, 1])
+    v3 = Variable('v3', [0, 1])
+    c1 = constraint_from_str('c1', 'v1 + v2 + v3', [v1, v2, v3])
+    computation = _gdba_computation(v1, [c1])
+    computation.message_sender = MagicMock()
+
+    computation.start()
+
+    assert computation.current_value == 1
+    assert computation._waiting_mode == 'ok'
+    assert computation.cycle_count == 1
+    expected = GdbaOkMessage(1)
+    computation.message_sender.assert_has_calls(
+        [
+            call('v1', 'v2', expected, None, None),
+            call('v1', 'v3', expected, None, None),
+        ],
+        any_order=True,
+    )
+    assert computation.message_sender.call_count == 2
+
+
+def test_ok_message_received_outside_ok_mode_is_postponed():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'v1 + v2', [v1, v2])
+    computation = _gdba_computation(v1, [c1])
+    computation._waiting_mode = 'improve'
+
+    computation._on_ok_msg('v2', GdbaOkMessage(1), None)
+
+    assert computation._neighbors_values == {}
+    assert computation.__postponed_ok_messages__ == [
+        ('v2', GdbaOkMessage(1))
+    ]
+
+
+def test_postponed_ok_message_is_processed_when_returning_to_ok_mode():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', '0 if v1 == v2 else 1', [v1, v2])
+    computation = _gdba_computation(v1, [c1])
+    computation.message_sender = MagicMock()
+    computation.value_selection(0, 1)
+    computation.__postponed_ok_messages__.append(('v2', GdbaOkMessage(1)))
+
+    computation._go_to_wait_ok_mode()
+
+    assert computation._waiting_mode == 'improve'
+    assert computation.__postponed_ok_messages__ == []
+    assert computation._neighbors_values == {'v2': 1}
+    assert computation._my_improve == 1
+    assert computation._new_value == 1
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', GdbaImproveMessage(1), None, None
+    )
+
+
+def test_improve_message_received_outside_improve_mode_is_postponed():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'v1 + v2', [v1, v2])
+    computation = _gdba_computation(v1, [c1])
+    computation._waiting_mode = 'ok'
+
+    computation._on_improve_message('v2', GdbaImproveMessage(1), None)
+
+    assert computation._neighbors_improvements == {}
+    assert computation.__postponed_improve_messages__ == [
+        ('v2', GdbaImproveMessage(1))
+    ]
+
+
+def test_self_winning_improvement_changes_value_and_cost():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', '0 if v1 == v2 else 1', [v1, v2])
+    computation = _gdba_computation(v1, [c1])
+    computation.message_sender = MagicMock()
+    computation.value_selection(0, 1)
+    computation._waiting_mode = 'improve'
+    computation._neighbors_values = {'v2': 1}
+    computation.__cost__ = 1
+    computation._my_improve = 1
+    computation._new_value = 1
+
+    computation._on_improve_message('v2', GdbaImproveMessage(0), None)
+
+    assert computation.current_value == 1
+    assert computation.current_cost == 0
+    assert computation._waiting_mode == 'ok'
+    assert computation._neighbors_improvements == {}
+    assert computation._neighbors_values == {}
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', GdbaOkMessage(1), None, None
+    )
+
+
+def test_higher_neighbor_improvement_prevents_local_move():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', '0 if v1 == v2 else 1', [v1, v2])
+    computation = _gdba_computation(v1, [c1])
+    computation.message_sender = MagicMock()
+    computation.value_selection(0, 1)
+    computation._waiting_mode = 'improve'
+    computation._neighbors_values = {'v2': 1}
+    computation._my_improve = 1
+    computation._new_value = 1
+
+    computation._on_improve_message('v2', GdbaImproveMessage(2), None)
+
+    assert computation.current_value == 0
+    assert computation.current_cost == 1
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', GdbaOkMessage(0), None, None
+    )
+
+
+def test_zero_improvement_increases_violated_constraint_costs():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'v1 * 0 + v2 * 0 + 1', [v1, v2])
+    computation = _gdba_computation(v1, [c1])
+    computation.message_sender = MagicMock()
+    computation.value_selection(0, 1)
+    rel_mat, _, _ = computation.__constraints__[0]
+    computation._waiting_mode = 'improve'
+    computation._neighbors_values = {'v2': 1}
+    computation.__cost__ = 1
+    computation._violated_constraints = [rel_mat]
+    computation._my_improve = 0
+    assignment = frozenset({'v1': 0, 'v2': 1}.items())
+
+    computation._on_improve_message('v2', GdbaImproveMessage(0), None)
+
+    assert computation.__constraints_modifiers__[rel_mat][assignment] == 1
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', GdbaOkMessage(0), None, None
+    )
+
+
+@pytest.mark.parametrize(
+    'violation_mode,expected',
+    [
+        ('NZ', [False, True, True]),
+        ('NM', [False, True, True]),
+        ('MX', [False, False, True]),
+    ],
+)
+def test_unary_violation_modes_are_discovered(violation_mode, expected):
+    v1 = Variable('v1', [0, 1, 2])
+    phi = NAryMatrixRelation([v1], numpy.array([0, 1, 2]), name='phi')
+    computation = GdbaComputation(
+        v1, [phi], violation=violation_mode, comp_def=MagicMock()
+    )
+    rel = computation.__constraints__[0]
+
+    assert [computation._is_violated(rel, value) for value in v1.domain] == expected
+
+
+@pytest.mark.parametrize(
+    'violation_mode,expected',
+    [
+        ('NZ', [False, True, True]),
+        ('NM', [False, True, True]),
+        ('MX', [False, True, False]),
+    ],
+)
+def test_nary_violation_modes_are_discovered(violation_mode, expected):
+    v1 = Variable('v1', [0, 1, 2])
+    v2 = Variable('v2', [0, 1, 2])
+    v3 = Variable('v3', [0, 1, 2])
+
+    @AsNAryFunctionRelation(v1, v2, v3)
+    def phi(v1_, v2_, v3_):
+        if v1_ == v2_:
+            return 2
+        if v1_ == v3_:
+            return 1
+        return 0
+
+    computation = GdbaComputation(
+        v1, [phi], violation=violation_mode, comp_def=MagicMock()
+    )
+    computation._neighbors_values['v2'] = 1
+    computation._neighbors_values['v3'] = 2
+    rel = computation.__constraints__[0]
+
+    assert [computation._is_violated(rel, value) for value in v1.domain] == expected
+
+
+def test_break_ties_selects_lexicographically_first_name():
+    assert gdba.break_ties(['v10', 'v2', 'v1']) == 'v1'
