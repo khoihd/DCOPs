@@ -55,6 +55,9 @@ Observed:
 - `exists_violated_constraint()` and `filter_assignment_dict()` are small in
   the sampled graph-coloring and generated cases.
 - Message posting overhead was small compared with relation evaluation.
+- After review, relation-level optimization of `find_optimal()`,
+  `assignment_cost()`, and `NAryMatrixRelation.__hash__()` remains explicitly
+  excluded/deferred. Their docstrings now document this decision.
 
 Verification:
 
@@ -63,8 +66,10 @@ Verification:
 Possible next steps:
 
 - Avoid changing DSA message flow based on current profiling.
-- If optimizing further, look first at the relation-evaluation work driven by
-  `find_optimal()`, and verify with API/CLI checks because this can affect
-  tie behavior.
+- Do not optimize `find_optimal()` or `assignment_cost()` as part of the DSA
+  pass; they are shared, behavior-sensitive relation helpers.
+- If optimizing DSA further, look for DSA-local improvements that preserve the
+  existing relation helper behavior and verify with API/CLI checks because tie
+  behavior can be affected.
 - Consider targeted API/CLI DSA checks if future edits touch message flow or
   stop-cycle behavior.
