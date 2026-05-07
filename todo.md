@@ -1,0 +1,3 @@
+- Optimize algorithms
+- Write more tests for the algorithms
+- Optimize instance generator
