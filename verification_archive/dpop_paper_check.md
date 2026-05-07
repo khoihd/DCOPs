@@ -86,11 +86,11 @@ The implementation intentionally generalizes the paper in these ways:
 - The paper does not define process serialization, message priority, stopping
   hooks, or runtime orchestration.
 - `communication_load()` is explicitly not implemented.
-- `computation_memory()` estimates memory from the computation variable plus
-  parent and direct pseudo-parents. The paper's induced-width discussion also
-  accounts for ancestor context dimensions introduced by descendant back edges.
-  This helper should not be treated as fully verified against the paper's
-  complexity model without a separate memory-focused check.
+- `memory_footprint_estimate()` is documented here as a local distribution-time
+  approximation. It estimates memory from the computation variable plus parent
+  and direct pseudo-parents. The exact joined UTIL dimensions can also include
+  ancestor context carried by child UTIL messages, which is only known during
+  runtime UTIL propagation.
 
 ## Existing Coverage
 
@@ -104,6 +104,4 @@ The implementation intentionally generalizes the paper in these ways:
 
 ## Follow-Up
 
-- Optional: decide whether `computation_memory()` should be upgraded to model
-  full induced-width separator/context dimensions or documented as a local
-  approximation.
+- None currently required for DPOP paper correctness.

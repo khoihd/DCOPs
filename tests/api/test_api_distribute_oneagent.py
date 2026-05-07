@@ -47,7 +47,7 @@ def test_api_distribute_maxsum_oneagent():
 
     cg = factor_graph.build_computation_graph(dcop)
     dist = oneagent.distribute(cg, dcop.agents.values(),
-                               computation_memory=amaxsum.computation_memory,
+                               memory_footprint_estimate=amaxsum.memory_footprint_estimate,
                                communication_load=amaxsum.communication_load)
 
     assert dist.is_hosted(['v1', 'v2', 'v3',
@@ -70,7 +70,7 @@ def test_api_distribute_dsa_oneagent():
 
     cg = factor_graph.build_computation_graph(dcop)
     dist = oneagent.distribute(cg, dcop.agents.values(),
-                               computation_memory=dsa.computation_memory,
+                               memory_footprint_estimate=dsa.memory_footprint_estimate,
                                communication_load=dsa.communication_load)
 
     assert dist.is_hosted(['v1', 'v2', 'v3',

@@ -73,14 +73,14 @@ def distribute(
     computation_graph: ComputationsFactorGraph,
     agentsdef: Iterable[AgentDef],
     hints=None,
-    computation_memory: Callable[[ComputationNode], float] = None,
+    memory_footprint_estimate: Callable[[ComputationNode], float] = None,
     communication_load: Callable[[ComputationNode, str], float] = None,
     timeout=600,  # Max 10 min
 ) -> Distribution:
-    if computation_memory is None or communication_load is None:
+    if memory_footprint_estimate is None or communication_load is None:
         raise ImpossibleDistributionException(
             "oilp_secp_fgdp distribution requires "
-            "computation_memory and link_communication functions"
+            "memory_footprint_estimate and link_communication functions"
         )
 
     mapping = defaultdict(lambda: [])
@@ -103,7 +103,7 @@ def distribute(
                 # Found an actuator variable, host it on the agent
                 mapping[agent.name].append(variable)
                 variable_computations.remove(variable)
-                agents_capa[agent.name] -= computation_memory(
+                agents_capa[agent.name] -= memory_footprint_estimate(
                     computation_graph.computation(variable)
                 )
                 # search for the cost factor, if any, and host it on the same agent.
@@ -111,7 +111,7 @@ def distribute(
                     if f"c_{variable}" == factor:
                         mapping[agent.name].append(factor)
                         factor_computations.remove(factor)
-                        agents_capa[agent.name] -= computation_memory(
+                        agents_capa[agent.name] -= memory_footprint_estimate(
                             computation_graph.computation(factor)
                         )
                 if agents_capa[agent.name] < 0:
@@ -126,7 +126,7 @@ def distribute(
         computation_graph,
         agentsdef,
         Distribution(mapping),
-        computation_memory,
+        memory_footprint_estimate,
         communication_load,
     )
 
@@ -135,7 +135,7 @@ def distribution_cost(
     distribution: Distribution,
     computation_graph: ComputationsFactorGraph,
     agentsdef: Iterable[AgentDef],
-    computation_memory: Callable[[ComputationNode], float],
+    memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
 ) -> float:
     """
@@ -148,7 +148,7 @@ def distribution_cost(
     distribution
     computation_graph
     agentsdef
-    computation_memory
+    memory_footprint_estimate
     communication_load
 
     Returns
@@ -175,7 +175,7 @@ def fg_secp_ilp(
     cg: ComputationsFactorGraph,
     agents: List[AgentDef],
     already_assigned: Distribution,
-    computation_memory: Callable[[ComputationNode], float],
+    memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
     timeout=600,  # Max 10 min
 ) -> Distribution:
@@ -244,7 +244,7 @@ def fg_secp_ilp(
         # Decrease capacity for already hosted computations
         capacity = a.capacity - sum(
             [
-                secp_computation_memory_in_cg(c, cg, computation_memory)
+                secp_memory_footprint_estimate_in_cg(c, cg, memory_footprint_estimate)
                 for c in already_assigned.computations_hosted(a.name)
             ]
         )
@@ -252,14 +252,14 @@ def fg_secp_ilp(
         pb += (
             lpSum(
                 [
-                    secp_computation_memory_in_cg(i, cg, computation_memory)
+                    secp_memory_footprint_estimate_in_cg(i, cg, memory_footprint_estimate)
                     * xs[(i, a.name)]
                     for i in vars_to_host
                 ]
             )
             + lpSum(
                 [
-                    secp_computation_memory_in_cg(j, cg, computation_memory)
+                    secp_memory_footprint_estimate_in_cg(j, cg, memory_footprint_estimate)
                     * fs[(j, a.name)]
                     for j in facs_to_host
                 ]
@@ -367,9 +367,9 @@ def secp_dist_objective_function(
     )
 
 
-def secp_computation_memory_in_cg(
-    computation_name: str, cg: ComputationsFactorGraph, computation_memory
+def secp_memory_footprint_estimate_in_cg(
+    computation_name: str, cg: ComputationsFactorGraph, memory_footprint_estimate
 ):
     computation = cg.computation(computation_name)
-    memory = computation_memory(computation)
+    memory = memory_footprint_estimate(computation)
     return memory

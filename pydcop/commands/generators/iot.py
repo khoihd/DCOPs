@@ -93,7 +93,7 @@ def generate_iot(args):
     cg = graph_module.build_computation_graph(dcop)
     algo_module = load_algorithm_module("maxsum")
 
-    footprints = {c.name: algo_module.computation_memory(c) for c in cg.nodes}
+    footprints = {c.name: algo_module.memory_footprint_estimate(c) for c in cg.nodes}
 
     # Generate an agent for each variable computation and assign the
     # computation to that agent.
@@ -146,7 +146,7 @@ def generate_iot(args):
             distribution,
             cg,
             dcop.agents.values(),
-            computation_memory=algo_module.computation_memory,
+            memory_footprint_estimate=algo_module.memory_footprint_estimate,
             communication_load=algo_module.communication_load,
         )
 

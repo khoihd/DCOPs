@@ -79,7 +79,7 @@ RATIO_HOST_COMM = 0.8
 def distribute(computation_graph: ComputationGraph,
                agentsdef: Iterable[AgentDef],
                hints: DistributionHints=None,
-               computation_memory=None,
+               memory_footprint_estimate=None,
                communication_load=None) -> Distribution:
     """
     Generate a distribution for the given computation graph.
@@ -88,13 +88,13 @@ def distribute(computation_graph: ComputationGraph,
     :param computation_graph: a ComputationGraph
     :param agentsdef: agents' definitions
     :param hints: a DistributionHints
-    :param computation_memory: a function that takes a computation node and its
+    :param memory_footprint_estimate: a function that takes a computation node and its
     Link node as  arguments and return the memory footprint for this node
     :param communication_load: a function that takes a Link as an argument
       and return the communication cost of this edge
     """
 
-    footprint = footprint_fonc(computation_graph, computation_memory)
+    footprint = footprint_fonc(computation_graph, memory_footprint_estimate)
     capacity = capacity_fonc(agentsdef)
     route = route_fonc(agentsdef)
     msg_load = msg_load_func(computation_graph, communication_load)
@@ -110,7 +110,7 @@ def distribute(computation_graph: ComputationGraph,
 def distribution_cost(distribution: Distribution,
                       computation_graph: ComputationGraph,
                       agentsdef: Iterable[AgentDef],
-                      computation_memory: Callable[[ComputationNode], float],
+                      memory_footprint_estimate: Callable[[ComputationNode], float],
                       communication_load: Callable[[ComputationNode, str],
                                                    float]) -> float:
     route = route_fonc(agentsdef)
@@ -251,20 +251,20 @@ def route_fonc(agents_def: Iterable[AgentDef])\
 
 
 def footprint_fonc(cg: ComputationGraph,
-                   computation_memory: Callable[[ComputationNode,
+                   memory_footprint_estimate: Callable[[ComputationNode,
                                                  Iterable[Link]],
                                                 float])\
         -> Callable[[str], float]:
     """
     :param cg: the computation graph
-    :param computation_memory: a function giving a memory footprint from a
+    :param memory_footprint_estimate: a function giving a memory footprint from a
     computation node and a set of link in the computation graph
     :return: a function that returns the memory footprint of a computation
     given it's name
     """
     def footprint(computation_name: str):
         c = cg.computation(computation_name)
-        return computation_memory(c)
+        return memory_footprint_estimate(c)
     return footprint
 
 

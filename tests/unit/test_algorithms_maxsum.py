@@ -46,7 +46,7 @@ from pydcop.algorithms.maxsum import (
     approx_match,
     build_computation,
     communication_load,
-    computation_memory,
+    memory_footprint_estimate,
     costs_for_factor,
     factor_costs_for_var,
     select_value,
@@ -337,14 +337,14 @@ def test_variable_memory_no_neighbor():
     v1 = Variable("v1", VariableDomain("d1", "", [1, 2, 3, 5]))
     vn1 = VariableComputationNode(v1, [])
 
-    assert computation_memory(vn1) == 0
+    assert memory_footprint_estimate(vn1) == 0
 
 
 def test_variable_memory_one_neighbor():
     v1 = Variable("v1", VariableDomain("d1", "", [1, 2, 3, 5]))
     cv1 = VariableComputationNode(v1, ["f1"])
 
-    assert computation_memory(cv1) == VARIABLE_UNIT_SIZE * 4
+    assert memory_footprint_estimate(cv1) == VARIABLE_UNIT_SIZE * 4
 
 
 def test_factor_memory_two_neighbors():
@@ -353,7 +353,7 @@ def test_factor_memory_two_neighbors():
     f1 = relation_from_str("f1", "v1 * 0.5 + v2", [v1, v2])
     cf1 = FactorComputationNode(f1)
 
-    assert computation_memory(cf1) == FACTOR_UNIT_SIZE * (5 + 3)
+    assert memory_footprint_estimate(cf1) == FACTOR_UNIT_SIZE * (5 + 3)
 
 
 def test_communication_load_from_variable_uses_variable_domain_size():

@@ -1138,7 +1138,7 @@ class AgentsMgt(MessagePassingComputation):
                 Distribution(dist),
                 self.graph,
                 self._dcop.agents.values(),  # AgentDef s
-                computation_memory=self._algo_module.computation_memory,
+                memory_footprint_estimate=self._algo_module.memory_footprint_estimate,
                 communication_load=self._algo_module.communication_load,
             )
             result["cost"] = cost

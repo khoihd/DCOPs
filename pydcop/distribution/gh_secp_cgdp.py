@@ -76,13 +76,13 @@ def distribute(
     computation_graph: ComputationGraph,
     agentsdef: Iterable[AgentDef],
     hints: DistributionHints = None,
-    computation_memory: Callable[[ComputationNode], float] = None,
+    memory_footprint_estimate: Callable[[ComputationNode], float] = None,
     communication_load: Callable[[ComputationNode, str], float] = None,
     timeout=None,  # not used
 ) -> Distribution:
-    if computation_memory is None:
+    if memory_footprint_estimate is None:
         raise ImpossibleDistributionException(
-            "adhoc distribution requires " "computation_memory functions"
+            "adhoc distribution requires " "memory_footprint_estimate functions"
         )
 
     mapping = defaultdict(lambda: [])
@@ -97,7 +97,7 @@ def distribute(
             if agent.hosting_cost(comp) == 0:
                 mapping[agent.name].append(comp)
                 computations.remove(comp)
-                agents_capa[agent.name] -= computation_memory(computation_graph.computation(comp))
+                agents_capa[agent.name] -= memory_footprint_estimate(computation_graph.computation(comp))
                 if agents_capa[agent.name] < 0:
                     raise ImpossibleDistributionException(
                         f"Not enough capacity on {agent} to hosts actuator {comp}: {agents_capa[agent.name]}"
@@ -111,7 +111,7 @@ def distribute(
     # there must always be a computation it depends on that is already hosted.
 
     for comp in computations:
-        footprint = computation_memory(computation_graph.computation(comp))
+        footprint = memory_footprint_estimate(computation_graph.computation(comp))
         neighbors = computation_graph.neighbors(comp)
 
         candidates = find_candidates(agents_capa, comp, footprint, mapping, neighbors)
@@ -128,14 +128,14 @@ def distribution_cost(
     distribution: Distribution,
     computation_graph: ComputationGraph,
     agentsdef: Iterable[AgentDef],
-    computation_memory: Callable[[ComputationNode], float],
+    memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
 ) -> float:
     return oilp_secp_cgdp.distribution_cost(
         distribution,
         computation_graph,
         agentsdef,
-        computation_memory,
+        memory_footprint_estimate,
         communication_load,
     )
 

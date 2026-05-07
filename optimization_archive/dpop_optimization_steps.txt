@@ -8,7 +8,7 @@ semantics and optimality.
 
 Current code map
 ----------------
-- `computation_memory()` estimates the UTIL relation footprint from the
+- `memory_footprint_estimate()` estimates the UTIL relation footprint from the
   computation variable and separator.
 - `DpopMessage.size` estimates UTIL and VALUE message sizes.
 - `DpopAlgo.__init__()` filters constraints so each relation is managed by the

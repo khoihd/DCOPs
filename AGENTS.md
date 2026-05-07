@@ -5,6 +5,10 @@ You are assisting development in VSCode on a Python project derived from pyDcop.
 
 Work conservatively. The human developer remains in control of decisions, architecture, and final changes.
 
+This is a private-use repository. Do not preserve public API compatibility for
+its own sake; prefer clear internal names and behavior when the human developer
+asks for a change.
+
 ## Session continuity
 - When a session starts, read `.agent/main-continuity.md` if it exists; if it is large, read only the latest/current-session-relevant section first.
 
@@ -33,6 +37,8 @@ Work conservatively. The human developer remains in control of decisions, archit
 - Do not refactor unrelated code.
 - Do not introduce new dependencies without approval.
 - Preserve existing behavior unless the task says otherwise.
+- Public API exposure is not a concern unless the human developer explicitly
+  says otherwise.
 - Prefer simple, readable solutions over clever ones.
 - Keep explanations concise.
 

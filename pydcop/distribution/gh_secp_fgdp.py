@@ -93,13 +93,13 @@ def distribute(
     computation_graph: ComputationsFactorGraph,
     agentsdef: Iterable[AgentDef],
     hints: DistributionHints = None,
-    computation_memory: Callable[[ComputationNode], float] = None,
+    memory_footprint_estimate: Callable[[ComputationNode], float] = None,
     communication_load: Callable[[ComputationNode, str], float] = None,
     timeout=None,  # not used
 ) -> Distribution:
-    if computation_memory is None:
+    if memory_footprint_estimate is None:
         raise ImpossibleDistributionException(
-            "adhoc distribution requires " "computation_memory functions"
+            "adhoc distribution requires " "memory_footprint_estimate functions"
         )
 
     # as we're dealing with a secp modelled as a factor graph, we have computations for
@@ -126,7 +126,7 @@ def distribute(
                 # Found an actuator variable, host it on the agent
                 mapping[agent.name].append(variable)
                 variable_computations.remove(variable)
-                agents_capa[agent.name] -= computation_memory(
+                agents_capa[agent.name] -= memory_footprint_estimate(
                     computation_graph.computation(variable)
                 )
                 # search for the cost factor, if any, and host it on the same agent.
@@ -134,7 +134,7 @@ def distribute(
                     if f"c_{variable}" == factor:
                         mapping[agent.name].append(factor)
                         factor_computations.remove(factor)
-                        agents_capa[agent.name] -= computation_memory(
+                        agents_capa[agent.name] -= memory_footprint_estimate(
                             computation_graph.computation(factor)
                         )
                 if agents_capa[agent.name] < 0:
@@ -164,9 +164,9 @@ def distribute(
 
     # Now place models
     for model_var, model_fac in models:
-        footprint = computation_memory(
+        footprint = memory_footprint_estimate(
             computation_graph.computation(model_fac)
-        ) + computation_memory(computation_graph.computation(model_var))
+        ) + memory_footprint_estimate(computation_graph.computation(model_var))
         neighbors = computation_graph.neighbors(model_fac)
 
         candidates = find_candidates(
@@ -183,7 +183,7 @@ def distribute(
 
     # And rules at last:
     for rule_fac in rule_factors:
-        footprint = computation_memory(computation_graph.computation(rule_fac))
+        footprint = memory_footprint_estimate(computation_graph.computation(rule_fac))
         neighbors = computation_graph.neighbors(rule_fac)
 
         candidates = find_candidates(
@@ -202,13 +202,13 @@ def distribution_cost(
     distribution: Distribution,
     computation_graph: ComputationGraph,
     agentsdef: Iterable[AgentDef],
-    computation_memory: Callable[[ComputationNode], float],
+    memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
 ) -> float:
     return oilp_secp_fgdp.distribution_cost(
         distribution,
         computation_graph,
         agentsdef,
-        computation_memory,
+        memory_footprint_estimate,
         communication_load,
     )

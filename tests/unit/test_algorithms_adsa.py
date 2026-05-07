@@ -59,14 +59,14 @@ def test_communication_load():
     assert adsa.communication_load(var_node, "another_neighbor") == expected
 
 
-def test_computation_memory_uses_exact_variable_names():
+def test_memory_footprint_estimate_uses_exact_variable_names():
     v1 = Variable("v1", list(range(10)))
     v10 = Variable("v10", list(range(10)))
     c1 = constraint_from_str("c1", " v1 == v10", [v1, v10])
     v10_node = VariableComputationNode(v10, [c1])
 
     assert set(v10_node.neighbors) == {"v1"}
-    assert adsa.computation_memory(v10_node) == adsa.UNIT_SIZE
+    assert adsa.memory_footprint_estimate(v10_node) == adsa.UNIT_SIZE
 
 
 def test_footprint_on_computation_object(monkeypatch):

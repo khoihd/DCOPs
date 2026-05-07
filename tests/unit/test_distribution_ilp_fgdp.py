@@ -33,14 +33,14 @@ import unittest
 from collections import namedtuple
 
 from pydcop.algorithms import amaxsum as ms
-from pydcop.algorithms.amaxsum import communication_load, computation_memory
+from pydcop.algorithms.amaxsum import communication_load, memory_footprint_estimate
 from pydcop.algorithms.maxsum import VARIABLE_UNIT_SIZE
 from pydcop.computations_graph.factor_graph import ComputationsFactorGraph, \
     VariableComputationNode, FactorComputationNode
 from pydcop.dcop.objects import Variable, VariableDomain, AgentDef
 from pydcop.dcop.relations import relation_from_str
 from pydcop.distribution.ilp_fgdp import distribute, _build_alphaijk_binvars, \
-    _objective_function, _computation_memory_in_cg
+    _objective_function, _memory_footprint_estimate_in_cg
 from pydcop.distribution.objects import ImpossibleDistributionException
 
 Agent = namedtuple('Agent', ['name'])
@@ -101,7 +101,7 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
 
         agent_mapping = distribute(cg, [a1, a2],
                                    hints=None,
-                                   computation_memory=ms.computation_memory,
+                                   memory_footprint_estimate=ms.memory_footprint_estimate,
                                    communication_load=ms.communication_load)
 
         self.assertEqual(agent_mapping.agent_for('v1'), 'a1')
@@ -119,7 +119,7 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
 
         agent_mapping = distribute(cg, [a1, a2],
                                    hints=None,
-                                   computation_memory=ms.computation_memory,
+                                   memory_footprint_estimate=ms.memory_footprint_estimate,
                                    communication_load=ms.communication_load)
 
         self.assertEqual(agent_mapping.agent_for('f1'), 'a1')
@@ -138,7 +138,7 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
 
         agent_mapping = distribute(cg, [a1, a2],
                                    hints=None,
-                                   computation_memory=ms.computation_memory,
+                                   memory_footprint_estimate=ms.memory_footprint_estimate,
                                    communication_load=ms.communication_load)
 
         self.assertEqual(agent_mapping.agent_for('f1'), 'a1')
@@ -158,7 +158,7 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
 
         agent_mapping = distribute(cg, [a1, a2],
                                    hints=None,
-                                   computation_memory=ms.computation_memory,
+                                   memory_footprint_estimate=ms.memory_footprint_estimate,
                                    communication_load=ms.communication_load)
 
         self.assertEqual(agent_mapping.agent_for('f1'), 'a1')
@@ -179,7 +179,7 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
 
         agent_mapping = distribute(cg, [a1, a2],
                                    hints=None,
-                                   computation_memory=ms.computation_memory,
+                                   memory_footprint_estimate=ms.memory_footprint_estimate,
                                    communication_load=ms.communication_load)
 
         self.assertEqual(agent_mapping.agent_for('f1'), 'a1')
@@ -203,7 +203,7 @@ class TestDistributionLPFactorGraphWithHints(unittest.TestCase):
         # available for a2 !
         self.assertRaises(ImpossibleDistributionException, distribute,
                           cg, [a1, a2], hints=None,
-                          computation_memory=ms.computation_memory,
+                          memory_footprint_estimate=ms.memory_footprint_estimate,
                           communication_load=ms.communication_load)
 
 class ILPFGDP(unittest.TestCase):
@@ -235,7 +235,7 @@ class ILPFGDP(unittest.TestCase):
         a1.capacity = 1000
         agent_mapping = distribute(cg, [a1, a2],
                                    hints=None,
-                                   computation_memory=ms.computation_memory,
+                                   memory_footprint_estimate=ms.memory_footprint_estimate,
                                    communication_load=ms.communication_load)
 
         # As there is enough capacity on a1, factor f1 must go there (where
@@ -260,7 +260,7 @@ class ILPFGDP(unittest.TestCase):
         a1.capacity = 15
         agent_mapping = distribute(cg, [a1, a2],
                                    hints=None,
-                                   computation_memory=ms.computation_memory,
+                                   memory_footprint_estimate=ms.memory_footprint_estimate,
                                    communication_load=ms.communication_load)
 
         # As there is enough not capacity on a1, factor f1 and variable v3
@@ -352,10 +352,10 @@ class ComputationMemory(unittest.TestCase):
         cf1 = FactorComputationNode(f1)
         cg = ComputationsFactorGraph([cv1], [cf1])
 
-        self.assertEqual(_computation_memory_in_cg('v1', cg,
-                                                   computation_memory), 0)
-        self.assertEqual(_computation_memory_in_cg('f1',
-                                                   cg, computation_memory),
+        self.assertEqual(_memory_footprint_estimate_in_cg('v1', cg,
+                                                   memory_footprint_estimate), 0)
+        self.assertEqual(_memory_footprint_estimate_in_cg('f1',
+                                                   cg, memory_footprint_estimate),
                          0)
 
     def test_var_fac_link(self):
@@ -365,11 +365,11 @@ class ComputationMemory(unittest.TestCase):
         cg = ComputationsFactorGraph([cv1], [cf1])
 
         # size of the domain of v1
-        self.assertEqual(_computation_memory_in_cg('v1', cg,
-                                                   computation_memory),
+        self.assertEqual(_memory_footprint_estimate_in_cg('v1', cg,
+                                                   memory_footprint_estimate),
                          4 *  VARIABLE_UNIT_SIZE)
-        self.assertEqual(_computation_memory_in_cg('f1', cg,
-                                                   computation_memory),
+        self.assertEqual(_memory_footprint_estimate_in_cg('f1', cg,
+                                                   memory_footprint_estimate),
                          4)
 
     def test_fac_2var(self):
@@ -380,6 +380,6 @@ class ComputationMemory(unittest.TestCase):
         cg = ComputationsFactorGraph([cv1, cv2], [cf1])
 
         # size of the domain of v1 + size domain v2
-        self.assertEqual(_computation_memory_in_cg('f1', cg,
-                                                   computation_memory),
+        self.assertEqual(_memory_footprint_estimate_in_cg('f1', cg,
+                                                   memory_footprint_estimate),
                          8)

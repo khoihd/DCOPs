@@ -48,7 +48,7 @@ def test_communication_load():
     assert dsa.communication_load(var_node, 'another_neighbor') == expected
 
 
-def test_computation_memory_one_constraint():
+def test_memory_footprint_estimate_one_constraint():
     v1 = Variable('v1', list(range(10)))
     v2 = Variable('v2', list(range(10)))
     v3 = Variable('v3', list(range(10)))
@@ -57,10 +57,10 @@ def test_computation_memory_one_constraint():
 
     # here, we have an hyper-edges with 3 vertices
     assert set(v1_node.neighbors) == {'v2', 'v3'}
-    assert dsa.computation_memory(v1_node) == dsa.UNIT_SIZE * 2
+    assert dsa.memory_footprint_estimate(v1_node) == dsa.UNIT_SIZE * 2
 
 
-def test_computation_memory_two_constraints():
+def test_memory_footprint_estimate_two_constraints():
     v1 = Variable('v1', list(range(10)))
     v2 = Variable('v2', list(range(10)))
     v3 = Variable('v3', list(range(10)))
@@ -72,17 +72,17 @@ def test_computation_memory_two_constraints():
 
     # here, we have 3 edges , one for each constraint
     assert set(v1_node.neighbors) == {'v2', 'v3', 'v4'}
-    assert dsa.computation_memory(v1_node) == dsa.UNIT_SIZE * 3
+    assert dsa.memory_footprint_estimate(v1_node) == dsa.UNIT_SIZE * 3
 
 
-def test_computation_memory_uses_exact_variable_names():
+def test_memory_footprint_estimate_uses_exact_variable_names():
     v1 = Variable('v1', list(range(10)))
     v10 = Variable('v10', list(range(10)))
     c1 = constraint_from_str('c1', ' v1 == v10', [v1, v10])
     v10_node = VariableComputationNode(v10, [c1])
 
     assert set(v10_node.neighbors) == {'v1'}
-    assert dsa.computation_memory(v10_node) == dsa.UNIT_SIZE
+    assert dsa.memory_footprint_estimate(v10_node) == dsa.UNIT_SIZE
 
 
 def test_footprint_on_computation_object(monkeypatch):

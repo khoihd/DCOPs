@@ -75,16 +75,18 @@ def build_computation(comp_def: ComputationDef):
     return computation
 
 
-def computation_memory(computation):
-    """Return the memory footprint of a DPOP computation.
+def memory_footprint_estimate(computation):
+    """Return a local distribution-time memory footprint estimate.
 
-    DPOP's dominant memory use is the UTIL relation built before projecting
-    the computation's own variable. Its dimensions are the computation variable
-    and its separator: parent plus pseudo-parents in the DFS pseudo-tree.
+    This estimates DPOP's dominant local memory use: the UTIL relation built
+    before projecting the computation's own variable. Its dimensions are the
+    computation variable and its direct separator: parent plus pseudo-parents
+    in the DFS pseudo-tree. Runtime child UTIL messages can carry additional
+    ancestor context dimensions.
     """
     if getattr(computation, "type", None) != "PseudoTreeComputation":
         raise ValueError(
-            "dpop computation_memory only supports PseudoTreeComputation, "
+            "dpop memory_footprint_estimate only supports PseudoTreeComputation, "
             "invalid computation: {}".format(computation)
         )
 
@@ -273,7 +275,7 @@ class DpopAlgo(VariableComputation):
             self._waited_children = list(self._children)
 
     def footprint(self):
-        return computation_memory(self.computation_def.node)
+        return memory_footprint_estimate(self.computation_def.node)
 
     @property
     def is_root(self):

@@ -65,23 +65,23 @@ def _gdba_computation(variable, constraints=None, params=None, mode="min"):
 
 
 class TestGdbaInfrastructure(unittest.TestCase):
-    def test_computation_memory_one_constraint(self):
+    def test_memory_footprint_estimate_one_constraint(self):
         v1 = Variable('v1', [0, 1])
         v2 = Variable('v2', [0, 1])
         v3 = Variable('v3', [0, 1])
         c1 = constraint_from_str('c1', ' v1 + v2 == v3', [v1, v2, v3])
         v1_node = VariableComputationNode(v1, [c1])
 
-        self.assertEqual(gdba.computation_memory(v1_node), gdba.UNIT_SIZE * 2)
+        self.assertEqual(gdba.memory_footprint_estimate(v1_node), gdba.UNIT_SIZE * 2)
 
-    def test_computation_memory_uses_exact_variable_names(self):
+    def test_memory_footprint_estimate_uses_exact_variable_names(self):
         v1 = Variable('v1', [0, 1])
         v10 = Variable('v10', [0, 1])
         c1 = constraint_from_str('c1', ' v1 == v10', [v1, v10])
         v10_node = VariableComputationNode(v10, [c1])
 
         self.assertEqual(set(v10_node.neighbors), {'v1'})
-        self.assertEqual(gdba.computation_memory(v10_node), gdba.UNIT_SIZE)
+        self.assertEqual(gdba.memory_footprint_estimate(v10_node), gdba.UNIT_SIZE)
 
 
 class GdbaAlgoTest(unittest.TestCase):

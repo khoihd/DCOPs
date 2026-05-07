@@ -17,7 +17,7 @@ Both passed before edits.
 
 Completed:
 
-- Fix `computation_memory()` to use computation links and exact variable-name
+- Fix `memory_footprint_estimate()` to use computation links and exact variable-name
   equality.
 - Avoid rebuilding and filtering the same assignment twice per relation during
   `compute_eval_value()`.

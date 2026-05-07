@@ -352,7 +352,7 @@ def run_cmd(args, timer=None, timeout=None):
             cg,
             dcop.agents.values(),
             hints=dcop.dist_hints,
-            computation_memory=algo_module.computation_memory,
+            memory_footprint_estimate=algo_module.memory_footprint_estimate,
             communication_load=algo_module.communication_load,
         )
     else:

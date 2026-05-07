@@ -554,8 +554,8 @@ def load_algorithm_module(algo_name: str):
     if not hasattr(algo_module, 'communication_load'):
         algo_module.communication_load = lambda *a, **ka: 1
 
-    if not hasattr(algo_module, 'computation_memory'):
-        algo_module.computation_memory = lambda *a, **ka: 1
+    if not hasattr(algo_module, 'memory_footprint_estimate'):
+        algo_module.memory_footprint_estimate = lambda *a, **ka: 1
 
     if not hasattr(algo_module, 'build_computation'):
         # Injecting the build_computation method will only work

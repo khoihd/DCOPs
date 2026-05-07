@@ -84,7 +84,7 @@ def distribute(
     computation_graph: ComputationGraph,
     agentsdef: Iterable[AgentDef],
     hints: DistributionHints = None,
-    computation_memory=None,
+    memory_footprint_estimate=None,
     communication_load=None,
     timeout=600,  # Max 10 min
 ) -> Distribution:
@@ -95,14 +95,14 @@ def distribute(
     computation_graph
     agentsdef
     hints
-    computation_memory
+    memory_footprint_estimate
     communication_load
 
     Returns
     -------
 
     """
-    footprint_f = footprint_fonc(computation_graph, computation_memory)
+    footprint_f = footprint_fonc(computation_graph, memory_footprint_estimate)
     capacity_f = capacity_fonc(agentsdef)
     route_f = route_fonc(agentsdef)
     msg_load_f = msg_load_func(computation_graph, communication_load)
@@ -126,7 +126,7 @@ def distribution_cost(
     distribution: Distribution,
     computation_graph: ComputationGraph,
     agentsdef: Iterable[AgentDef],
-    computation_memory: Callable[[ComputationNode], float],
+    memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
 ) -> float:
     route = route_fonc(agentsdef)
@@ -288,7 +288,7 @@ def _objective(xs, betas, route, msg_load, hosting_cost):
 
 
 def footprint_fonc(
-    cg: ComputationGraph, computation_memory: Callable[[ComputationNode], float]
+    cg: ComputationGraph, memory_footprint_estimate: Callable[[ComputationNode], float]
 ) -> Callable[[str], float]:
     """
 
@@ -296,7 +296,7 @@ def footprint_fonc(
     ----------
     cg: ComputationGraph
         the computation graph
-    computation_memory: Callable
+    memory_footprint_estimate: Callable
         a function giving a memory footprint from a computation node and a set of links
          in the computation graph
 
@@ -309,7 +309,7 @@ def footprint_fonc(
 
     def footprint(computation_name: str):
         c = cg.computation(computation_name)
-        return computation_memory(c)
+        return memory_footprint_estimate(c)
 
     return footprint
 

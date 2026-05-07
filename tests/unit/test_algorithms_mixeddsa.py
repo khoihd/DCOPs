@@ -116,7 +116,7 @@ def test_mixed_dsa_message_properties():
     assert message != object()
 
 
-def test_computation_memory_uses_exact_variable_names():
+def test_memory_footprint_estimate_uses_exact_variable_names():
     v1 = Variable("v1", [0, 1])
     v10 = Variable("v10", [0, 1])
 
@@ -127,7 +127,7 @@ def test_computation_memory_uses_exact_variable_names():
     v10_node = VariableComputationNode(v10, [c1])
 
     assert set(v10_node.neighbors) == {"v1"}
-    assert mixeddsa.computation_memory(v10_node) == mixeddsa.UNIT_SIZE
+    assert mixeddsa.memory_footprint_estimate(v10_node) == mixeddsa.UNIT_SIZE
 
 
 def test_compute_dcop_cost_keeps_hard_violations_out_of_cost():

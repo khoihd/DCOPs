@@ -87,7 +87,7 @@ def generate_small_world(args):
     cg = graph_module.build_computation_graph(dcop)
     algo_module = load_algorithm_module("maxsum")
 
-    footprints = {n.name: algo_module.computation_memory(n) for n in cg.nodes}
+    footprints = {n.name: algo_module.memory_footprint_estimate(n) for n in cg.nodes}
     f_vals = footprints.values()
     logger.info(
         "%s computations, footprint: \n  sum: %s, avg: %s max: %s, " "min: %s",

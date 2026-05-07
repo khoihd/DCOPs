@@ -70,7 +70,7 @@ def distribute(
     computation_graph: ComputationGraph,
     agentsdef: Iterable[AgentDef],
     hints: DistributionHints = None,
-    computation_memory: Callable[[ComputationNode], float] = None,
+    memory_footprint_estimate: Callable[[ComputationNode], float] = None,
     communication_load: Callable[[ComputationNode, str], float] = None,
 ) -> Distribution:
     """
@@ -80,7 +80,7 @@ def distribute(
     computation_graph
     agentsdef
     hints
-    computation_memory
+    memory_footprint_estimate
     communication_load
 
     Returns
@@ -89,7 +89,7 @@ def distribute(
     """
     # Sort computation by footprint, but add a random element to avoid sorting on names
     computations = [
-        (computation_memory(n), n, None, random.random())
+        (memory_footprint_estimate(n), n, None, random.random())
         for n in computation_graph.nodes
     ]
     computations = sorted(computations, key=lambda o: (o[0], o[3]), reverse=True)
@@ -157,14 +157,14 @@ def distribution_cost(
     distribution: Distribution,
     computation_graph: ComputationGraph,
     agentsdef: Iterable[AgentDef],
-    computation_memory: Callable[[ComputationNode], float],
+    memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
 ) -> float:
     return ilp_compref.distribution_cost(
         distribution,
         computation_graph,
         agentsdef,
-        computation_memory,
+        memory_footprint_estimate,
         communication_load,
     )
 

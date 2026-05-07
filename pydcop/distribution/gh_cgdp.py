@@ -70,7 +70,7 @@ def distribute(
     computation_graph: ComputationGraph,
     agentsdef: Iterable[AgentDef],
     hints=None,
-    computation_memory: Callable[[ComputationNode], float] = None,
+    memory_footprint_estimate: Callable[[ComputationNode], float] = None,
     communication_load: Callable[[ComputationNode, str], float] = None,
     timeout=None,  # not used
 ) -> Distribution:
@@ -85,7 +85,7 @@ def distribute(
     computation_graph
     agentsdef
     hints
-    computation_memory
+    memory_footprint_estimate
     communication_load
 
     Returns
@@ -103,13 +103,13 @@ def distribute(
             if agent.hosting_cost(comp) == 0:
                 fixed_mapping[comp] = (
                     agent.name,
-                    computation_memory(computation_graph.computation(comp)),
+                    memory_footprint_estimate(computation_graph.computation(comp)),
                 )
                 break
 
     # Sort computation by footprint, but add a random element to avoid sorting on names
     computations = [
-        (computation_memory(n), n, None, random.random())
+        (memory_footprint_estimate(n), n, None, random.random())
         for n in computation_graph.nodes
         if n.name not in fixed_mapping
     ]
@@ -187,14 +187,14 @@ def distribution_cost(
     distribution: Distribution,
     computation_graph: ComputationGraph,
     agentsdef: Iterable[AgentDef],
-    computation_memory: Callable[[ComputationNode], float],
+    memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
 ) -> float:
     return oilp_cgdp.distribution_cost(
         distribution,
         computation_graph,
         agentsdef,
-        computation_memory,
+        memory_footprint_estimate,
         communication_load,
     )
 

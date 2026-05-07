@@ -114,7 +114,7 @@ from pydcop.infrastructure.computations import (
 GRAPH_TYPE = "pseudotree"
 
 
-def computation_memory(*args):
+def memory_footprint_estimate(*args):
     raise NotImplementedError("DPOP has no computation memory implementation (yet)")
 
 

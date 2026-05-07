@@ -263,10 +263,10 @@ def run_cmd(args, timer=None, timeout=None):
     logger.info("Distributing computation graph for dcop {}".format(dcop_yaml_files))
 
     if algo_module is None:
-        computation_memory = None
+        memory_footprint_estimate = None
         communication_load = None
     else:
-        computation_memory = algo_module.computation_memory
+        memory_footprint_estimate = algo_module.memory_footprint_estimate
         communication_load = algo_module.communication_load
 
     global result
@@ -288,7 +288,7 @@ def run_cmd(args, timer=None, timeout=None):
         # Warning: some methods may not honor the timeout parameter
         distribute_kwargs = {
             "hints": dcop.dist_hints,
-            "computation_memory": computation_memory,
+            "memory_footprint_estimate": memory_footprint_estimate,
             "communication_load": communication_load
         }
         if "timeout" in signature(dist_module.distribute).parameters:
@@ -310,7 +310,7 @@ def run_cmd(args, timer=None, timeout=None):
                 distribution,
                 cg,
                 dcop.agents.values(),
-                computation_memory=computation_memory,
+                memory_footprint_estimate=memory_footprint_estimate,
                 communication_load=communication_load,
             )
         else:

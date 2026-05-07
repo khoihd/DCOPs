@@ -53,8 +53,8 @@ For each algorithm:
   - Paper / Source: `verification_archive/papers/dpop_petcu_05.pdf`
   - Check File: `verification_archive/dpop_paper_check.md`
   - Status: Verified
-  - Notes: Core UTIL/VALUE logic matches the paper; memory helper caveat is
-    documented in the check file.
+  - Notes: Core UTIL/VALUE logic matches the paper; `memory_footprint_estimate()` is
+    documented as a local distribution-time approximation.
 
 - MGM
   - Priority: 2
@@ -168,7 +168,7 @@ For each algorithm:
   documented deviations.
 - Confirm objective direction (`min`, `max`, or both) is implemented consistently.
 - Confirm message classes serialize cleanly for thread and process modes.
-- Confirm `build_computation()` and `computation_memory()` behavior is covered
+- Confirm `build_computation()` and `memory_footprint_estimate()` behavior is covered
   where the algorithm exposes them.
 - Prefer tiny deterministic DCOP fixtures and oracle-backed solve tests where
   possible.

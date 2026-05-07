@@ -219,7 +219,7 @@ are generally required for a correct distribution of the computations on
 agents, but if you only want to use `oneagent` distribution (or simply
 during development) you can simply return 0::
 
-     def computation_memory(computation: ComputationNode, links):
+     def memory_footprint_estimate(computation: ComputationNode, links):
      """
        This method must return the memory footprint for the given computation
        from the graph.

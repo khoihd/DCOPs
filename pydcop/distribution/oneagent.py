@@ -65,7 +65,7 @@ from pydcop.distribution.objects import Distribution, DistributionHints, \
 def distribution_cost(distribution: Distribution,
                       computation_graph: ComputationGraph,
                       agentsdef: Iterable[AgentDef],
-                      computation_memory: Callable[[ComputationNode], float],
+                      memory_footprint_estimate: Callable[[ComputationNode], float],
                       communication_load: Callable[[ComputationNode, str],
                                                    float]) -> float:
     """
@@ -77,7 +77,7 @@ def distribution_cost(distribution: Distribution,
     distribution
     computation_graph
     agentsdef
-    computation_memory
+    memory_footprint_estimate
     communication_load
 
     Returns
@@ -90,7 +90,7 @@ def distribution_cost(distribution: Distribution,
 def distribute(computation_graph: ComputationGraph,
                agentsdef: Iterable[AgentDef],
                hints: DistributionHints=None,
-               computation_memory=None,
+               memory_footprint_estimate=None,
                communication_load=None,
                timeout= None)-> Distribution:
     """
@@ -110,9 +110,9 @@ def distribute(computation_graph: ComputationGraph,
         There **must** be at least as many agents as computations.
     hints:
         Not used by the ``oneagent`` distribution method.
-    computation_memory:
+    memory_footprint_estimate:
         Not used by the ``oneagent`` distribution method.
-    computation_memory:
+    memory_footprint_estimate:
         Not used by the ``oneagent`` distribution method.
 
     Returns

@@ -2,6 +2,8 @@
 
 ## Project
 - DCOP is a private continuation derived from Orange-OpenSource pyDcop.
+- This repository is for private use only; do not worry about public API
+  exposure or backward compatibility unless the human developer explicitly asks.
 - Current goal: stabilize and understand the codebase before structural
   modernization.
 - Work conservatively: small targeted changes, behavior preserved by default,
@@ -34,7 +36,7 @@
   and SyncBB.
 - Small production fixes made during that test pass:
   - `dsa.py` and `dsatuto.py` now expose `build_computation()`.
-  - `dpop.computation_memory()` now raises the intended `ValueError` for
+  - `dpop.memory_footprint_estimate()` now raises the intended `ValueError` for
     non-pseudotree inputs without a `type` attribute.
   - GDBA now records the winning local move cost as `__cost__ - _my_improve`.
   - MixedDSA now applies `stop_cycle`, accounts for isolated variable costs,

@@ -124,7 +124,7 @@ def build_computation(comp_def: ComputationDef):
         return MaxSumFactorComputation(comp_def=comp_def)
 
 
-def computation_memory(
+def memory_footprint_estimate(
     computation: Union[FactorComputationNode, VariableComputationNode]
 ) -> float:
     """Memory footprint associated with the maxsum computation node.
@@ -333,7 +333,7 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
         pass
 
     def footprint(self) -> float:
-        return computation_memory(self.computation_def.node)
+        return memory_footprint_estimate(self.computation_def.node)
 
     def on_new_cycle(self, messages, cycle_id) -> Optional[List]:
         # Collect costs messages from neighbor variables for this cycle (aka iteration)

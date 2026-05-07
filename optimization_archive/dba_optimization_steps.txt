@@ -17,7 +17,7 @@ Both passed before edits.
 
 Completed:
 
-- Fix `computation_memory()` to exclude the computation variable by exact
+- Fix `memory_footprint_estimate()` to exclude the computation variable by exact
   variable-name equality.
 - Avoid the generic assignment filtering helper in the OK-message reduction
   loop by using precomputed relation dimension names.

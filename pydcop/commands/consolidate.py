@@ -192,14 +192,14 @@ def single_distrib_costs(dcop, distribution_file, algo):
     graph_module = load_graph_module(algo_module.GRAPH_TYPE)
 
     cg = graph_module.build_computation_graph(dcop)
-    computation_memory = algo_module.computation_memory
+    memory_footprint_estimate = algo_module.memory_footprint_estimate
     communication_load = algo_module.communication_load
 
     cost, comm, hosting = dist_module.distribution_cost(
         distribution,
         cg,
         dcop.agents.values(),
-        computation_memory=computation_memory,
+        memory_footprint_estimate=memory_footprint_estimate,
         communication_load=communication_load,
     )
     return cost, comm, hosting

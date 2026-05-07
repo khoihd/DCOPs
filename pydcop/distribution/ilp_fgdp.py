@@ -66,7 +66,7 @@ based on ILP, optimize for communication wrt capacity.
 def distribute(computation_graph: ComputationGraph,
                agentsdef: Iterable[AgentDef],
                hints: DistributionHints=None,
-               computation_memory=None,
+               memory_footprint_estimate=None,
                communication_load=None):
     """
     Generate a distribution for the dcop.
@@ -74,14 +74,14 @@ def distribute(computation_graph: ComputationGraph,
     :param computation_graph: a ComputationGraph
     :param agentsdef: the agents definitions
     :param hints: a DistributionHints
-    :param computation_memory: a function that takes a computation node as an 
+    :param memory_footprint_estimate: a function that takes a computation node as an 
       argument and return the memory footprint for this
     :param link_communication: a function that takes a Link as an argument 
       and return the communication cost of this edge
     """
-    if computation_memory is None or communication_load is None:
+    if memory_footprint_estimate is None or communication_load is None:
         raise ImpossibleDistributionException('LinearProg distribution requires '
-                         'computation_memory and link_communication functions')
+                         'memory_footprint_estimate and link_communication functions')
 
     agents = list(agentsdef)
 
@@ -95,13 +95,13 @@ def distribute(computation_graph: ComputationGraph,
     logger.debug(f"Must host: {must_host}")
 
     return factor_graph_lp_model(computation_graph, agents, must_host,
-                                 computation_memory, communication_load)
+                                 memory_footprint_estimate, communication_load)
 
 
 def distribution_cost(distribution: Distribution,
                       computation_graph: ComputationGraph,
                       agentsdef: Iterable[AgentDef],
-                      computation_memory: Callable[[ComputationNode], float],
+                      memory_footprint_estimate: Callable[[ComputationNode], float],
                       communication_load: Callable[[ComputationNode, str],
                                                    float]) -> float:
     """
@@ -114,7 +114,7 @@ def distribution_cost(distribution: Distribution,
     distribution
     computation_graph
     agentsdef
-    computation_memory
+    memory_footprint_estimate
     communication_load
 
     Returns
@@ -158,7 +158,7 @@ def distribute_add(secp, new_device, current_distribution,
 def factor_graph_lp_model(cg: ComputationsFactorGraph,
                           agents: List[AgentDef],
                           must_host: Dict[str, List],
-                          computation_memory=None,
+                          memory_footprint_estimate=None,
                           communication_load=None):
     """
     To distribute we need:
@@ -169,8 +169,8 @@ def factor_graph_lp_model(cg: ComputationsFactorGraph,
     These function depends on the algorithm.
 
     Here    
-    * mem_var and mem_fac are given by the computation_memory method.
-    * com is given by computation_memory
+    * mem_var and mem_fac are given by the memory_footprint_estimate method.
+    * com is given by memory_footprint_estimate
 
     :return:
     """
@@ -223,12 +223,12 @@ def factor_graph_lp_model(cg: ComputationsFactorGraph,
     for a in agents:
         # Decrease capacity for already hosted computations
         capacity = a.capacity - \
-                   sum([_computation_memory_in_cg(c, cg, computation_memory)
+                   sum([_memory_footprint_estimate_in_cg(c, cg, memory_footprint_estimate)
                         for c in must_host[a.name]])
 
-        pb += lpSum([_computation_memory_in_cg(i, cg, computation_memory) *
+        pb += lpSum([_memory_footprint_estimate_in_cg(i, cg, memory_footprint_estimate) *
                      xs[(i, a.name)] for i in vars_to_host]) \
-            + lpSum([_computation_memory_in_cg(j, cg, computation_memory) *
+            + lpSum([_memory_footprint_estimate_in_cg(j, cg, memory_footprint_estimate) *
                      fs[(j, a.name)] for j in facs_to_host]) <= capacity, \
             'memory {}'.format(a.name)
 
@@ -330,7 +330,7 @@ def _objective_function(cg: ComputationGraph, communication_load,
                   for link in cg.links for k in agents_names])
 
 
-def _computation_memory_in_cg(computation_name: str,
-                              cg: ComputationGraph, computation_memory):
+def _memory_footprint_estimate_in_cg(computation_name: str,
+                              cg: ComputationGraph, memory_footprint_estimate):
     computation = cg.computation(computation_name)
-    return computation_memory(computation)
+    return memory_footprint_estimate(computation)

@@ -61,7 +61,7 @@ HEADER_SIZE = 100
 UNIT_SIZE = 5
 
 
-def computation_memory(computation: VariableComputationNode) -> float:
+def memory_footprint_estimate(computation: VariableComputationNode) -> float:
     """Return the memory footprint of a MGM2 computation.
 
     Notes

@@ -71,7 +71,7 @@ from pydcop.computations_graph.objects import ComputationNode
 from pydcop.dcop.objects import AgentDef
 from pydcop.distribution.objects import Distribution, ImpossibleDistributionException
 from pydcop.distribution.oilp_secp_fgdp import (
-    secp_computation_memory_in_cg,
+    secp_memory_footprint_estimate_in_cg,
 )
 
 logger = logging.getLogger("distribution.oilp_secp_cgdp")
@@ -81,14 +81,14 @@ def distribute(
     computation_graph: ComputationConstraintsHyperGraph,
     agentsdef: Iterable[AgentDef],
     hints=None,
-    computation_memory: Callable[[ComputationNode], float] = None,
+    memory_footprint_estimate: Callable[[ComputationNode], float] = None,
     communication_load: Callable[[ComputationNode, str], float] = None,
     timeout=600,  # Max 10 min
 ) -> Distribution:
-    if computation_memory is None or communication_load is None:
+    if memory_footprint_estimate is None or communication_load is None:
         raise ImpossibleDistributionException(
             "oilp_secp_cgdp distribution requires "
-            "computation_memory and link_communication functions"
+            "memory_footprint_estimate and link_communication functions"
         )
 
     mapping = defaultdict(lambda: [])
@@ -103,7 +103,7 @@ def distribute(
             if agent.hosting_cost(comp) == 0:
                 mapping[agent.name].append(comp)
                 computations.remove(comp)
-                agents_capa[agent.name] -= computation_memory(
+                agents_capa[agent.name] -= memory_footprint_estimate(
                     computation_graph.computation(comp)
                 )
                 if agents_capa[agent.name] < 0:
@@ -118,7 +118,7 @@ def distribute(
         computation_graph,
         agentsdef,
         Distribution(mapping),
-        computation_memory,
+        memory_footprint_estimate,
         communication_load,
     )
 
@@ -129,7 +129,7 @@ def distribution_cost(
     distribution: Distribution,
     computation_graph: ComputationConstraintsHyperGraph,
     agentsdef: Iterable[AgentDef],
-    computation_memory: Callable[[ComputationNode], float],
+    memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
 ) -> float:
     """
@@ -142,7 +142,7 @@ def distribution_cost(
     distribution
     computation_graph
     agentsdef
-    computation_memory
+    memory_footprint_estimate
     communication_load
 
     Returns
@@ -169,7 +169,7 @@ def cg_secp_ilp(
     cg: ComputationConstraintsHyperGraph,
     agents: List[AgentDef],
     already_assigned: Distribution,
-    computation_memory: Callable[[ComputationNode], float],
+    memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
     timeout=600,  # Max 10 min
 ) -> Distribution:
@@ -220,7 +220,7 @@ def cg_secp_ilp(
         # Decrease capacity for already hosted computations
         capacity = a.capacity - sum(
             [
-                secp_computation_memory_in_cg(c, cg, computation_memory)
+                secp_memory_footprint_estimate_in_cg(c, cg, memory_footprint_estimate)
                 for c in already_assigned.computations_hosted(a.name)
             ]
         )
@@ -228,7 +228,7 @@ def cg_secp_ilp(
         pb += (
             lpSum(
                 [
-                    secp_computation_memory_in_cg(i, cg, computation_memory)
+                    secp_memory_footprint_estimate_in_cg(i, cg, memory_footprint_estimate)
                     * xs[(i, a.name)]
                     for i in comps_to_host
                 ]

@@ -139,7 +139,7 @@ def build_computation(comp_def: ComputationDef) -> VariableComputation:
     return DsaComputation(comp_def)
 
 
-def computation_memory(computation: VariableComputationNode) -> float:
+def memory_footprint_estimate(computation: VariableComputationNode) -> float:
     """Return the memory footprint of a DSA computation.
 
     Notes

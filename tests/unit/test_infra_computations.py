@@ -322,7 +322,7 @@ def test_handler_decorator_not_called_before_start():
 
 
 def test_memory_footprint():
-    # use maxsum as is has a computation_memory function defined
+    # use maxsum as is has a memory_footprint_estimate function defined
     maxsum_module = load_algorithm_module("amaxsum")
     from pydcop.computations_graph.factor_graph import (
         VariableComputationNode as FGVariableComputationNode,
@@ -340,7 +340,7 @@ def test_memory_footprint():
 
 
 def test_memory_footprint_from_import_module():
-    # use maxsum as is has a computation_memory function defined
+    # use maxsum as is has a memory_footprint_estimate function defined
     maxsum_module = import_module("pydcop.algorithms.amaxsum")
     from pydcop.computations_graph.factor_graph import (
         VariableComputationNode as FGVariableComputationNode,
@@ -358,7 +358,7 @@ def test_memory_footprint_from_import_module():
 
 
 def test_memory_footprint_from_classic_import():
-    # use maxsum as is has a computation_memory function defined
+    # use maxsum as is has a memory_footprint_estimate function defined
     import pydcop.algorithms.amaxsum as maxsum_module
     from pydcop.computations_graph.factor_graph import (
         VariableComputationNode as FGVariableComputationNode,
@@ -376,7 +376,7 @@ def test_memory_footprint_from_classic_import():
 
 
 def test_fallback_memory_footprint():
-    # use dsatuto as is has no computation_memory function defined
+    # use dsatuto as is has no memory_footprint_estimate function defined
     dsa_module = load_algorithm_module("dsatuto")
 
     v1 = Variable("v1", [1, 2])
@@ -390,7 +390,7 @@ def test_fallback_memory_footprint():
 
 
 def test_fallback_memory_footprint_from_import_module():
-    # use dsatuto as is has no computation_memory function defined
+    # use dsatuto as is has no memory_footprint_estimate function defined
     dsa_module = import_module("pydcop.algorithms.dsatuto")
 
     v1 = Variable("v1", [1, 2])
@@ -404,7 +404,7 @@ def test_fallback_memory_footprint_from_import_module():
 
 
 def test_fallback_memory_footprint_from_classic_import():
-    # use dsatuto as is has no computation_memory function defined
+    # use dsatuto as is has no memory_footprint_estimate function defined
     import pydcop.algorithms.dsatuto as dsa_module
 
     v1 = Variable("v1", [1, 2])

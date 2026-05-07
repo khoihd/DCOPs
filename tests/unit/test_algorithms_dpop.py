@@ -57,16 +57,16 @@ def test_build_computation_factory_creates_dpop_algo():
     assert computation.is_leaf
 
 
-def test_computation_memory_root():
+def test_memory_footprint_estimate_root():
     variable = Variable("x0", ["a", "b"])
     node = PseudoTreeNode(
         variable, constraints=[], links=[PseudoTreeLink("children", "x0", "x1")]
     )
 
-    assert dpop.computation_memory(node) == 2
+    assert dpop.memory_footprint_estimate(node) == 2
 
 
-def test_computation_memory_parent_separator():
+def test_memory_footprint_estimate_parent_separator():
     x0 = Variable("x0", ["a", "b"])
     x1 = Variable("x1", ["a", "b", "c"])
     relation = NAryMatrixRelation([x0, x1])
@@ -74,10 +74,10 @@ def test_computation_memory_parent_separator():
         x1, constraints=[relation], links=[PseudoTreeLink("parent", "x1", "x0")]
     )
 
-    assert dpop.computation_memory(node) == 6
+    assert dpop.memory_footprint_estimate(node) == 6
 
 
-def test_computation_memory_parent_and_pseudo_parent_separator():
+def test_memory_footprint_estimate_parent_and_pseudo_parent_separator():
     x0 = Variable("x0", ["a", "b"])
     x1 = Variable("x1", ["a", "b", "c"])
     x2 = Variable("x2", ["a", "b", "c", "d", "e"])
@@ -91,15 +91,15 @@ def test_computation_memory_parent_and_pseudo_parent_separator():
         ],
     )
 
-    assert dpop.computation_memory(node) == 30
+    assert dpop.memory_footprint_estimate(node) == 30
 
 
-def test_computation_memory_rejects_invalid_node_type():
+def test_memory_footprint_estimate_rejects_invalid_node_type():
     with pytest.raises(ValueError, match="PseudoTreeComputation"):
-        dpop.computation_memory(object())
+        dpop.memory_footprint_estimate(object())
 
 
-def test_computation_memory_requires_separator_variable_in_constraints():
+def test_memory_footprint_estimate_requires_separator_variable_in_constraints():
     x0 = Variable("x0", ["a", "b"])
     x1 = Variable("x1", ["a", "b", "c"])
     node = PseudoTreeNode(
@@ -107,7 +107,7 @@ def test_computation_memory_requires_separator_variable_in_constraints():
     )
 
     with pytest.raises(ValueError, match="separator variable x0"):
-        dpop.computation_memory(node)
+        dpop.memory_footprint_estimate(node)
 
 
 def test_dpop_message_util_size():

@@ -1026,7 +1026,7 @@ class VariableComputation(DcopComputation):
 
         This methods should **NOT be overwritten** when subclassing
         `VariableComputation`, instead, you should provide a
-        `computation_memory` function at module-level in your algorithm.
+        `memory_footprint_estimate` function at module-level in your algorithm.
         This method computes the footprint
         from a ComputationNode, which is required to for bootstrap
         distributions, where the distribution is computed before instanciating
@@ -1034,7 +1034,7 @@ class VariableComputation(DcopComputation):
 
         This module level function must have the following signature:
 
-        > computation_memory(computation: ComputationNode) -> float:
+        > memory_footprint_estimate(computation: ComputationNode) -> float:
 
         Returns
         -------
@@ -1045,10 +1045,10 @@ class VariableComputation(DcopComputation):
             try:
                 self._footprint_method = import_module(
                     self.__class__.__module__
-                ).computation_memory
+                ).memory_footprint_estimate
             except AttributeError:
                 # if the algorithm as been imported without using
-                # `load_algoorithm_module`, computation_memory may not be
+                # `load_algoorithm_module`, memory_footprint_estimate may not be
                 #  available
                 self._footprint_method = lambda *a, **ka: 1
 

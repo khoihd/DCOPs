@@ -67,7 +67,7 @@ def test_communication_load():
     )
 
 
-def test_computation_memory_one_constraint():
+def test_memory_footprint_estimate_one_constraint():
     v1 = Variable("v1", list(range(10)))
     v2 = Variable("v2", list(range(10)))
     v3 = Variable("v3", list(range(10)))
@@ -75,10 +75,10 @@ def test_computation_memory_one_constraint():
     v1_node = VariableComputationNode(v1, [c1])
 
     # here, we have an hyper-edges with 3 vertices
-    assert mgm2.computation_memory(v1_node) == mgm2.UNIT_SIZE * 2 * 2
+    assert mgm2.memory_footprint_estimate(v1_node) == mgm2.UNIT_SIZE * 2 * 2
 
 
-def test_computation_memory_two_constraints():
+def test_memory_footprint_estimate_two_constraints():
     v1 = Variable("v1", list(range(10)))
     v2 = Variable("v2", list(range(10)))
     v3 = Variable("v3", list(range(10)))
@@ -89,16 +89,16 @@ def test_computation_memory_two_constraints():
     v1_node = VariableComputationNode(v1, [c1, c2, c3])
 
     # here, we have 3 edges , one for each constraint
-    assert mgm2.computation_memory(v1_node) == mgm2.UNIT_SIZE * 3 * 2
+    assert mgm2.memory_footprint_estimate(v1_node) == mgm2.UNIT_SIZE * 3 * 2
 
 
-def test_computation_memory_uses_exact_variable_names():
+def test_memory_footprint_estimate_uses_exact_variable_names():
     v1 = Variable("v1", list(range(10)))
     v10 = Variable("v10", list(range(10)))
     c1 = constraint_from_str("c1", " v1 == v10", [v1, v10])
     v10_node = VariableComputationNode(v10, [c1])
 
-    assert mgm2.computation_memory(v10_node) == mgm2.UNIT_SIZE * 2
+    assert mgm2.memory_footprint_estimate(v10_node) == mgm2.UNIT_SIZE * 2
 
 
 def test_offer_message_equality_includes_offer_flag():

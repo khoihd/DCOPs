@@ -118,7 +118,7 @@ def solve(dcop: DCOP,
         distrib_module = import_module('pydcop.distribution.' + distribution)
         distribution = distrib_module.distribute(
             graph, dcop.agents.values(),
-            computation_memory=algo_module.computation_memory,
+            memory_footprint_estimate=algo_module.memory_footprint_estimate,
             communication_load=algo_module.communication_load)
 
     orchestrator = run_local_thread_dcop(algo_def, graph, distribution, dcop,

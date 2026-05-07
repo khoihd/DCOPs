@@ -54,7 +54,7 @@ class TestDistributionAdHocFactorGraph(unittest.TestCase):
         cg = ComputationsFactorGraph([cv1], [cf1])
         agents = [AgentDef('a1', capacity=100), AgentDef('a2', capacity=100)]
         agent_mapping = distribute(cg, agents, hints=None,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
         self.assertTrue(agent_mapping.is_hosted(['v1', 'f1']))
 
     def test_must_host_one(self):
@@ -69,7 +69,7 @@ class TestDistributionAdHocFactorGraph(unittest.TestCase):
         hints = DistributionHints({'a1': ['v1']}, None)
         agents = [AgentDef('a1', capacity=100), AgentDef('a2', capacity=100)]
         agent_mapping = distribute(cg, agents, hints,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
 
         self.assertIn('v1', agent_mapping.computations_hosted('a1'))
         self.assertTrue(is_all_hosted(cg, agent_mapping))
@@ -88,7 +88,7 @@ class TestDistributionAdHocFactorGraph(unittest.TestCase):
         hints = DistributionHints({'a1': ['v1', 'v2']}, None)
         agents = [AgentDef('a1', capacity=100), AgentDef('a2', capacity=100)]
         agent_mapping = distribute(cg, agents, hints,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
 
         self.assertIn('v1', agent_mapping.computations_hosted('a1'))
         self.assertIn('v2', agent_mapping.computations_hosted('a1'))
@@ -109,7 +109,7 @@ class TestDistributionAdHocFactorGraph(unittest.TestCase):
         hints = DistributionHints({'a1': ['v1'], 'a2': ['v2']}, None)
         agents = [AgentDef('a1', capacity=100), AgentDef('a2', capacity=100)]
         agent_mapping = distribute(cg, agents, hints,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
 
         self.assertIn('v1', agent_mapping.computations_hosted('a1'))
         self.assertIn('v2', agent_mapping.computations_hosted('a2'))
@@ -131,7 +131,7 @@ class TestDistributionAdHocFactorGraph(unittest.TestCase):
         agents = [AgentDef('a{}'.format(i), capacity=100)
                   for i in range(1, 11)]
         agent_mapping = distribute(cg, agents, hints,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
 
         self.assertEqual(agent_mapping.agent_for('v1'),
                          agent_mapping.agent_for('f1'))
@@ -159,7 +159,7 @@ class TestDistributionAdHocFactorGraph(unittest.TestCase):
                   for i in range(1, 11)]
 
         agent_mapping = distribute(cg, agents, hints,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
 
         print(agent_mapping)
         self.assertEqual(agent_mapping.agent_for('f1'), 'a1')
@@ -196,7 +196,7 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
 
         agents = [AgentDef('a{}'.format(i), capacity=100) for i in range(1, 11)]
         agent_mapping = distribute(self.cg, agents, hints,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
 
         # Check that the variable and relation of the model are on the same
         # agent
@@ -211,7 +211,7 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
 
         agents = [AgentDef('a{}'.format(i), capacity=100) for i in range(1, 11)]
         agent_mapping = distribute(self.cg, agents, hints,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
 
         # Check that the variable and relation of the model are on the same
         # agent
@@ -226,7 +226,7 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
 
         agents = [AgentDef('a{}'.format(i), capacity=100) for i in range(1, 11)]
         agent_mapping = distribute(self.cg, agents, hints,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
 
         # rule should be hosted either with model m1 or variable v2
         # print(agent_mapping.agent_for('m1'), agent_mapping.agent_for('mf1'),
@@ -246,7 +246,7 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
 
         agents = [AgentDef('a{}'.format(i), capacity=100) for i in range(1, 11)]
         agent_mapping = distribute(self.cg, agents, hints,
-                                   computation_memory=lambda x: 10)
+                                   memory_footprint_estimate=lambda x: 10)
 
         # rule r2 only depends on v3, it must be hosted on the same agent
         self.assertEqual(agent_mapping.agent_for('v3'),

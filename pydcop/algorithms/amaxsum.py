@@ -96,7 +96,7 @@ def build_computation(comp_def: ComputationDef):
 
 # MaxSum and AMaxSum have the same definitions for communication load
 # and computation footprints.
-computation_memory = maxsum.computation_memory
+memory_footprint_estimate = maxsum.memory_footprint_estimate
 communication_load = maxsum.communication_load
 
 # reuse same algorithms parameters as MaxSum
@@ -133,7 +133,7 @@ class MaxSumFactorComputation(DcopComputation):
         self._prev_messages = defaultdict(lambda: (None, 0))
 
     def footprint(self) -> float:
-        return computation_memory(self.computation_def.node)
+        return memory_footprint_estimate(self.computation_def.node)
 
     def on_start(self):
         # Only unary factors (leaf in the graph) needs to send their costs at

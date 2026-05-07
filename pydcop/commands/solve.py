@@ -479,8 +479,8 @@ def run_cmd(args, timer=None, timeout=None):
     logger.info("Distributing computation graph ")
     if dist_module is not None:
 
-        if not hasattr(algo_module, "computation_memory"):
-            algo_module.computation_memory = lambda *v, **k: 0
+        if not hasattr(algo_module, "memory_footprint_estimate"):
+            algo_module.memory_footprint_estimate = lambda *v, **k: 0
         if not hasattr(algo_module, "communication_load"):
             algo_module.communication_load = lambda *v, **k: 0
 
@@ -488,7 +488,7 @@ def run_cmd(args, timer=None, timeout=None):
             cg,
             dcop.agents.values(),
             hints=dcop.dist_hints,
-            computation_memory=algo_module.computation_memory,
+            memory_footprint_estimate=algo_module.memory_footprint_estimate,
             communication_load=algo_module.communication_load,
         )
     else:

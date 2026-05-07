@@ -56,7 +56,7 @@ estimation function for the computation footprint, and honors so-called
 def distribute(computation_graph: ComputationGraph,
                agentsdef: Iterable[AgentDef],
                hints: DistributionHints=None,
-               computation_memory=None,
+               memory_footprint_estimate=None,
                communication_load=None):
     """
     Generate a distribution for the dcop.
@@ -71,23 +71,23 @@ def distribute(computation_graph: ComputationGraph,
     adhoc secp distribution method.
 
     """
-    if computation_memory is None:
+    if memory_footprint_estimate is None:
         raise ImpossibleDistributionException('adhoc distribution requires '
-                                              'computation_memory functions')
+                                              'memory_footprint_estimate functions')
 
     agents = list(agentsdef)
 
     hints = DistributionHints() if hints is None else hints
 
     return _distribute_try(computation_graph, agents, hints,
-                           computation_memory,
+                           memory_footprint_estimate,
                            computation_graph)
 
 
 def _distribute_try(computation_graph: ComputationGraph,
                     agents: Iterable[AgentDef],
                     hints: DistributionHints=None,
-                    computation_memory=None,
+                    memory_footprint_estimate=None,
                     communication_load=None,
                     attempt=0):
     agents_capa = {a.name: a.capacity for a in agents}
@@ -106,7 +106,7 @@ def _distribute_try(computation_graph: ComputationGraph,
         for c in hints.must_host(a):
             mapping[a].add(c)
             var_hosted.update({c: a})
-            agents_capa[a] -= computation_memory(
+            agents_capa[a] -= memory_footprint_estimate(
                 computation_graph.computation(c))
 
     # First mimic original secp adhoc behavior
@@ -134,12 +134,12 @@ def _distribute_try(computation_graph: ComputationGraph,
             mapping[selected].update({n.name, hostwith[0]})
             var_hosted[n.name] = selected
             var_hosted[hostwith[0]] = selected
-            agents_capa[selected] -= computation_memory(n)
+            agents_capa[selected] -= memory_footprint_estimate(n)
 
     for n in nodes:
         if n.name in var_hosted:
             continue
-        footprint = computation_memory(n)
+        footprint = memory_footprint_estimate(n)
         # Candidates : hints only with enough capacity
         candidates = [(agents_capa[a], a) for a in hints.host_with(n.name)
                       if agents_capa[a] > footprint]
@@ -174,7 +174,7 @@ def _distribute_try(computation_graph: ComputationGraph,
                     'attempts'.format(attempt))
             else:
                 _distribute_try(computation_graph, agents, hints,
-                                computation_memory, computation_graph,
+                                memory_footprint_estimate, computation_graph,
                                 attempt+1)
 
         mapping[selected].update({n.name})

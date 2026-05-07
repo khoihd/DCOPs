@@ -17,7 +17,7 @@ Both passed before edits.
 
 Completed:
 
-- Fixed `computation_memory()` to exclude the computation variable by exact
+- Fixed `memory_footprint_estimate()` to exclude the computation variable by exact
   variable-name equality, instead of substring membership.
 - Added regression coverage for similarly-prefixed variable names such as
   `v1` and `v10`.

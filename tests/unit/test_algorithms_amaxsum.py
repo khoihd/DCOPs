@@ -40,7 +40,7 @@ from pydcop.algorithms.amaxsum import (
     MaxSumVariableComputation,
     build_computation,
     communication_load,
-    computation_memory,
+    memory_footprint_estimate,
 )
 from pydcop.algorithms.maxsum import (
     FACTOR_UNIT_SIZE,
@@ -327,7 +327,7 @@ def test_variable_memory_no_neighbor():
 
     # If a variable has no neighbors, it does not need to keep any cost
     # and thus requires no memory
-    assert computation_memory(vn1) == 0
+    assert memory_footprint_estimate(vn1) == 0
 
 
 def test_variable_memory_one_neighbor():
@@ -335,7 +335,7 @@ def test_variable_memory_one_neighbor():
     v1 = Variable("v1", d1)
     cv1 = VariableComputationNode(v1, ["f1"])
 
-    assert computation_memory(cv1) == VARIABLE_UNIT_SIZE * 4
+    assert memory_footprint_estimate(cv1) == VARIABLE_UNIT_SIZE * 4
 
 
 def test_factor_memory_one_neighbor():
@@ -344,7 +344,7 @@ def test_factor_memory_one_neighbor():
     f1 = relation_from_str("f1", "v1 * 0.5", [v1])
     cf1 = FactorComputationNode(f1)
 
-    assert computation_memory(cf1) == FACTOR_UNIT_SIZE * 4
+    assert memory_footprint_estimate(cf1) == FACTOR_UNIT_SIZE * 4
 
 
 def test_factor_memory_two_neighbors():
@@ -355,7 +355,7 @@ def test_factor_memory_two_neighbors():
     f1 = relation_from_str("f1", "v1 * 0.5 + v2", [v1, v2])
     cf1 = FactorComputationNode(f1)
 
-    assert computation_memory(cf1) == FACTOR_UNIT_SIZE * (5 + 3)
+    assert memory_footprint_estimate(cf1) == FACTOR_UNIT_SIZE * (5 + 3)
 
 
 def test_variable_memory_two_neighbors():
@@ -363,7 +363,7 @@ def test_variable_memory_two_neighbors():
     v1 = Variable("v1", d1)
     cv1 = VariableComputationNode(v1, ["f1", "f2"])
 
-    assert computation_memory(cv1) == VARIABLE_UNIT_SIZE * 4 * 2
+    assert memory_footprint_estimate(cv1) == VARIABLE_UNIT_SIZE * 4 * 2
 
 
 def test_communication_load_from_variable_uses_variable_domain_size():
