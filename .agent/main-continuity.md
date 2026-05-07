@@ -25,29 +25,30 @@
   tests, communication retry behavior, benchmark compatibility, and replication
   path benchmark shape updates.
 - Project-wide declaration newline style was normalized.
-- High-level optimization tracking lives in `optimization_tracker.md`.
+- Archived optimization tracking lives in
+  `optimization_archive/optimization_tracker.md`.
 - All algorithm candidates previously listed there now have focused
   optimization passes and file-specific notes.
 
 ## Completed Optimization Passes
 - Relations: `pydcop/dcop/relations.py`,
-  `relation_optimization_steps.txt`.
+  `optimization_archive/relation_optimization_steps.txt`.
 - Algorithms: DPOP, DSA, MGM, MGM2, ADSA, MaxSum/AMaxSum, DBA, DSA tutorial,
   GDBA, Dynamic MaxSum, MixedDSA, NCBB, and SyncBB.
 - Details live in:
-  - `dpop_optimization_steps.txt`
-  - `dsa_optimization_steps.txt`
-  - `mgm_optimization_steps.txt`
-  - `mgm2_optimization_steps.txt`
-  - `adsa_optimization_steps.txt`
-  - `maxsum_optimization_steps.txt`
-  - `dba_optimization_steps.txt`
-  - `dsatuto_optimization_steps.txt`
-  - `gdba_optimization_steps.txt`
-  - `maxsum_dynamic_optimization_steps.txt`
-  - `mixeddsa_optimization_steps.txt`
-  - `ncbb_optimization_steps.txt`
-  - `syncbb_optimization_steps.txt`
+  - `optimization_archive/dpop_optimization_steps.txt`
+  - `optimization_archive/dsa_optimization_steps.txt`
+  - `optimization_archive/mgm_optimization_steps.txt`
+  - `optimization_archive/mgm2_optimization_steps.txt`
+  - `optimization_archive/adsa_optimization_steps.txt`
+  - `optimization_archive/maxsum_optimization_steps.txt`
+  - `optimization_archive/dba_optimization_steps.txt`
+  - `optimization_archive/dsatuto_optimization_steps.txt`
+  - `optimization_archive/gdba_optimization_steps.txt`
+  - `optimization_archive/maxsum_dynamic_optimization_steps.txt`
+  - `optimization_archive/mixeddsa_optimization_steps.txt`
+  - `optimization_archive/ncbb_optimization_steps.txt`
+  - `optimization_archive/syncbb_optimization_steps.txt`
 
 ## Durable Caveats
 - Leave relation helpers `assignment_cost()`, `find_optimal()`, and
@@ -68,7 +69,8 @@
   overheads; treat that as a new focused planning pass.
 - For any new optimization, pick one file or subsystem, update/create a focused
   `*_optimization_steps.txt` plan, then run targeted tests and Ruff.
-- Focused checks are listed in `optimization_tracker.md`; common examples:
+- Focused checks are listed in
+  `optimization_archive/optimization_tracker.md`; common examples:
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_syncbb.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_dcop_relations.py`
   - `conda run -n khoihd ruff check path/to/file.py path/to/test.py`
@@ -83,7 +85,7 @@
   `tests/instances/`.
 - Oracle/known cases: `tests/utils/known_instances.py`,
   `tests/utils/dcop_oracle.py`.
-- Tracker: `optimization_tracker.md`.
+- Archived optimization notes: `optimization_archive/`.
 
 ## Open Questions
 - What is the primary long-term execution path: CLI, library API, or both?
