@@ -36,22 +36,118 @@ For each algorithm:
 
 ## Tracker
 
-| Priority | Algorithm | Implementation | Paper / Source | Check File | Status | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | ADSA | `pydcop/algorithms/adsa.py` | TBD | `verification_archive/adsa_paper_check.md` | Not started |  |
-| 2 | AMaxSum | `pydcop/algorithms/amaxsum.py` | TBD | `verification_archive/amaxsum_paper_check.md` | Not started |  |
-| 3 | DBA | `pydcop/algorithms/dba.py` | TBD | `verification_archive/dba_paper_check.md` | Not started |  |
-| 4 | DPOP | `pydcop/algorithms/dpop.py` | TBD | `verification_archive/dpop_paper_check.md` | Not started |  |
-| 5 | DSA | `pydcop/algorithms/dsa.py` | TBD | `verification_archive/dsa_paper_check.md` | Not started |  |
-| 6 | DSA Tutorial | `pydcop/algorithms/dsatuto.py` | TBD | `verification_archive/dsatuto_paper_check.md` | Not started | Tutorial implementation; verify if it should be checked against DSA paper or docs only. |
-| 7 | GDBA | `pydcop/algorithms/gdba.py` | TBD | `verification_archive/gdba_paper_check.md` | Not started |  |
-| 8 | MaxSum | `pydcop/algorithms/maxsum.py` | TBD | `verification_archive/maxsum_paper_check.md` | Not started |  |
-| 9 | Dynamic MaxSum | `pydcop/algorithms/maxsum_dynamic.py` | TBD | `verification_archive/maxsum_dynamic_paper_check.md` | Not started |  |
-| 10 | MGM | `pydcop/algorithms/mgm.py` | TBD | `verification_archive/mgm_paper_check.md` | Not started |  |
-| 11 | MGM2 | `pydcop/algorithms/mgm2.py` | TBD | `verification_archive/mgm2_paper_check.md` | Not started |  |
-| 12 | MixedDSA | `pydcop/algorithms/mixeddsa.py` | TBD | `verification_archive/mixeddsa_paper_check.md` | Not started |  |
-| 13 | NCBB | `pydcop/algorithms/ncbb.py` | TBD | `verification_archive/ncbb_paper_check.md` | Not started | Search phase is known incomplete from continuity notes. |
-| 14 | SyncBB | `pydcop/algorithms/syncbb.py` | TBD | `verification_archive/syncbb_paper_check.md` | Not started |  |
+- DPOP
+  - Priority: 1
+  - Implementation: `pydcop/algorithms/dpop.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/dpop_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- MGM
+  - Priority: 2
+  - Implementation: `pydcop/algorithms/mgm.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/mgm_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- DSA
+  - Priority: 3
+  - Implementation: `pydcop/algorithms/dsa.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/dsa_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- ADSA
+  - Priority: 4
+  - Implementation: `pydcop/algorithms/adsa.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/adsa_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- AMaxSum
+  - Priority: 5
+  - Implementation: `pydcop/algorithms/amaxsum.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/amaxsum_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- DBA
+  - Priority: 6
+  - Implementation: `pydcop/algorithms/dba.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/dba_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- DSA Tutorial
+  - Priority: 7
+  - Implementation: `pydcop/algorithms/dsatuto.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/dsatuto_paper_check.md`
+  - Status: Not started
+  - Notes: Tutorial implementation; verify if it should be checked against DSA
+    paper or docs only.
+
+- GDBA
+  - Priority: 8
+  - Implementation: `pydcop/algorithms/gdba.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/gdba_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- MaxSum
+  - Priority: 9
+  - Implementation: `pydcop/algorithms/maxsum.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/maxsum_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- Dynamic MaxSum
+  - Priority: 10
+  - Implementation: `pydcop/algorithms/maxsum_dynamic.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/maxsum_dynamic_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- MGM2
+  - Priority: 11
+  - Implementation: `pydcop/algorithms/mgm2.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/mgm2_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- MixedDSA
+  - Priority: 12
+  - Implementation: `pydcop/algorithms/mixeddsa.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/mixeddsa_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- NCBB
+  - Priority: 13
+  - Implementation: `pydcop/algorithms/ncbb.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/ncbb_paper_check.md`
+  - Status: Not started
+  - Notes: Search phase is known incomplete from continuity notes.
+
+- SyncBB
+  - Priority: 14
+  - Implementation: `pydcop/algorithms/syncbb.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/syncbb_paper_check.md`
+  - Status: Not started
+  - Notes:
 
 ## Cross-Cutting Checks
 
