@@ -78,6 +78,29 @@
 - MGM2 optimization is complete and tracked in `mgm2_optimization_steps.txt`;
   `_compute_offers_to_send()` now avoids the generic
   `generate_assignment_as_dict()` path by iterating the two domains directly.
+- ADSA optimization is complete and tracked in `adsa_optimization_steps.txt`;
+  focused ADSA unit coverage was added and local evaluation now avoids an
+  extra assignment copy, reuses current assignments for DSA-B violation checks,
+  accounts for variable costs consistently, fixes no-neighbor startup value/cost
+  unpacking, and removes unconditional periodic stdout output.
+- MaxSum and AMaxSum shared optimization is complete and tracked in
+  `maxsum_optimization_steps.txt`; shared helper hot paths in
+  `pydcop/algorithms/maxsum.py` now avoid repeated assignment scans and
+  intermediate dictionaries while preserving MaxSum/AMaxSum message timing and
+  normalization semantics.
+- DBA optimization is complete and tracked in `dba_optimization_steps.txt`;
+  local evaluation avoids generic assignment filtering in the OK-message path,
+  avoids double current-value evaluation, supports best-improvement scans
+  without violated-list allocation, and fixes exact-name memory accounting.
+- DSA tutorial optimization is complete and tracked in
+  `dsatuto_optimization_steps.txt`; the tutorial implementation remains small,
+  but cycle improvement detection now respects min/max mode and selected
+  value cost is stored when a move is made. Focused tests were added because
+  the previous unit file was effectively empty.
+- GDBA optimization is complete and tracked in `gdba_optimization_steps.txt`;
+  local evaluation now reuses relation assignments/value lookups, supports
+  best-improvement scans without violated-list allocation, and fixes exact-name
+  memory accounting.
 - `optimization_tracker.md` now lists only completed items under Status and
   records remaining algorithm candidates under Current Next Step.
 
@@ -85,12 +108,6 @@
 - No active optimization pass is planned. Pick one remaining algorithm at a
   time and create a focused `*_optimization_steps.txt` plan before changing it.
 - Remaining algorithm candidates:
-  - `pydcop/algorithms/adsa.py`
-  - `pydcop/algorithms/amaxsum.py`
-  - `pydcop/algorithms/dba.py`
-  - `pydcop/algorithms/dsatuto.py`
-  - `pydcop/algorithms/gdba.py`
-  - `pydcop/algorithms/maxsum.py`
   - `pydcop/algorithms/maxsum_dynamic.py`
   - `pydcop/algorithms/mixeddsa.py`
   - `pydcop/algorithms/ncbb.py`
@@ -102,6 +119,7 @@
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_mgm2.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dpop.py`
+  - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_adsa.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_amaxsum.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dba.py`
   - `conda run -n khoihd python -m pytest tests/unit/test_algorithms_dsatuto.py`
@@ -122,12 +140,23 @@
 - `pydcop/algorithms/dsa.py` — completed DSA optimization pass.
 - `pydcop/algorithms/mgm.py` — completed MGM optimization pass.
 - `pydcop/algorithms/mgm2.py` — completed MGM2 optimization pass.
+- `pydcop/algorithms/adsa.py` — completed ADSA optimization pass.
+- `pydcop/algorithms/maxsum.py` — completed shared MaxSum/AMaxSum helper pass.
+- `pydcop/algorithms/amaxsum.py` — AMaxSum implementation using MaxSum helpers.
+- `pydcop/algorithms/dba.py` — completed DBA optimization pass.
+- `pydcop/algorithms/dsatuto.py` — completed DSA tutorial optimization pass.
+- `pydcop/algorithms/gdba.py` — completed GDBA optimization pass.
 - `tests/unit/test_algorithms_dpop.py` — DPOP message-flow unit tests.
 - `tests/api/test_api_solve_dpop.py` — DPOP API oracle checks.
 - `dpop_optimization_steps.txt` — current DPOP optimization plan.
 - `dsa_optimization_steps.txt` — completed DSA optimization plan.
 - `mgm_optimization_steps.txt` — completed MGM optimization plan.
 - `mgm2_optimization_steps.txt` — completed MGM2 optimization plan.
+- `adsa_optimization_steps.txt` — completed ADSA optimization plan.
+- `maxsum_optimization_steps.txt` — completed shared MaxSum/AMaxSum plan.
+- `dba_optimization_steps.txt` — completed DBA optimization plan.
+- `dsatuto_optimization_steps.txt` — completed DSA tutorial optimization plan.
+- `gdba_optimization_steps.txt` — completed GDBA optimization plan.
 - `optimization_tracker.md` — high-level optimization tracker.
 - `pydcop/dcop/relations.py` — optimized relation primitives.
 - `relation_optimization_steps.txt` — completed relation optimization plan.
