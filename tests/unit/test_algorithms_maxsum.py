@@ -28,22 +28,69 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import json
+from unittest.mock import MagicMock, call
+
+import pytest
+
 from pydcop.algorithms import ComputationDef, AlgorithmDef
 from pydcop.algorithms.maxsum import (
+    FACTOR_UNIT_SIZE,
+    HEADER_SIZE,
+    SAME_COUNT,
+    UNIT_SIZE,
+    VARIABLE_UNIT_SIZE,
     MaxSumVariableComputation,
     MaxSumFactorComputation,
+    MaxSumMessage,
+    approx_match,
     build_computation,
+    communication_load,
+    computation_memory,
     costs_for_factor,
     factor_costs_for_var,
     select_value,
 )
-from pydcop.computations_graph.factor_graph import build_computation_graph
+from pydcop.computations_graph.factor_graph import (
+    FactorComputationNode,
+    VariableComputationNode,
+    build_computation_graph,
+)
 from pydcop.dcop.objects import (
     Variable,
     Domain,
+    VariableDomain,
     VariableWithCostFunc,
 )
-from pydcop.dcop.relations import constraint_from_str
+from pydcop.dcop.relations import AsNAryFunctionRelation, constraint_from_str
+from pydcop.dcop.relations import relation_from_str
+from pydcop.utils.simple_repr import from_repr, simple_repr
+
+
+def _algo_def(params=None, mode="min"):
+    params = {} if params is None else dict(params)
+    params.setdefault("noise", 0)
+    return AlgorithmDef.build_with_default_param("maxsum", params=params, mode=mode)
+
+
+def _factor_comp_def(factor, params=None, mode="min"):
+    return ComputationDef(FactorComputationNode(factor), _algo_def(params, mode))
+
+
+def _variable_comp_def(variable, factors, params=None, mode="min"):
+    return ComputationDef(
+        VariableComputationNode(variable, factors), _algo_def(params, mode)
+    )
+
+
+def _factor_computation(factor, params=None, mode="min"):
+    return MaxSumFactorComputation(_factor_comp_def(factor, params, mode))
+
+
+def _variable_computation(variable, factors, params=None, mode="min"):
+    return MaxSumVariableComputation(
+        _variable_comp_def(variable, factors, params, mode)
+    )
 
 
 def test_comp_creation():
@@ -71,6 +118,51 @@ def test_comp_creation():
     assert comp.name == "v1"
     assert comp.variable.name == "v1"
     assert comp.factors == ["c1"]
+
+
+def test_factor_computation_init_from_real_computation_def():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+
+    @AsNAryFunctionRelation(x1, x2)
+    def phi(x1_, x2_):
+        return x1_ + x2_
+
+    computation = _factor_computation(phi)
+
+    assert computation.name == "phi"
+    assert computation.mode == "min"
+    assert computation.factor == phi
+    assert computation.variables == [x1, x2]
+    assert computation._costs == {}
+    assert computation.damping == 0.5
+    assert computation.damping_nodes == "both"
+    assert computation.start_messages == "leafs"
+
+
+def test_variable_computation_init_from_real_computation_def():
+    variable = Variable("v1", [0, 1])
+
+    computation = _variable_computation(
+        variable,
+        ["f1", "f2"],
+        params={
+            "damping": 0.25,
+            "damping_nodes": "vars",
+            "stability": 0.2,
+            "start_messages": "all",
+        },
+    )
+
+    assert computation.name == "v1"
+    assert computation.variable == variable
+    assert computation.factors == ["f1", "f2"]
+    assert computation.mode == "min"
+    assert computation.damping == 0.25
+    assert computation.damping_nodes == "vars"
+    assert computation.stability_coef == 0.2
+    assert computation.start_messages == "all"
+    assert computation.costs == {}
 
 
 def test_comp_creation_with_factory_method():
@@ -110,6 +202,83 @@ def test_compute_factor_cost_at_start():
     assert obtained["R"] == 0
     assert obtained["G"] == 0
     assert len(obtained) == 2
+
+
+def test_cost_for_unary_factor_in_min_mode():
+    x1 = Variable("x1", [0, 1, 5])
+
+    @AsNAryFunctionRelation(x1)
+    def cost(x1_):
+        return x1_ * 2
+
+    computation = _factor_computation(cost, mode="min")
+
+    costs = factor_costs_for_var(cost, x1, computation._costs, computation.mode)
+
+    assert costs[0] == 0
+    assert costs[5] == 10
+    assert set(costs) == {0, 1, 5}
+
+
+def test_cost_for_binary_factor_in_max_mode():
+    x1 = Variable("x1", [0, 1, 2])
+    x2 = Variable("x2", [0, 1])
+
+    @AsNAryFunctionRelation(x1, x2)
+    def cost(x1_, x2_):
+        return abs(x1_ - x2_)
+
+    computation = _factor_computation(cost, mode="max")
+
+    costs = factor_costs_for_var(cost, x1, computation._costs, computation.mode)
+
+    assert costs == {0: 1, 1: 1, 2: 2}
+
+
+def test_cost_for_binary_factor_includes_received_costs_in_max_mode():
+    x1 = Variable("x1", [0, 1, 2])
+    x2 = Variable("x2", [0, 1])
+
+    @AsNAryFunctionRelation(x1, x2)
+    def cost(x1_, x2_):
+        return x1_ - x2_
+
+    computation = _factor_computation(cost, mode="max")
+    computation._costs["x2"] = {0: -5, 1: 10}
+
+    costs = factor_costs_for_var(cost, x1, computation._costs, computation.mode)
+
+    assert costs == {0: 9, 1: 10, 2: 11}
+
+
+def test_approx_match_accepts_small_relative_variations():
+    assert approx_match({0: 10.0, 1: 20.0}, {0: 10.4, 1: 19.5}, 0.1)
+
+
+def test_approx_match_rejects_missing_previous_costs():
+    assert not approx_match({0: 0}, None, 0.1)
+
+
+def test_approx_match_rejects_large_variations():
+    assert not approx_match({0: 0, 1: 0, 2: 0}, {0: 0, 1: 1, 2: 0}, 0.1)
+
+
+def test_approx_match_rejects_large_negative_to_zero_variations():
+    c1 = {
+        0: -46.0,
+        1: -46.5,
+        2: -55.5,
+        3: -56.0,
+        4: -56.5,
+        5: -65.5,
+        6: -66.0,
+        7: -66.5,
+        8: -67.0,
+        9: -67.5,
+    }
+    c2 = dict.fromkeys(c1, 0.0)
+
+    assert not approx_match(c1, c2, 0.1)
 
 
 def test_factor_costs_for_ternary_factor_includes_received_costs_once():
@@ -162,3 +331,259 @@ def test_costs_for_factor_normalizes_other_factor_costs():
     obtained = costs_for_factor(v1, "f1", ["f1", "f2"], costs)
 
     assert obtained == {0: -1.0, 1: 2.0}
+
+
+def test_variable_memory_no_neighbor():
+    v1 = Variable("v1", VariableDomain("d1", "", [1, 2, 3, 5]))
+    vn1 = VariableComputationNode(v1, [])
+
+    assert computation_memory(vn1) == 0
+
+
+def test_variable_memory_one_neighbor():
+    v1 = Variable("v1", VariableDomain("d1", "", [1, 2, 3, 5]))
+    cv1 = VariableComputationNode(v1, ["f1"])
+
+    assert computation_memory(cv1) == VARIABLE_UNIT_SIZE * 4
+
+
+def test_factor_memory_two_neighbors():
+    v1 = Variable("v1", VariableDomain("d1", "", [1, 2, 3, 4, 5]))
+    v2 = Variable("v2", VariableDomain("d2", "", [1, 2, 3]))
+    f1 = relation_from_str("f1", "v1 * 0.5 + v2", [v1, v2])
+    cf1 = FactorComputationNode(f1)
+
+    assert computation_memory(cf1) == FACTOR_UNIT_SIZE * (5 + 3)
+
+
+def test_communication_load_from_variable_uses_variable_domain_size():
+    v1 = Variable("v1", VariableDomain("d1", "", [1, 2, 3, 5]))
+    cv1 = VariableComputationNode(v1, ["f1"])
+
+    assert communication_load(cv1, "f1") == HEADER_SIZE + UNIT_SIZE * len(v1.domain)
+
+
+def test_communication_load_from_factor_uses_target_variable_domain_size():
+    v1 = Variable("v1", VariableDomain("d1", "", [1, 2, 3, 5]))
+    v2 = Variable("v2", VariableDomain("d2", "", [1, 2]))
+    f1 = relation_from_str("f1", "v1 * 0.5 + v2", [v1, v2])
+    cf1 = FactorComputationNode(f1)
+
+    assert communication_load(cf1, "v1") == HEADER_SIZE + UNIT_SIZE * 4
+    assert communication_load(cf1, "v2") == HEADER_SIZE + UNIT_SIZE * 2
+
+
+def test_communication_load_from_factor_rejects_unknown_target():
+    v1 = Variable("v1", VariableDomain("d1", "", [1, 2, 3, 5]))
+    f1 = relation_from_str("f1", "v1 * 0.5", [v1])
+    cf1 = FactorComputationNode(f1)
+
+    with pytest.raises(ValueError, match="Could not find variable"):
+        communication_load(cf1, "unknown")
+
+
+def test_communication_load_rejects_invalid_computation_node():
+    with pytest.raises(ValueError, match="maxsum communication_load only supports"):
+        communication_load(object(), "f1")
+
+
+def test_maxsum_message_properties():
+    message = MaxSumMessage({1: 10, 2: 20})
+
+    assert message.type == "max_sum"
+    assert message.costs == {1: 10, 2: 20}
+    assert message.size == 4
+    assert str(message) == "MaxSumMessage({1: 10, 2: 20})"
+    assert repr(message) == "MaxSumMessage({1: 10, 2: 20})"
+    assert message == MaxSumMessage({1: 10, 2: 20})
+    assert message != MaxSumMessage({1: 10, 2: 21})
+    assert message != object()
+
+
+def test_maxsum_message_serializes_integer_keys():
+    msg = MaxSumMessage({1: 10, 2: 20})
+    msg_json = json.dumps(simple_repr(msg))
+
+    msg2 = from_repr(json.loads(msg_json))
+
+    assert msg == msg2
+
+
+def test_unary_factor_sends_initial_message_when_leaf_start_messages_enabled():
+    v1 = Variable("v1", VariableDomain("d1", "", [1, 2]))
+    f1 = relation_from_str("f1", "v1 * 0.5", [v1])
+    computation = _factor_computation(f1)
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.start()
+
+    message_sender.assert_called_once_with(
+        "f1", "v1", MaxSumMessage({1: 0.5, 2: 1.0}), None, None
+    )
+
+
+def test_binary_factor_sends_initial_messages_to_all_variables_when_configured():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(f1, params={"start_messages": "all"})
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.start()
+
+    expected_message = MaxSumMessage({0: 0, 1: 0})
+    message_sender.assert_has_calls(
+        [
+            call("f1", "v1", expected_message, None, None),
+            call("f1", "v2", expected_message, None, None),
+        ],
+        any_order=True,
+    )
+    assert message_sender.call_count == 2
+
+
+def test_factor_cycle_sends_costs_to_all_variables():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(f1)
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.on_new_cycle({"v2": (MaxSumMessage({0: 0, 1: 0}), 0)}, 1)
+
+    expected_message = MaxSumMessage({0: 0, 1: 0})
+    message_sender.assert_has_calls(
+        [
+            call("f1", "v1", expected_message, None, None),
+            call("f1", "v2", expected_message, None, None),
+        ],
+        any_order=True,
+    )
+    assert message_sender.call_count == 2
+    assert computation._costs == {"v2": {0: 0, 1: 0}}
+    assert computation._prev_messages["v1"] == ({0: 0, 1: 0}, 1)
+    assert computation._prev_messages["v2"] == ({0: 0, 1: 0}, 1)
+
+
+def test_factor_cycle_applies_damping_before_sending_message():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "v1 + v2", [v1, v2])
+    computation = _factor_computation(
+        f1, params={"damping": 0.5, "damping_nodes": "factors"}
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._prev_messages["v1"] = ({0: 2, 1: 2}, 1)
+    computation._prev_messages["v2"] = ({0: 0, 1: 0}, SAME_COUNT)
+
+    computation.on_new_cycle({"v2": (MaxSumMessage({0: 0, 1: 0}), 0)}, 1)
+
+    message_sender.assert_has_calls(
+        [
+            call("f1", "v1", MaxSumMessage({0: 1.0, 1: 1.5}), None, None),
+            call("f1", "v2", MaxSumMessage({0: 0.0, 1: 0.5}), None, None),
+        ],
+        any_order=True,
+    )
+    assert message_sender.call_count == 2
+    assert computation._prev_messages["v1"] == ({0: 1.0, 1: 1.5}, 1)
+
+
+def test_factor_cycle_suppresses_stable_message_after_same_count():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(f1)
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._prev_messages["v1"] = ({0: 0, 1: 0}, SAME_COUNT)
+    computation._prev_messages["v2"] = ({0: 0, 1: 0}, SAME_COUNT)
+
+    computation.on_new_cycle({"v2": (MaxSumMessage({0: 0, 1: 0}), 0)}, 1)
+
+    message_sender.assert_not_called()
+
+
+def test_variable_sends_initial_leaf_message_on_start():
+    variable = Variable("v1", [0, 1], initial_value=1)
+    computation = _variable_computation(variable, ["f1"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.start()
+
+    assert computation.current_value == 1
+    message_sender.assert_called_once_with(
+        "v1", "f1", MaxSumMessage({0: 0.0, 1: 0.0}), None, None
+    )
+
+
+def test_variable_sends_integrated_costs_on_start():
+    variable = VariableWithCostFunc("v1", [0, 1, 2], lambda value: value * 2)
+    computation = _variable_computation(variable, ["f1"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.start()
+
+    assert computation.current_value == 0
+    assert computation.current_cost == 0
+    message_sender.assert_called_once_with(
+        "v1", "f1", MaxSumMessage({0: 0.0, 1: 2.0, 2: 4.0}), None, None
+    )
+
+
+def test_variable_cycle_selects_value_and_sends_costs_to_all_factors():
+    variable = VariableWithCostFunc("v1", [0, 1], lambda value: value * 2)
+    computation = _variable_computation(variable, ["f1", "f2"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.on_new_cycle({"f1": (MaxSumMessage({0: 5, 1: 0}), 0)}, 1)
+
+    assert computation.costs == {"f1": {0: 5, 1: 0}}
+    assert computation.current_value == 1
+    assert computation.current_cost == 2
+    message_sender.assert_has_calls(
+        [
+            call("v1", "f1", MaxSumMessage({0: 0.0, 1: 2.0}), None, None),
+            call("v1", "f2", MaxSumMessage({0: 2.5, 1: -0.5}), None, None),
+        ],
+        any_order=True,
+    )
+    assert message_sender.call_count == 2
+
+
+def test_variable_cycle_applies_damping_before_sending_message():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(
+        variable, ["f1", "f2"], params={"damping": 0.5, "damping_nodes": "vars"}
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._prev_messages["f1"] = ({0: 0, 1: 0}, SAME_COUNT)
+    computation._prev_messages["f2"] = ({0: 2, 1: 2}, 1)
+
+    computation.on_new_cycle({"f1": (MaxSumMessage({0: 4, 1: 0}), 0)}, 1)
+
+    message_sender.assert_called_once_with(
+        "v1", "f2", MaxSumMessage({0: 2.0, 1: 0.0}), None, None
+    )
+    assert computation._prev_messages["f2"] == ({0: 2.0, 1: 0.0}, 1)
+
+
+def test_variable_cycle_suppresses_stable_message_after_same_count():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(variable, ["f1", "f2"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._prev_messages["f1"] = ({0: 0.0, 1: 0.0}, SAME_COUNT)
+    computation._prev_messages["f2"] = ({0: 0.0, 1: 0.0}, SAME_COUNT)
+
+    computation.on_new_cycle({"f1": (MaxSumMessage({0: 0, 1: 0}), 0)}, 1)
+
+    message_sender.assert_not_called()
