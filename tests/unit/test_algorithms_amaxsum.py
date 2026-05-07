@@ -46,6 +46,7 @@ from pydcop.algorithms.maxsum import (
     FACTOR_UNIT_SIZE,
     HEADER_SIZE,
     MaxSumMessage,
+    SAME_COUNT,
     UNIT_SIZE,
     VARIABLE_UNIT_SIZE,
     approx_match,
@@ -56,7 +57,7 @@ from pydcop.computations_graph.factor_graph import (
     VariableComputationNode,
     build_computation_graph,
 )
-from pydcop.dcop.objects import Variable, VariableDomain
+from pydcop.dcop.objects import Variable, VariableDomain, VariableWithCostFunc
 from pydcop.dcop.relations import AsNAryFunctionRelation, relation_from_str
 from pydcop.utils.simple_repr import from_repr, simple_repr
 
@@ -248,6 +249,22 @@ def test_cost_for_binary_factor_includes_received_costs():
     assert costs == {0: 0, 1: 1, 2: 2}
 
 
+def test_cost_for_binary_factor_includes_received_costs_in_max_mode():
+    x1 = Variable("x1", [0, 1, 2])
+    x2 = Variable("x2", [0, 1])
+
+    @AsNAryFunctionRelation(x1, x2)
+    def cost(x1_, x2_):
+        return x1_ - x2_
+
+    f = _factor_computation(cost, mode="max")
+    f._costs["x2"] = {0: -5, 1: 10}
+
+    costs = factor_costs_for_var(cost, x1, f._costs, f.mode)
+
+    assert costs == {0: 9, 1: 10, 2: 11}
+
+
 def test_approx_match_exact_costs():
     c1 = {0: 0, 1: 0, 2: 0}
     c2 = {0: 0, 1: 0, 2: 0}
@@ -421,6 +438,46 @@ def test_unary_factor_sends_initial_message_when_leaf_start_messages_enabled():
     )
 
 
+def test_binary_factor_sends_initial_messages_to_all_variables_when_configured():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(f1, params={"start_messages": "all"})
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.start()
+
+    expected_message = MaxSumMessage({0: 0, 1: 0})
+    message_sender.assert_has_calls(
+        [
+            call("f1", "v1", expected_message, None, None),
+            call("f1", "v2", expected_message, None, None),
+        ],
+        any_order=True,
+    )
+    assert message_sender.call_count == 2
+
+
+def test_factor_resume_clears_state_and_restarts_leaf_messages():
+    v1 = Variable("v1", [1, 2])
+    f1 = relation_from_str("f1", "v1 * 0.5", [v1])
+    computation = _factor_computation(f1)
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._costs["v1"] = {1: 10}
+    computation._prev_messages["v1"] = ({1: 10, 2: 10}, SAME_COUNT)
+
+    computation.pause()
+    computation.pause(False)
+
+    assert computation._costs == {}
+    assert dict(computation._prev_messages) == {}
+    message_sender.assert_called_once_with(
+        "f1", "v1", MaxSumMessage({1: 0.5, 2: 1.0}), None, None
+    )
+
+
 def test_binary_factor_waits_for_all_variable_costs_before_sending():
     v1 = Variable("v1", [0, 1])
     v2 = Variable("v2", [0, 1])
@@ -441,6 +498,42 @@ def test_binary_factor_waits_for_all_variable_costs_before_sending():
     assert computation._prev_messages["v1"] == ({0: 0, 1: 0}, 1)
 
 
+def test_factor_applies_damping_before_sending_message():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "v1 + v2", [v1, v2])
+    computation = _factor_computation(
+        f1, params={"damping": 0.5, "damping_nodes": "factors"}
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._costs["v1"] = {0: 0, 1: 0}
+    computation._prev_messages["v1"] = ({0: 2, 1: 2}, 1)
+
+    computation._on_maxsum_msg("v2", MaxSumMessage({0: 0, 1: 0}), None)
+
+    message_sender.assert_called_once_with(
+        "f1", "v1", MaxSumMessage({0: 1.0, 1: 1.5}), None, None
+    )
+    assert computation._prev_messages["v1"] == ({0: 1.0, 1: 1.5}, 1)
+
+
+def test_factor_suppresses_stable_message_after_same_count():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(f1)
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._costs["v1"] = {0: 0, 1: 0}
+    computation._prev_messages["v1"] = ({0: 0, 1: 0}, SAME_COUNT)
+
+    computation._on_maxsum_msg("v2", MaxSumMessage({0: 0, 1: 0}), None)
+
+    message_sender.assert_not_called()
+    assert computation._prev_messages["v1"] == ({0: 0, 1: 0}, SAME_COUNT)
+
+
 def test_variable_sends_initial_leaf_message_on_start():
     variable = Variable("v1", [0, 1], initial_value=1)
     computation = _variable_computation(variable, ["f1"])
@@ -452,6 +545,21 @@ def test_variable_sends_initial_leaf_message_on_start():
     assert computation.current_value == 1
     message_sender.assert_called_once_with(
         "v1", "f1", MaxSumMessage({0: 0.0, 1: 0.0}), None, None
+    )
+
+
+def test_variable_sends_integrated_costs_on_start():
+    variable = VariableWithCostFunc("v1", [0, 1, 2], lambda value: value * 2)
+    computation = _variable_computation(variable, ["f1"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation.start()
+
+    assert computation.current_value == 0
+    assert computation.current_cost == 0
+    message_sender.assert_called_once_with(
+        "v1", "f1", MaxSumMessage({0: 0.0, 1: 2.0, 2: 4.0}), None, None
     )
 
 
@@ -474,3 +582,81 @@ def test_variable_sends_initial_messages_to_all_factors_when_configured():
         any_order=True,
     )
     assert message_sender.call_count == 2
+
+
+def test_variable_resume_clears_state_and_restarts_leaf_messages():
+    variable = Variable("v1", [0, 1], initial_value=1)
+    computation = _variable_computation(variable, ["f1"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._costs["f1"] = {0: 10, 1: -10}
+    computation._prev_messages["f1"] = ({0: 10, 1: -10}, SAME_COUNT)
+
+    computation.pause()
+    computation.pause(False)
+
+    assert computation._costs == {}
+    assert dict(computation._prev_messages) == {}
+    message_sender.assert_called_once_with(
+        "v1", "f1", MaxSumMessage({0: 0.0, 1: 0.0}), None, None
+    )
+
+
+def test_variable_selects_value_and_sends_costs_to_other_factors():
+    variable = VariableWithCostFunc("v1", [0, 1], lambda value: value * 2)
+    computation = _variable_computation(variable, ["f1", "f2"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation._on_maxsum_msg("f1", MaxSumMessage({0: 5, 1: 0}), None)
+
+    assert computation._costs == {"f1": {0: 5, 1: 0}}
+    assert computation.current_value == 1
+    assert computation.current_cost == 2
+    message_sender.assert_called_once_with(
+        "v1", "f2", MaxSumMessage({0: 2.5, 1: -0.5}), None, None
+    )
+    assert computation._prev_messages["f2"] == ({0: 2.5, 1: -0.5}, 1)
+
+
+def test_variable_does_not_send_back_to_message_sender():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(variable, ["f1"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation._on_maxsum_msg("f1", MaxSumMessage({0: 2, 1: 0}), None)
+
+    assert computation.current_value == 1
+    assert computation.current_cost == 0
+    message_sender.assert_not_called()
+
+
+def test_variable_applies_damping_before_sending_message():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(
+        variable, ["f1", "f2"], params={"damping": 0.5, "damping_nodes": "vars"}
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._prev_messages["f2"] = ({0: 2, 1: 2}, 1)
+
+    computation._on_maxsum_msg("f1", MaxSumMessage({0: 4, 1: 0}), None)
+
+    message_sender.assert_called_once_with(
+        "v1", "f2", MaxSumMessage({0: 2.0, 1: 0.0}), None, None
+    )
+    assert computation._prev_messages["f2"] == ({0: 2.0, 1: 0.0}, 1)
+
+
+def test_variable_suppresses_stable_message_after_same_count():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(variable, ["f1", "f2"])
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._prev_messages["f2"] = ({0: 0.0, 1: 0.0}, SAME_COUNT)
+
+    computation._on_maxsum_msg("f1", MaxSumMessage({0: 0, 1: 0}), None)
+
+    message_sender.assert_not_called()
+    assert computation._prev_messages["f2"] == ({0: 0.0, 1: 0.0}, SAME_COUNT)

@@ -285,7 +285,7 @@ class MaxSumVariableComputation(VariableComputation):
         # costs : this dict is used to store, for each value of the domain,
         # the associated cost sent by each factor this variable is involved
         # with. { factor : {domain value : cost }}
-        self._costs = {}  # type: Dict[str, Dict[Any, float]]
+        self._costs: dict[str, dict[object, float]] = {}
 
         self._prev_messages = defaultdict(lambda: (None, 0))
 
