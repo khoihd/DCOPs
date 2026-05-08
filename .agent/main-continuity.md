@@ -89,6 +89,37 @@
 - `pydcop/commands/generators/graphcoloring.py` is the current graph-coloring
   generator implementation; generated DCOP YAML is serialized via
   `pydcop/dcop/yamldcop.py`.
+- Graph-coloring generation now supports `--objective min|max`. The default
+  remains `min`.
+- Graph-coloring pseudo-hard constraints use
+  `HARD_CONSTRAINT_VALUE = 999999`: same-color neighbor assignments get
+  `999999` in `min` mode and `-999999` in `max` mode; non-conflicts get `0`.
+  This is still a finite pseudo-hard value, not symbolic infinity.
+- Graph-coloring soft mode still generates random integer costs in `[0, 9]`
+  for every joint assignment on each edge, with no additional hard conflict
+  constraint.
+- The graph-coloring generator docs were corrected to use the actual
+  `graph_coloring` command name and current options.
+- Targeted generator tests and the full `tests/unit` suite passed after these
+  changes:
+  `conda run -n khoihd python -m pytest tests/unit` reported
+  `1095 passed, 6 deselected`.
+
+## Solve/LP Notes
+
+- `pydcop/commands/solve.py` currently solves with DCOP algorithms from
+  `pydcop/algorithms/`; it does not yet offer a centralized linear/integer
+  programming solver for the DCOP assignment problem.
+- Existing LP/ILP code is for distribution only, not solving assignments.
+  Distribution modules use PuLP with GLPK through `GLPK_CMD`, especially
+  `pydcop/distribution/ilp_fgdp.py`,
+  `pydcop/distribution/oilp_cgdp.py`, and related SECP distribution modules.
+- Next implementation focus requested by the human developer: add a linear
+  programming solver path in `pydcop/commands/solve.py`.
+  Start by designing the smallest CLI integration that reuses existing
+  dependencies/patterns if possible. Likely first pass: a centralized exact
+  solver for finite-domain extensional/intensional DCOPs, with careful handling
+  of `objective: min|max`, hard pseudo-costs, and output/metrics consistency.
 
 ## Durable Caveats
 
@@ -109,6 +140,8 @@
 
 ## Next Steps
 
+- Prioritize the requested `solve.py` linear-programming solver implementation
+  in the next session.
 - Continue paper-based correctness verification one algorithm at a time,
   following `verification_archive/algorithm_paper_check_tracker.md`.
 - Current tracker order starts with DPOP, MGM, MGM2, then DSA; DPOP is
