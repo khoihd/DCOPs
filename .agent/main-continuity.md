@@ -47,6 +47,11 @@
 - Source PDFs should live in `verification_archive/papers/`.
 - DPOP has been checked against `verification_archive/papers/dpop.pdf`
   and documented in `verification_archive/dpop_paper_check.md`.
+- MGM and MGM2 use `verification_archive/papers/mgm.pdf`.
+  Initial paper-check notes live in `verification_archive/mgm_paper_check.md`
+  and `verification_archive/mgm2_paper_check.md`.
+- Current MGM verification focus: confirm min/max gain behavior with small
+  deterministic experiment runs.
 
 ## DPOP Paper Check Notes
 
@@ -57,6 +62,33 @@
   distribution-time approximation, not exact runtime joined UTIL memory.
 - Exact DPOP runtime context can include ancestor dimensions carried by child
   UTIL messages.
+
+## MGM And MGM2 Paper Check Notes
+
+- The Maheswaran/Pearce/Tambe 2004 graphical-game paper is stored as
+  `verification_archive/papers/mgm.pdf`.
+- MGM is currently `In progress` in the tracker. The paper contract and
+  implementation mapping are drafted.
+- MGM2 is now priority 3 in the tracker, directly after MGM, because it uses
+  the same paper and should be checked while that context is fresh.
+- MGM min/max sign convention has been checked with four focused
+  `tests/unit/test_algorithms_mgm.py` tests; the targeted pytest run passed.
+- MGM minimization uses `current_cost - candidate_cost > 0` as an improving
+  gain; MGM maximization uses `current_cost - candidate_cost < 0` as an
+  improving gain. Gain comparison follows this convention: largest gain wins
+  in `min`, smallest gain wins in `max`.
+
+## Generator/YAML Notes
+
+- The project can generate YAML DCOP instances through
+  `python -m pydcop.dcop_cli generate ...`, with optional global
+  `--output <file>`.
+- Live generator types include `graph_coloring`, `meetings`, `ising`,
+  `agents`, `scenario`, `mixed_problem`, `ising_soft`, `small_world`, `iot`,
+  and `secp`.
+- `pydcop/commands/generators/graphcoloring.py` is the current graph-coloring
+  generator implementation; generated DCOP YAML is serialized via
+  `pydcop/dcop/yamldcop.py`.
 
 ## Durable Caveats
 
@@ -79,7 +111,11 @@
 
 - Continue paper-based correctness verification one algorithm at a time,
   following `verification_archive/algorithm_paper_check_tracker.md`.
-- Current tracker order starts with DPOP, MGM, then DSA; DPOP is verified.
+- Current tracker order starts with DPOP, MGM, MGM2, then DSA; DPOP is
+  verified.
+- Continue with MGM first: finish min/max experiment notes, check direct
+  monotonicity/tie behavior coverage, then update `mgm_paper_check.md` and
+  tracker status.
 - For each algorithm paper check:
   - store the paper under `verification_archive/papers/`
   - create `verification_archive/<algorithm>_paper_check.md`
