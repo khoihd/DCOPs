@@ -51,7 +51,7 @@ Synopsis
                 [--soft]
                 [--intentional]
                 [--noagents]
-                [--objective <objective>]
+                --objective <objective>
                 [--p_edge <p_edge>]
                 [--m_edge <m_edge>]
 
@@ -116,7 +116,6 @@ Options
 
 ``--objective <objective>``
   Optimization objective for the generated DCOP, ``min`` or ``max``.
-  Defaults to ``min``.
 
 ``--p_edge <p_edge>`` / ``-p <p_edge>``
   Only used for random graph, probability for edge creation in the random
@@ -136,7 +135,7 @@ Examples
 Generating a random soft graph coloring problem with 10 variables::
 
     pydcop generate graph_coloring --graph random  --variables_count 10 \\
-        --colors_count 3  --p_edge 0.5 --soft
+        --colors_count 3  --p_edge 0.5 --soft --objective min
 
 Generating a hard graph coloring maximization problem with 10 variables::
 
@@ -226,7 +225,7 @@ def init_cli_parser(parent_parser):
     parser.add_argument(
         "--objective",
         choices=["min", "max"],
-        default="min",
+        required=True,
         help="Optimization objective for the generated DCOP",
     )
 

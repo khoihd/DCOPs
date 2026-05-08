@@ -1,0 +1,380 @@
+Generator argument inventory
+============================
+
+Scope: CLI arguments registered for `pydcop generate ...` problem generators.
+Most parser definitions live in `pydcop/commands/generators/`; `iot`,
+`small_world`, `ising_soft`, and `mixed_problem` are wired from
+`pydcop/commands/generate.py`.
+
+Global CLI argument consumed by generators
+------------------------------------------
+
+- `--output`
+  - source: `pydcop/dcop_cli.py`
+  - type: str
+  - required: no
+  - default: None
+  - note: many generators check `args.output` to write YAML files instead of stdout.
+
+Generate command argument
+-------------------------
+
+- `-c`, `--correct_density`
+  - source: `pydcop/commands/generate.py`
+  - action: store_true
+  - required: no
+  - default: False
+  - note: currently used by the older in-file mixed/graph generation paths.
+
+graph_coloring
+--------------
+
+Source: `pydcop/commands/generators/graphcoloring.py`
+
+- `-v`, `--variables_count`
+  - type: int
+  - required: yes
+  - default: None
+- `-c`, `--colors_count`
+  - type: int
+  - required: yes
+  - default: None
+- `-g`, `--graph`
+  - choices: random, grid, scalefree
+  - required: yes
+  - default: None
+- `--allow_subgraph`
+  - action: store_true
+  - required: no
+  - default: False
+- `--soft`
+  - action: store_true
+  - required: no
+  - default: False
+- `--intentional`
+  - action: store_true
+  - required: no
+  - default: False
+- `--noagents`
+  - action: store_true
+  - required: no
+  - default: False
+- `--objective`
+  - choices: min, max
+  - required: yes
+  - default: None
+- `-p`, `--p_edge`
+  - type: float
+  - required: no
+  - default: None
+  - note: required by runtime validation when `--graph random`.
+- `-m`, `--m_edge`
+  - type: int
+  - required: no
+  - default: None
+  - note: required by runtime validation when `--graph scalefree`.
+
+meetings
+--------
+
+Source: `pydcop/commands/generators/meetingscheduling.py`
+
+- `--slots_count`
+  - type: int
+  - required: yes
+  - default: None
+- `--events_count`
+  - type: int
+  - required: yes
+  - default: None
+- `--resources_count`
+  - type: int
+  - required: yes
+  - default: None
+- `--max_resources_event`
+  - type: int
+  - required: yes
+  - default: None
+- `--max_length_event`
+  - type: int
+  - required: no
+  - default: 1
+- `--max_resource_value`
+  - type: int
+  - required: no
+  - default: 10
+- `--no_agents`
+  - action: store_true
+  - required: no
+  - default: False
+- `--routes_default`
+  - type: int
+  - required: no
+  - default: None
+- `--hosting_default`
+  - type: int
+  - required: no
+  - default: None
+- `--capacity`
+  - type: int
+  - required: no
+  - default: None
+
+ising
+-----
+
+Source: `pydcop/commands/generators/ising.py`
+
+- `--row_count`
+  - type: int
+  - required: yes
+  - default: None
+- `--col_count`
+  - type: int
+  - required: no
+  - default: None
+- `--bin_range`
+  - type: float
+  - required: no
+  - default: 1.6
+- `--un_range`
+  - type: float
+  - required: no
+  - default: 0.05
+- `--intentional`
+  - action: store_true
+  - required: no
+  - default: False
+- `--no_agents`
+  - action: store_true
+  - required: no
+  - default: False
+- `--fg_dist`
+  - action: store_true
+  - required: no
+  - default: False
+- `--var_dist`
+  - action: store_true
+  - required: no
+  - default: False
+
+agents
+------
+
+Source: `pydcop/commands/generators/agents.py`
+
+- `--mode`
+  - type: str
+  - choices: variables, count
+  - required: yes
+  - default: None
+- `--dcop_files`
+  - type: str
+  - nargs: +
+  - required: no
+  - default: None
+- `--count`
+  - type: int
+  - required: no
+  - default: None
+  - note: required by runtime validation when `--mode count`.
+- `--agent_prefix`
+  - type: str
+  - required: no
+  - default: a
+- `--capacity`
+  - type: int
+  - required: yes
+  - default: None
+- `--hosting`
+  - choices: None, name_mapping, var_startswith
+  - required: no
+  - default: None
+- `--hosting_default`
+  - type: int
+  - required: no
+  - default: None
+  - note: required by runtime validation when `--hosting` is not `None`.
+- `--routes`
+  - choices: None, uniform, graph
+  - required: no
+  - default: None
+- `--routes_default`
+  - type: int
+  - required: no
+  - default: None
+  - note: required by runtime validation when `--routes` is not `None`.
+- `dcop_files_end`
+  - positional
+  - type: str
+  - nargs: *
+  - metavar: FILE
+  - required: no
+  - default: None
+
+scenario
+--------
+
+Source: `pydcop/commands/generators/scenario.py`
+
+- `--evts_count`
+  - type: int
+  - required: no
+  - default: None
+- `--actions_count`
+  - type: int
+  - required: yes
+  - default: None
+- `--delay`
+  - type: int
+  - required: yes
+  - default: None
+- `--initial_delay`
+  - type: int
+  - required: no
+  - default: 20
+- `--end_delay`
+  - type: int
+  - required: no
+  - default: 20
+- `--dcop_files`
+  - type: str
+  - nargs: +
+  - required: no
+  - default: None
+- `dcop_files_end`
+  - positional
+  - type: str
+  - nargs: *
+  - metavar: FILE
+  - required: no
+  - default: None
+
+mixed_problem
+-------------
+
+Source: `pydcop/commands/generate.py`
+
+- `-v`, `--variable_count`
+  - type: int
+  - required: yes
+  - default: None
+- `-c`, `--constraint_count`
+  - type: int
+  - required: yes
+  - default: None
+- `-H`, `--hard_constraint`
+  - type: float
+  - required: yes
+  - default: None
+- `-A`, `--arity`
+  - type: int
+  - required: no
+  - default: 2
+- `-r`, `--range`
+  - type: int
+  - required: yes
+  - default: None
+- `-d`, `--density`
+  - type: float
+  - required: yes
+  - default: None
+- `-a`, `--agents`
+  - type: int
+  - required: no
+  - default: None
+- `--capacity`
+  - type: int
+  - required: no
+  - default: 0
+- `-e`, `--extensive`
+  - action: store
+  - required: no
+  - default: None
+  - note: help text says this is not implemented yet.
+
+ising_soft
+----------
+
+Source: `pydcop/commands/generate.py`
+
+- `-s`, `--size`
+  - type: int
+  - required: yes
+  - default: None
+- `-r`, `--range`
+  - type: int
+  - required: yes
+  - default: None
+
+small_world
+-----------
+
+Source: parser in `pydcop/commands/generate.py`, generator in
+`pydcop/commands/generators/smallworld.py`
+
+- `-d`, `--domain`
+  - type: int
+  - required: yes
+  - default: None
+- `-n`, `--num`
+  - type: int
+  - required: yes
+  - default: None
+- `-r`, `--range`
+  - type: int
+  - required: no
+  - default: 10
+
+iot
+---
+
+Source: parser in `pydcop/commands/generate.py`, generator in
+`pydcop/commands/generators/iot.py`
+
+- `-d`, `--domain`
+  - type: int
+  - required: yes
+  - default: None
+- `-n`, `--num`
+  - type: int
+  - required: yes
+  - default: None
+- `-r`, `--range`
+  - type: int
+  - required: no
+  - default: 10
+- `--objective`
+  - choices: min, max
+  - required: yes
+  - default: None
+
+secp
+----
+
+Source: `pydcop/commands/generators/secp.py`
+
+- `-l`, `--lights`
+  - type: int
+  - required: yes
+  - default: None
+- `-m`, `--models`
+  - type: int
+  - required: yes
+  - default: None
+- `-r`, `--rules`
+  - type: int
+  - required: yes
+  - default: None
+- `-c`, `--capacity`
+  - type: int
+  - required: no
+  - default: None
+- `--max_model_size`
+  - type: int
+  - required: no
+  - default: 3
+- `--max_rule_size`
+  - type: int
+  - required: no
+  - default: 3

@@ -9,7 +9,9 @@ with regard to the requested model.
 
 """
 
-from subprocess import check_output, STDOUT
+from subprocess import CalledProcessError, check_output, STDOUT
+
+import pytest
 
 from pydcop.dcop.yamldcop import load_dcop
 from tests.dcop_cli.utils import pydcop_cmd
@@ -53,9 +55,18 @@ def test_scalefree_hard():
     assert len(dcop.variables) == 20
 
 
+def test_objective_is_required():
+    cmd = (
+        f"{pydcop_cmd()} generate graph_coloring --graph grid "
+        "--variables_count 4 --colors_count 3"
+    )
+    with pytest.raises(CalledProcessError):
+        check_output(cmd, stderr=STDOUT, timeout=10, shell=True)
+
+
 def run_generate(graph, variables_count, colors_count, intentional=False,
                  soft=False,
-                 p_edge=None, m_edge=None, objective=None):
+                 p_edge=None, m_edge=None, objective="min"):
     # filename = instance_path(filename)
     cmd = f"{pydcop_cmd()} generate graph_coloring --graph {graph} " \
           f" --variables_count {variables_count} " \
