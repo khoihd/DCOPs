@@ -1,3 +1,7 @@
+- Review instance generators:
+    - How do they represent hard constraint? What values?
+    - What is the range of utility value in soft mode?
+    - Do they have random networks?
 - Verify the correctness of the implementation with the provided paper
 - Optimize commonly used files with overheads
 - Optimize instance generator
