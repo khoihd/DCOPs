@@ -43,7 +43,7 @@ Creating various kind of DCOP using the api.
 def test_api_dcop_graph_coloring():
     # Graph coloring with 3 variables and color preferences
 
-    dcop = DCOP('test')
+    dcop = DCOP('test', 'min')
 
     # Domain and variables
     d = Domain('color', '', ['R', 'G'])

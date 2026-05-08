@@ -57,7 +57,7 @@ def dcop_graphcoloring_3():
     -------
 
     """
-    dcop = DCOP('graphcoloring_3')
+    dcop = DCOP('graphcoloring_3', 'min')
     # Domain and variables
     d = Domain('color', '', ['R', 'G'])
     variables = create_variables('v', ['1', '2', '3'], d)

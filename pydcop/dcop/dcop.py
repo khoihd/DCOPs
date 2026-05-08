@@ -56,8 +56,7 @@ class DCOP(object):
 
     """
 
-    def __init__(self, name: str=None,
-                 objective: str='min', description: str='',
+    def __init__(self, name: str, objective: str, description: str='',
                  domains: Dict[str, Domain]=None,
                  variables: Dict[str, Variable]=None,
                  constraints: Dict[str, Constraint]=None,
@@ -186,7 +185,7 @@ class DCOP(object):
 
         Examples
         --------
-        >>> dcop = DCOP('test')
+        >>> dcop = DCOP('test', 'min')
         >>> v1 = Variable('v1', range(10) )
         >>> dcop += 'c1', '2 if v1 > 5 else 10 ', [v1]
         >>> dcop.constraints['c1'](8)
@@ -224,7 +223,7 @@ class DCOP(object):
         create_agents:
 
         >>> from pydcop.dcop.objects import create_agents
-        >>> dcop = DCOP()
+        >>> dcop = DCOP('test', 'min')
         >>> dcop.add_agents(AgentDef('foo'))
         >>> dcop.add_agents([AgentDef('bar'), AgentDef('tabac')])
         >>> dcop.add_agents(create_agents('a', [1, 2, 3]))

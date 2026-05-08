@@ -37,7 +37,7 @@ from tests.api.instances_and_utils import dcop_graphcoloring_3
 
 
 def create_dcop():
-    dcop = DCOP('test')
+    dcop = DCOP('test', 'min')
     # Domain and vraibales
     d = Domain('color', '', ['R', 'G'])
     variables = create_variables('v', [1, 2, 3], d)

@@ -29,14 +29,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import pytest
+
 from pydcop.dcop.dcop import DCOP, filter_dcop
 from pydcop.dcop.objects import Variable, VariableDomain, AgentDef, \
     create_agents
 from pydcop.dcop.relations import constraint_from_str
 
 
+def test_dcop_name_and_objective_are_required():
+    with pytest.raises(TypeError):
+        DCOP()
+    with pytest.raises(TypeError):
+        DCOP('test')
+
+
 def test_dcop_add_constraint_is_enough():
-    dcop = DCOP()
+    dcop = DCOP('test', 'min')
 
     d = VariableDomain('test', 'test' , values=range(10))
     v1 = Variable('v1', d)
@@ -51,7 +60,7 @@ def test_dcop_add_constraint_is_enough():
 
 
 def test_dcop_add_constraint_easy_api():
-    dcop = DCOP()
+    dcop = DCOP('test', 'min')
     d = VariableDomain('test', 'test' , values=range(10))
 
     v1 = Variable('v1', d)
@@ -64,13 +73,13 @@ def test_dcop_add_constraint_easy_api():
     assert dcop.domains == {'test': d}
 
 def test_dcop_add_single_agent():
-    dcop = DCOP()
+    dcop = DCOP('test', 'min')
     a1 = AgentDef('a1')
     dcop.add_agents(a1)
     assert dcop.agent('a1').name == 'a1'
 
 def test_dcop_add_agents_from_list():
-    dcop = DCOP()
+    dcop = DCOP('test', 'min')
     a1 = AgentDef('a1')
     a2 = AgentDef('a2')
     dcop.add_agents([a1, a2])
@@ -78,7 +87,7 @@ def test_dcop_add_agents_from_list():
     assert dcop.agent('a2').name == 'a2'
 
 def test_dcop_add_agents_from_dict():
-    dcop = DCOP()
+    dcop = DCOP('test', 'min')
     agts = create_agents('a', [1, 2, 3])
     dcop.add_agents(agts)
 
@@ -88,7 +97,7 @@ def test_dcop_add_agents_from_dict():
 
 
 def test_filter_dcop():
-    dcop = DCOP()
+    dcop = DCOP('test', 'min')
 
     d = VariableDomain('test', 'test' , values=range(10))
 
@@ -105,7 +114,7 @@ def test_filter_dcop():
     assert filtered.variables == {'v1': v1, 'v2': v2}
 
 def test_filter_dcop_unary_constraint():
-    dcop = DCOP()
+    dcop = DCOP('test', 'min')
 
     d = VariableDomain('test', 'test' , values=range(10))
 
@@ -126,7 +135,7 @@ def test_filter_dcop_unary_constraint():
 
 
 def test_filter_dcop_unary_constraint_accepted():
-    dcop = DCOP()
+    dcop = DCOP('test', 'min')
 
     d = VariableDomain('test', 'test' , values=range(10))
 

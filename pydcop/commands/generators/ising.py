@@ -320,6 +320,7 @@ def generate_ising(
         agents = {}
     dcop = DCOP(
         name,
+        "min",
         domains={"var_domain": domain},
         variables={v.name: v for v in variables.values()},
         agents=agents,
