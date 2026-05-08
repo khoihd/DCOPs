@@ -107,19 +107,25 @@
 
 ## Solve/LP Notes
 
-- `pydcop/commands/solve.py` currently solves with DCOP algorithms from
-  `pydcop/algorithms/`; it does not yet offer a centralized linear/integer
-  programming solver for the DCOP assignment problem.
-- Existing LP/ILP code is for distribution only, not solving assignments.
-  Distribution modules use PuLP with GLPK through `GLPK_CMD`, especially
-  `pydcop/distribution/ilp_fgdp.py`,
-  `pydcop/distribution/oilp_cgdp.py`, and related SECP distribution modules.
-- Next implementation focus requested by the human developer: add a linear
-  programming solver path in `pydcop/commands/solve.py`.
-  Start by designing the smallest CLI integration that reuses existing
-  dependencies/patterns if possible. Likely first pass: a centralized exact
-  solver for finite-domain extensional/intensional DCOPs, with careful handling
-  of `objective: min|max`, hard pseudo-costs, and output/metrics consistency.
+- `pydcop solve -a pulp <dcop_file>` now solves finite-domain DCOP instances
+  with a centralized exact PuLP model instead of the distributed runtime.
+- The production solver lives in `pydcop/solvers/pulp_solver.py`; `solve.py`
+  exposes it as the `pulp` algorithm choice and skips graph construction,
+  distribution, agents, and message metrics for that path.
+- The solver creates one binary choice variable per DCOP variable value and
+  one binary tuple variable per relation assignment, links relation tuples to
+  variable choices, and optimizes relation values plus variable costs according
+  to `objective: min|max`.
+- The `pulp` path reports the usual JSON metrics shape, with zero message
+  metrics plus `solver: "pulp"`, `solver_status`, and `objective`.
+- Symbolic/non-finite hard costs are treated as forbidden assignments; finite
+  pseudo-hard values such as graph-coloring `999999` remain objective terms.
+- The old duplicate test-only oracle `tests/utils/dcop_oracle.py` was removed.
+  Tests now use `pydcop.solvers.pulp_solver.solve_dcop` directly.
+- Current focused validation passed:
+  `conda run -n khoihd python -m pytest tests/unit/test_solvers_pulp.py tests/dcop_cli/test_solve_pulp.py`
+  and, after retiring the oracle,
+  `conda run -n khoihd python -m pytest tests/unit/test_solvers_pulp.py tests/api/test_api_solve_dpop.py`.
 
 ## Durable Caveats
 
@@ -140,8 +146,6 @@
 
 ## Next Steps
 
-- Prioritize the requested `solve.py` linear-programming solver implementation
-  in the next session.
 - Continue paper-based correctness verification one algorithm at a time,
   following `verification_archive/algorithm_paper_check_tracker.md`.
 - Current tracker order starts with DPOP, MGM, MGM2, then DSA; DPOP is
@@ -164,11 +168,11 @@
 - Algorithms: `pydcop/algorithms/`.
 - Computation graphs: `pydcop/computations_graph/`.
 - Runtime/agents/communication: `pydcop/infrastructure/`.
+- Centralized solvers: `pydcop/solvers/`.
 - CLI: `pydcop/commands/`, `pydcop/dcop_cli.py`, `pydcop/pydcop`.
 - Tests: `tests/unit/`, `tests/api/`, `tests/dcop_cli/`,
   `tests/instances/`.
-- Oracle/known cases: `tests/utils/known_instances.py`,
-  `tests/utils/dcop_oracle.py`.
+- Known cases: `tests/utils/known_instances.py`.
 - Archived optimization notes: `optimization_archive/`.
 - Paper verification notes: `verification_archive/`.
 

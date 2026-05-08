@@ -7,6 +7,8 @@ pyDCOP v0.1.2 [Unreleased]
 --------------------------
 
 ### Added
+- Exact centralized PuLP solver available from the solve CLI with
+  `pydcop solve -a pulp <dcop_file>`.
 - New `--restart` flag on `agent` cli command.
 - New `--version` global option on cli.
 - `--graph` option may be omitted in `distribute` cli command, when `--algo`
@@ -33,6 +35,10 @@ pyDCOP v0.1.2 [Unreleased]
 - Bugs with end metric computations (cycle and time).
 - Bug with solve and run command when collecting lots of metrics (would 
   not honor the timeout)   
+
+### Removed
+- Retired the duplicate test-only PuLP oracle in `tests/utils/dcop_oracle.py`;
+  tests now use `pydcop.solvers.pulp_solver`.
 
 ## Modified
 - domain type is now optional (in API and yaml DCOP format)

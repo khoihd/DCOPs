@@ -15,6 +15,7 @@ asks for a change.
 ## Project map
 - `pydcop/dcop/` — core DCOP model: `dcop.py`, variables/agents in `objects.py`, constraints/relations in `relations.py`, YAML load/dump in `yamldcop.py`.
 - `pydcop/algorithms/` — algorithm implementations such as MaxSum, DSA, DPOP, MGM, DBA. Look here for message classes, computation behavior, `GRAPH_TYPE`, `algo_params`, and memory/communication hooks.
+- `pydcop/solvers/` — centralized solver backends such as the exact PuLP solver used by `pydcop solve -a pulp`.
 - `pydcop/computations_graph/` — graph builders and graph data structures: factor graph, constraints hypergraph, pseudotree, and ordered graph.
 - `pydcop/distribution/` — distribution algorithms and distribution objects/yaml format. CLI distribution failures usually involve this package plus `pydcop/commands/distribute.py`.
 - `pydcop/infrastructure/` — runtime, orchestration, agents, communication, discovery, computation base classes, and thread/process run helpers.
@@ -27,6 +28,7 @@ asks for a change.
 ## Search hints
 - CLI output or argument issues: start in `tests/dcop_cli/`, then `pydcop/dcop_cli.py`, then the matching `pydcop/commands/<command>.py`.
 - Solve/distribute runtime issues: inspect `pydcop/commands/solve.py`, `pydcop/commands/distribute.py`, `pydcop/infrastructure/run.py`, `pydcop/infrastructure/orchestrator.py`, `pydcop/infrastructure/agents.py`, and `pydcop/infrastructure/communication.py`.
+- Centralized solve issues: inspect `pydcop/commands/solve.py`, then `pydcop/solvers/pulp_solver.py`, and compare with `tests/unit/test_solvers_pulp.py`.
 - Algorithm behavior: inspect `pydcop/algorithms/<name>.py` and the corresponding `tests/unit/test_algorithms_<name>.py`.
 - Serialization/YAML issues: inspect `pydcop/dcop/yamldcop.py`, `pydcop/utils/simple_repr.py`, and, for process-mode messages, `pydcop/infrastructure/communication.py`.
 - Distribution failures: inspect `pydcop/distribution/objects.py`, the selected `pydcop/distribution/<method>.py`, and `tests/unit/test_distribution_<method>.py` when present.

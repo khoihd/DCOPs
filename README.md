@@ -5,12 +5,31 @@
 
 pyDCOP is a python library for Distributed Constraints Optimization.
 It contains implementations of several standard DCOP algorithms (MaxSum, DSA,
-DPOP, MGM, etc.) and allows you to develop your own algorithms.
+DPOP, MGM, etc.), an exact centralized PuLP solver for finite-domain DCOPs,
+and allows you to develop your own algorithms.
 
 pyDCOP runs on python >= 3.11.
 
 Documentation is hosted on 
 [ReadTheDoc](https://pydcop.readthedocs.io)
+
+## Solving DCOPs
+
+Distributed algorithms are selected with `-a` / `--algo`:
+
+```bash
+python -m pydcop.dcop_cli solve -a dpop instance.yaml
+python -m pydcop.dcop_cli solve --algo mgm instance.yaml
+```
+
+For an exact centralized solve, use the PuLP backend as an algorithm choice:
+
+```bash
+python -m pydcop.dcop_cli solve -a pulp instance.yaml
+```
+
+The `pulp` solver builds a centralized LP/ILP model and does not use the
+distributed computation graph, distribution method, agents, or message runtime.
  
 ## Acknowledgment
 
