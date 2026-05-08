@@ -36,8 +36,16 @@ def test_grid_hard_max_objective():
     assert dcop.objective == "max"
     constraint = next(iter(dcop.constraints.values()))
     var1, var2 = constraint.dimensions
-    assert constraint(**{var1.name: "R", var2.name: "R"}) == -999999
-    assert constraint(**{var1.name: "R", var2.name: "G"}) == 0
+    color1, color2 = var1.domain.values[:2]
+    assert constraint(**{var1.name: color1, var2.name: color1}) == -999999
+    assert constraint(**{var1.name: color1, var2.name: color2}) == 0
+
+
+def test_color_values_use_capital_english_letters():
+    dcop = run_generate("grid", 4, 12, soft=False)
+    domain = dcop.domains["colors"]
+
+    assert list(domain.values) == list("ABCDEFGHIJKL")
 
 
 def test_scalefree_hard():

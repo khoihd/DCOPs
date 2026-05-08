@@ -159,7 +159,7 @@ from pydcop.dcop.yamldcop import dcop_yaml
 
 logger = logging.getLogger("pydcop.cli.generate")
 
-COLORS = ["R", "G", "B", "O", "F", "Y", "L", "C"]
+COLORS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 HARD_CONSTRAINT_VALUE = 999999
 
 
@@ -258,8 +258,10 @@ def generate(args):
     """
     Generate and output a graph coloring problem
     """
-    if args.colors_count > len(COLORS):
-        raise ValueError("Too many colors!")
+    if args.colors_count < 1 or args.colors_count > len(COLORS):
+        raise ValueError(
+            f"The number of colors must be between 1 and {len(COLORS)}"
+        )
 
     if args.graph == "random":
         if not args.p_edge:
