@@ -87,6 +87,15 @@ The implementation intentionally generalizes the paper in these ways:
   computation, min and max gain handling, stop cycles, and random tie-breaking.
 - API and CLI tests exercise MGM in solve-level graph-coloring scenarios.
 
+## Current Focus
+
+- Verify MGM min and max behavior with small deterministic experiment runs.
+- Confirm that minimization treats `current_cost - candidate_cost > 0` as an
+  improving gain, while maximization treats `current_cost - candidate_cost < 0`
+  as an improving gain.
+- Confirm that gain comparison follows the same sign convention: largest gain
+  wins in `min` mode and smallest gain wins in `max` mode.
+
 ## Follow-Up
 
 - Review whether existing unit tests explicitly cover the paper monotonicity

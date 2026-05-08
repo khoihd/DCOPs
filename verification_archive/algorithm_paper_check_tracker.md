@@ -62,8 +62,8 @@ For each algorithm:
   - Paper / Source: `verification_archive/papers/mgm.pdf`
   - Check File: `verification_archive/mgm_paper_check.md`
   - Status: In progress
-  - Notes: Paper contract and implementation mapping drafted; focused test
-    review still pending.
+  - Notes: Current focus is verifying MGM min/max gain behavior with small
+    deterministic experiment runs.
 
 - MGM2
   - Priority: 3
