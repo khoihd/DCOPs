@@ -91,6 +91,8 @@
   `pydcop/dcop/yamldcop.py`.
 - Graph-coloring generation now supports `--objective min|max`. The default
   remains `min`.
+- Graph-coloring color domains now use capital English letters from `A` to
+  `Z`; `--colors_count` is restricted to 1 through 26.
 - Graph-coloring pseudo-hard constraints use
   `HARD_CONSTRAINT_VALUE = 999999`: same-color neighbor assignments get
   `999999` in `min` mode and `-999999` in `max` mode; non-conflicts get `0`.
@@ -118,6 +120,10 @@
   to `objective: min|max`.
 - The `pulp` path reports the usual JSON metrics shape, with zero message
   metrics plus `solver: "pulp"`, `solver_status`, and `objective`.
+- The current PuLP backend uses `GLPK_CMD`, which does not expose a thread/core
+  option through PuLP. Optional multicore support would likely require adding a
+  CBC backend via `PULP_CBC_CMD(threads=...)` and CLI/algo parameters to select
+  solver backend and thread count.
 - Symbolic/non-finite hard costs are treated as forbidden assignments; finite
   pseudo-hard values such as graph-coloring `999999` remain objective terms.
 - The old duplicate test-only oracle `tests/utils/dcop_oracle.py` was removed.
