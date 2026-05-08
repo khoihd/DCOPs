@@ -65,8 +65,17 @@ For each algorithm:
   - Notes: Paper contract and implementation mapping drafted; focused test
     review still pending.
 
-- DSA
+- MGM2
   - Priority: 3
+  - Implementation: `pydcop/algorithms/mgm2.py`
+  - Paper / Source: `verification_archive/papers/mgm.pdf`
+  - Check File: `verification_archive/mgm2_paper_check.md`
+  - Status: In progress
+  - Notes: Paper contract and implementation mapping drafted; focused test
+    review still pending.
+
+- DSA
+  - Priority: 4
   - Implementation: `pydcop/algorithms/dsa.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/dsa_paper_check.md`
@@ -74,7 +83,7 @@ For each algorithm:
   - Notes:
 
 - ADSA
-  - Priority: 4
+  - Priority: 5
   - Implementation: `pydcop/algorithms/adsa.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/adsa_paper_check.md`
@@ -82,7 +91,7 @@ For each algorithm:
   - Notes:
 
 - AMaxSum
-  - Priority: 5
+  - Priority: 6
   - Implementation: `pydcop/algorithms/amaxsum.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/amaxsum_paper_check.md`
@@ -90,7 +99,7 @@ For each algorithm:
   - Notes:
 
 - DBA
-  - Priority: 6
+  - Priority: 7
   - Implementation: `pydcop/algorithms/dba.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/dba_paper_check.md`
@@ -98,7 +107,7 @@ For each algorithm:
   - Notes:
 
 - DSA Tutorial
-  - Priority: 7
+  - Priority: 8
   - Implementation: `pydcop/algorithms/dsatuto.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/dsatuto_paper_check.md`
@@ -107,7 +116,7 @@ For each algorithm:
     paper or docs only.
 
 - GDBA
-  - Priority: 8
+  - Priority: 9
   - Implementation: `pydcop/algorithms/gdba.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/gdba_paper_check.md`
@@ -115,7 +124,7 @@ For each algorithm:
   - Notes:
 
 - MaxSum
-  - Priority: 9
+  - Priority: 10
   - Implementation: `pydcop/algorithms/maxsum.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/maxsum_paper_check.md`
@@ -123,21 +132,12 @@ For each algorithm:
   - Notes:
 
 - Dynamic MaxSum
-  - Priority: 10
+  - Priority: 11
   - Implementation: `pydcop/algorithms/maxsum_dynamic.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/maxsum_dynamic_paper_check.md`
   - Status: Not started
   - Notes:
-
-- MGM2
-  - Priority: 11
-  - Implementation: `pydcop/algorithms/mgm2.py`
-  - Paper / Source: `verification_archive/papers/mgm.pdf`
-  - Check File: `verification_archive/mgm2_paper_check.md`
-  - Status: In progress
-  - Notes: Paper contract and implementation mapping drafted; focused test
-    review still pending.
 
 - MixedDSA
   - Priority: 12
