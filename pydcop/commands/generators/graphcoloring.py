@@ -28,11 +28,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
+r"""
 .. _pydcop_commands_generate_graphcoloring:
 
-pydcop generate graphcoloring
-=============================
+pydcop generate graph_coloring
+==============================
 
 Graph coloring benchmark problem generator
 ------------------------------------------
@@ -43,14 +43,15 @@ Synopsis
 
 ::
 
-  pydcop generate graphcoloring
+  pydcop generate graph_coloring
                 --variables_count <variables_count>
                 --colors_count <colors_count>
                 --graph <graph_type>
                 [--allow_subgraph]
                 [--soft]
-                [--extensive]
+                [--intentional]
                 [--noagents]
+                [--objective <objective>]
                 [--p_edge <p_edge>]
                 [--m_edge <m_edge>]
 
@@ -69,11 +70,12 @@ Graph structures:
 
 Problems:
 
-* Graph coloring, with pseudo-hard constraint where a cost of 10000 is incurred
-  for neighbors sharing the same color and 0 otherwise. These constraints can
-  be expressed intentionally or extensively.
+* Graph coloring, with pseudo-hard constraint where a cost of 999999 is
+  incurred for neighbors sharing the same color and 0 otherwise when minimizing.
+  When maximizing, the pseudo-hard value is -999999. These constraints can be
+  expressed intentionally or extensively.
 * Weighted, or soft graph coloring, with soft constraints where the cost of a
-  join assignment between two neighbors is a random cost, always expressed
+  joint assignment between two neighbors is a random cost, always expressed
   extensively.
 
 
@@ -90,13 +92,13 @@ Options
 ``--colors_count <colors_count>`` / ``-c <colors_count>``
   Number of colors for coloring the graph.
 
-``--graph <graph_type>`` / ``--g <graph_type>``
+``--graph <graph_type>`` / ``-g <graph_type>``
   Structure of the constraints graph. Can be ``random``, ``scalefree`` or
   ``grid``.
 
 ``--allow_subgraph``
-  When generating the graph structure, we only keep graph with no disconnected
-  sub-graph. When this flag is set no filtering is done and you may get
+  When generating the graph structure, only connected graphs are kept by
+  default. When this flag is set no filtering is done and you may get
   disconnected sub-graphs.
 
 ``--soft``
@@ -112,11 +114,15 @@ Options
   If this flag is set, no agent definition is generated in the dcop file,
   otherwise one agent is created for each variable.
 
-``--p_edge <p_edge>`` / ``--p <p_edge>``
+``--objective <objective>``
+  Optimization objective for the generated DCOP, ``min`` or ``max``.
+  Defaults to ``min``.
+
+``--p_edge <p_edge>`` / ``-p <p_edge>``
   Only used for random graph, probability for edge creation in the random
   Erdős-Rényi graph creation model.
 
-``--m_edge <m_edge>`` / ``--m <m_edge>``
+``--m_edge <m_edge>`` / ``-m <m_edge>``
   Only used for scale-free graph, number of edges to attach from a new variable
   in the preferential attachment Barabási–Albert graph model
 
@@ -131,6 +137,11 @@ Generating a random soft graph coloring problem with 10 variables::
 
     pydcop generate graph_coloring --graph random  --variables_count 10 \\
         --colors_count 3  --p_edge 0.5 --soft
+
+Generating a hard graph coloring maximization problem with 10 variables::
+
+    pydcop generate graph_coloring --graph random  --variables_count 10 \\
+        --colors_count 3  --p_edge 0.5 --objective max
 
 
 
@@ -149,6 +160,7 @@ from pydcop.dcop.yamldcop import dcop_yaml
 logger = logging.getLogger("pydcop.cli.generate")
 
 COLORS = ["R", "G", "B", "O", "F", "Y", "L", "C"]
+HARD_CONSTRAINT_VALUE = 999999
 
 
 def init_cli_parser(parent_parser):
@@ -209,6 +221,13 @@ def init_cli_parser(parent_parser):
         required=False,
         action="store_true",
         help="Do not generate agents",
+    )
+
+    parser.add_argument(
+        "--objective",
+        choices=["min", "max"],
+        default="min",
+        help="Optimization objective for the generated DCOP",
     )
 
     # For random graphs
@@ -288,11 +307,14 @@ def generate(args):
         constraints = generate_soft_constraints(graph, variables, args.intentional)
         name += "soft graph coloring"
     else:
-        constraints = generate_hard_constraints(graph, variables, args.intentional)
+        constraints = generate_hard_constraints(
+            graph, variables, args.intentional, args.objective
+        )
         name += "hard graph coloring"
 
     dcop = DCOP(
         name,
+        objective=args.objective,
         domains={"colors": domain},
         variables={v.name: v for v in variables.values()},
         agents=agents,
@@ -375,7 +397,7 @@ def generate_soft_constraints(graph, variables, intentional):
     return constraints
 
 
-def generate_hard_constraints(graph, variables, intentional):
+def generate_hard_constraints(graph, variables, intentional, objective="min"):
     """
     Generate a hard constraint for each edge in the graph
     Parameters
@@ -386,12 +408,20 @@ def generate_hard_constraints(graph, variables, intentional):
         a dict of variable objects
     intentional: bool
         if true, generate intentional constraints
+    objective: str
+        optimization objective, "min" or "max"
 
     Returns
     -------
     dict:
         a dict of constraints
     """
+    if objective not in ["min", "max"]:
+        raise ValueError("Invalid objective for graph coloring: " + objective)
+
+    hard_constraint_value = (
+        HARD_CONSTRAINT_VALUE if objective == "min" else -HARD_CONSTRAINT_VALUE
+    )
     constraints = {}
     for i, edge in enumerate(graph.edges):
         logger.debug("edge %s - %s", edge, i)
@@ -399,13 +429,15 @@ def generate_hard_constraints(graph, variables, intentional):
         u, v = edge
         v1, v2 = variables[u], variables[v]
         if intentional:
-            expression = f"1000 if {v1.name} == {v2.name} else 0"
+            expression = (
+                f"{hard_constraint_value} if {v1.name} == {v2.name} else 0"
+            )
             constraints[name] = relation_from_str(name, expression, [v1, v2])
         else:
             constraint = NAryMatrixRelation([v1, v2], name=name)
             for val in v1.domain:
                 constraint = constraint.set_value_for_assignment(
-                    {v1.name: val, v2.name: val}, 1000
+                    {v1.name: val, v2.name: val}, hard_constraint_value
                 )
             constraints[name] = constraint
         logger.debug(repr(constraints[name]))

@@ -31,6 +31,15 @@ def test_grid_hard():
     assert len(dcop.constraints) == 12
 
 
+def test_grid_hard_max_objective():
+    dcop = run_generate("grid", 4, 3, soft=False, objective="max")
+    assert dcop.objective == "max"
+    constraint = next(iter(dcop.constraints.values()))
+    var1, var2 = constraint.dimensions
+    assert constraint(**{var1.name: "R", var2.name: "R"}) == -999999
+    assert constraint(**{var1.name: "R", var2.name: "G"}) == 0
+
+
 def test_scalefree_hard():
     dcop = run_generate("scalefree", 20, 3, soft=False, m_edge=2)
     assert len(dcop.variables) == 20
@@ -38,7 +47,7 @@ def test_scalefree_hard():
 
 def run_generate(graph, variables_count, colors_count, intentional=False,
                  soft=False,
-                 p_edge=None, m_edge=None):
+                 p_edge=None, m_edge=None, objective=None):
     # filename = instance_path(filename)
     cmd = f"{pydcop_cmd()} generate graph_coloring --graph {graph} " \
           f" --variables_count {variables_count} " \
@@ -51,6 +60,8 @@ def run_generate(graph, variables_count, colors_count, intentional=False,
         cmd += " --intentional"
     if soft:
         cmd += " --soft"
+    if objective:
+        cmd += f" --objective {objective}"
     output = check_output(cmd, stderr=STDOUT, timeout=10, shell=True)
     dcop = load_dcop(output)
     return dcop
