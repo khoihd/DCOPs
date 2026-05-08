@@ -9,11 +9,10 @@ with regard to the requested model.
 
 """
 
-import sys
-from os import path
 from subprocess import check_output, STDOUT
 
 from pydcop.dcop.yamldcop import load_dcop
+from tests.dcop_cli.utils import pydcop_cmd
 
 
 def test_random_soft():
@@ -41,8 +40,7 @@ def run_generate(graph, variables_count, colors_count, intentional=False,
                  soft=False,
                  p_edge=None, m_edge=None):
     # filename = instance_path(filename)
-    pydcop_bin = path.join(path.dirname(sys.executable), "pydcop")
-    cmd = f"{pydcop_bin} generate graph_coloring --graph {graph} " \
+    cmd = f"{pydcop_cmd()} generate graph_coloring --graph {graph} " \
           f" --variables_count {variables_count} " \
           f" --colors_count {colors_count} "
     if p_edge:
@@ -56,4 +54,3 @@ def run_generate(graph, variables_count, colors_count, intentional=False,
     output = check_output(cmd, stderr=STDOUT, timeout=10, shell=True)
     dcop = load_dcop(output)
     return dcop
-

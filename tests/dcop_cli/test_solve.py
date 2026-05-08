@@ -30,12 +30,10 @@
 
 
 import json
-import sys
 import unittest
-from os import path
 from subprocess import STDOUT, check_output, CalledProcessError
 
-from tests.dcop_cli.utils import instance_path
+from tests.dcop_cli.utils import instance_path, pydcop_cmd
 
 
 class SimpleSecpDCOP1(unittest.TestCase):
@@ -231,11 +229,10 @@ def run_solve(algo, distribution, filename, timeout: int, mode='thread',
     param_str = ''
     for p in algo_params:
         param_str += ' --algo_param '+ p
-    pydcop_bin = path.join(path.dirname(sys.executable), "pydcop")
     cmd = '{pydcop_bin} -v 0 -t {timeout} solve -a {algo} {params} -d {' \
           'distribution} ' \
           '-m {mode} ' \
-          '{file}'.format(pydcop_bin=pydcop_bin,
+          '{file}'.format(pydcop_bin=pydcop_cmd(),
                           timeout=timeout,
                           algo=algo,
                           params=param_str,

@@ -1,8 +1,7 @@
 
-CONDA_ENV ?= khoihd
-PYTHON ?= conda run -n $(CONDA_ENV) python
+PYTHON ?= python
 PYTEST ?= $(PYTHON) -m pytest
-RUFF ?= conda run -n $(CONDA_ENV) ruff
+RUFF ?= ruff
 MYPY ?= $(PYTHON) -m mypy
 COVERAGE ?= $(PYTHON) -m coverage
 

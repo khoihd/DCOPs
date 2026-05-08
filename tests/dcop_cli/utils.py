@@ -30,8 +30,13 @@
 
 
 """Various utility fonctions for cli end2end tests"""
+import shlex
 import sys
 from os import path
+
+
+def pydcop_cmd():
+    return f"{shlex.quote(sys.executable)} -m pydcop.dcop_cli"
 
 
 def instance_path(instance_filename):

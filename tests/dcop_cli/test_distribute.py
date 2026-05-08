@@ -30,13 +30,11 @@
 
 
 import unittest
-import sys
-from os import path
 from subprocess import check_output, STDOUT, CalledProcessError
 
 import yaml
 
-from tests.dcop_cli.utils import instance_path
+from tests.dcop_cli.utils import instance_path, pydcop_cmd
 
 
 class GraphColoring1(unittest.TestCase):
@@ -173,10 +171,9 @@ def run_distribute(filename, distribution, graph=None, algo=None):
     filename = instance_path(filename)
     algo_opt = '' if algo is None else '-a ' + algo
     graph_opt = '' if graph is None else '-g ' + graph
-    pydcop_bin = path.join(path.dirname(sys.executable), "pydcop")
     cmd = '{pydcop_bin} distribute -d {distribution} {graph_opt} ' \
           '{algo_opt} {file}'.format(distribution=distribution,
-                                     pydcop_bin=pydcop_bin,
+                                     pydcop_bin=pydcop_cmd(),
                                      graph_opt=graph_opt,
                                      algo_opt=algo_opt,
                                      file=filename)
