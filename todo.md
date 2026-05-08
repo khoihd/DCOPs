@@ -1,8 +1,18 @@
 - Review instance generators:
-    - Utility [0, 99], hard constraint 999999, max and min
-    - Done with graph coloring 
-    - Do they have random networks?
-    - Review other instances too
+    - Let difference instances share common arguments from generate
+      - Number of variables
+      - Domain range
+      - Utility range
+      - Seed value
+    
+    - Utility [0, 9], hard constraint 999999, max and min objective
+      - (DONE) Graph coloring: random-graph, scalefree, grid
+      - (WIP) IoT
+  
+- Add option for the generator to name the instances:
+  - Instance file name and in the instance file
+
+- Add options for the generator to support multiple instances
 
 - Add print out when agent sends and receive messages for debugging
 - Check how the algorithm supports multi-threading
