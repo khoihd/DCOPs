@@ -125,6 +125,7 @@ Options
 
 ``--algo <dcop_algorithm>`` / ``-a <dcop_algorithm>``
   Name of the dcop algorithm, e.g. 'maxsum', 'dpop', 'dsa', etc.
+  Use 'pulp' to solve centrally with an exact PuLP model.
 
 ``--algo_params <params>`` / ``-p <params>``
   Optional parameter for the DCOP algorithm, given as string
@@ -212,6 +213,7 @@ import traceback
 from functools import partial
 from queue import Queue, Empty
 from threading import Thread
+from time import perf_counter
 
 import numpy as np
 
@@ -224,9 +226,15 @@ from pydcop.infrastructure.run import run_local_thread_dcop, run_local_process_d
 
 logger = logging.getLogger("pydcop.cli.solve")
 
+PULP_ALGORITHM = "pulp"
+CENTRALIZED_ALGORITHMS = [PULP_ALGORITHM]
+
 
 def set_parser(subparsers):
     algorithms = list_available_algorithms()
+    for algorithm in CENTRALIZED_ALGORITHMS:
+        if algorithm not in algorithms:
+            algorithms.append(algorithm)
     logger.debug("Available DCOP algorithms %s", algorithms)
 
     parser = subparsers.add_parser("solve", help="solve static dcop")
@@ -457,6 +465,15 @@ def run_cmd(args, timer=None, timeout=None):
         if args.period is not None:
             _error('Cannot use "period" argument when collect_on is not ' '"period"')
 
+    global dcop
+    logger.info("loading dcop from {}".format(args.dcop_files))
+    dcop = load_dcop_from_file(args.dcop_files)
+    logger.debug(f"dcop  {dcop} ")
+
+    if args.algo == PULP_ALGORITHM:
+        _run_pulp_solver(dcop, args, timer, timeout)
+        return
+
     csv_cb = prepare_metrics_files(args.run_metrics, args.end_metrics, collect_on)
 
     if args.distribution in DISTRIBUTION_METHODS:
@@ -465,11 +482,6 @@ def run_cmd(args, timer=None, timeout=None):
         )
     else:
         dist_module, algo_module, graph_module = _load_modules(None, args.algo)
-
-    global dcop
-    logger.info("loading dcop from {}".format(args.dcop_files))
-    dcop = load_dcop_from_file(args.dcop_files)
-    logger.debug(f"dcop  {dcop} ")
 
     # Build factor-graph computation graph
     logger.info("Building computation graph ")
@@ -563,6 +575,49 @@ def run_cmd(args, timer=None, timeout=None):
         _results("ERROR")
 
 
+def _run_pulp_solver(dcop, args, timer=None, timeout=None):
+    if args.algo_params:
+        _error("Algo pulp does not support any parameter")
+    if args.run_metrics or args.end_metrics:
+        _error("CSV metrics are only available for distributed algorithms")
+
+    from pydcop.solvers.pulp_solver import PulpDcopSolverError, solve_dcop
+
+    start_time = perf_counter()
+    try:
+        result = solve_dcop(dcop, INFINITY, timeout)
+    except PulpDcopSolverError as e:
+        _error("Error while solving with pulp", e)
+
+    if timer:
+        timer.cancel()
+
+    metrics = _pulp_metrics(dcop, result, perf_counter() - start_time)
+    _output_metrics(metrics)
+
+
+def _pulp_metrics(dcop, result, elapsed):
+    if result.status == "FINISHED":
+        violation, cost = dcop.solution_cost(result.assignment, INFINITY)
+    else:
+        violation, cost = None, None
+
+    return {
+        "status": result.status,
+        "assignment": result.assignment,
+        "cost": cost,
+        "violation": violation,
+        "time": elapsed,
+        "msg_count": 0,
+        "msg_size": 0,
+        "cycle": 0,
+        "agt_metrics": {},
+        "solver": PULP_ALGORITHM,
+        "solver_status": result.solver_status,
+        "objective": result.objective_value,
+    }
+
+
 def on_timeout():
     logger.debug("cli timeout ")
     # Timeout should have been handled by the orchestrator, if the cli timeout
@@ -616,6 +671,10 @@ def _results(status):
 
     metrics = orchestrator.end_metrics()
     metrics["status"] = status
+    _output_metrics(metrics)
+
+
+def _output_metrics(metrics):
     global end_metrics, run_metrics
     if end_metrics is not None:
         add_csvline(end_metrics, collect_on, metrics)
