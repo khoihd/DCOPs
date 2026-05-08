@@ -82,7 +82,7 @@ def generate_iot(args):
     # compute the footprint of computations:
     dcop = DCOP(
         "graph coloring",
-        "min",
+        args.objective,
         domains={"d": domain},
         variables=variables,
         agents={},
@@ -127,7 +127,7 @@ def generate_iot(args):
 
     dcop = DCOP(
         "graph coloring",
-        "min",
+        args.objective,
         domains={"d": domain},
         variables=variables,
         agents=agents,

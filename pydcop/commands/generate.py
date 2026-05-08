@@ -170,6 +170,12 @@ def parser_iot_problem(subparsers):
     parser.add_argument(
         "-r", "--range", type=int, default=10, help="range of the constraints values"
     )
+    parser.add_argument(
+        "--objective",
+        choices=["min", "max"],
+        required=True,
+        help="Optimization objective for the generated DCOP",
+    )
     # parser.add_argument('-a', '--agents', type=int, required=True,
     #                     help='number of agents')
 
