@@ -1829,6 +1829,7 @@ def test_assignment_cost_extra_vars():
     assert assignment_cost({"v1": 2, "v2": 5, "v3": 4}, [c1, c2]) == 17
 
 
+@pytest.mark.perf
 def test_bench_compute_cost(request):
     x1 = Variable("x1", list(range(5)))
     x2 = Variable("x2", list(range(5)))
@@ -2159,6 +2160,7 @@ def test_join_matrix_relations_different_order():
     assert joined(x1=1, x2=1) == 44
 
 
+@pytest.mark.perf
 def test_benchmark_join_fast_against_join_slow():
     domain = list(range(7))
     x1 = Variable("x1", domain)
@@ -2438,6 +2440,7 @@ class ProjectionTestCase(unittest.TestCase):
         assert p_slow.get_value_for_assignment(["b", "u"]) == 10
         assert p_slow.get_value_for_assignment(["b", "v"]) == 12
 
+    @pytest.mark.perf
     def test_benchmark_projection_fast_against_projection_slow(self):
         domain = list(range(7))
         x1 = Variable("x1", domain)

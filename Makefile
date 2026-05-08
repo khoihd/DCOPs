@@ -24,6 +24,9 @@ test_unit:
 test_api:
 	$(PYTEST) ./tests/api
 
+perf:
+	$(PYTEST) -m perf
+
 mypy:
 	$(MYPY) --ignore-missing-imports pydcop
 

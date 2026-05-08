@@ -112,6 +112,7 @@ def test_filter_missing_agents_paths_2():
 
     assert len(filtered) == len(paths)
 
+@pytest.mark.perf
 def test_bench_filter_missing_agents_paths(benchmark):
     def to_bench():
         paths = [
@@ -177,6 +178,7 @@ def test_remove_path():
     remove_path(paths, ("a2", "foo", "a4"))
     assert len(paths) == 10
 
+@pytest.mark.perf
 def test_remove_path_bench(benchmark):
     def to_bench():
         paths = [
@@ -246,6 +248,7 @@ def test_affordable_path_from():
 
     assert len(list(paths)) == 3
 
+@pytest.mark.perf
 def test_bench_affordable_path_from(benchmark):
     table = [
         (3, ("a2", "a9", "a4", "a8")),
