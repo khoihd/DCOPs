@@ -31,7 +31,7 @@
 import pytest
 
 from pydcop.solvers.pulp_solver import solve_dcop
-from tests.utils.known_instances import KNOWN_INSTANCE_SOLUTIONS
+from tests.utils.known_instances import KNOWN_INSTANCE_COSTS, KNOWN_INSTANCE_SOLUTIONS
 
 
 @pytest.mark.parametrize(
@@ -46,4 +46,18 @@ def test_pulp_solver_matches_known_solution(known_case):
 
     assert result.status == "FINISHED"
     assert result.assignment == known_case.optimal_assignment
+    assert result.objective_value == pytest.approx(known_case.optimal_cost)
+
+
+@pytest.mark.parametrize(
+    "known_case",
+    KNOWN_INSTANCE_COSTS,
+    ids=[known_case.name for known_case in KNOWN_INSTANCE_COSTS],
+)
+def test_pulp_solver_matches_known_cost(known_case):
+    dcop = known_case.dcop_factory()
+
+    result = solve_dcop(dcop)
+
+    assert result.status == "FINISHED"
     assert result.objective_value == pytest.approx(known_case.optimal_cost)

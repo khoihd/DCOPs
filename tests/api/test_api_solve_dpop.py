@@ -32,7 +32,7 @@ import pytest
 
 from pydcop.dcop.objects import create_agents
 from pydcop.infrastructure.run import INFINITY, solve
-from tests.utils.dcop_oracle import solve_dcop_with_pulp
+from pydcop.solvers.pulp_solver import solve_dcop as solve_with_pulp
 from tests.utils.known_instances import KNOWN_INSTANCE_COSTS, KNOWN_INSTANCE_SOLUTIONS
 
 
@@ -49,9 +49,10 @@ def ensure_one_agent_per_variable(dcop):
         )
 
 
-def assert_dpop_matches_lp_oracle_cost(known_case):
+def assert_dpop_matches_pulp_cost(known_case):
     dcop = known_case.dcop_factory()
-    _, oracle_cost = solve_dcop_with_pulp(dcop)
+    pulp_result = solve_with_pulp(dcop)
+    assert pulp_result.status == "FINISHED"
     ensure_one_agent_per_variable(dcop)
 
     assignment = solve(dcop, "dpop", "oneagent", timeout=3)
@@ -59,7 +60,7 @@ def assert_dpop_matches_lp_oracle_cost(known_case):
     hard_cost, soft_cost = dcop.solution_cost(assignment, INFINITY)
 
     assert hard_cost == 0
-    assert soft_cost == pytest.approx(oracle_cost)
+    assert soft_cost == pytest.approx(pulp_result.objective_value)
 
 
 @pytest.mark.parametrize(
@@ -67,8 +68,8 @@ def assert_dpop_matches_lp_oracle_cost(known_case):
     KNOWN_INSTANCE_SOLUTIONS,
     ids=[known_case.name for known_case in KNOWN_INSTANCE_SOLUTIONS],
 )
-def test_api_solve_dpop_matches_lp_oracle_solution_cases(known_case):
-    assert_dpop_matches_lp_oracle_cost(known_case)
+def test_api_solve_dpop_matches_pulp_solution_cases(known_case):
+    assert_dpop_matches_pulp_cost(known_case)
 
 
 @pytest.mark.parametrize(
@@ -76,5 +77,5 @@ def test_api_solve_dpop_matches_lp_oracle_solution_cases(known_case):
     KNOWN_INSTANCE_COSTS,
     ids=[known_case.name for known_case in KNOWN_INSTANCE_COSTS],
 )
-def test_api_solve_dpop_matches_lp_oracle_cost_only_cases(known_case):
-    assert_dpop_matches_lp_oracle_cost(known_case)
+def test_api_solve_dpop_matches_pulp_cost_only_cases(known_case):
+    assert_dpop_matches_pulp_cost(known_case)
