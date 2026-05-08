@@ -59,10 +59,11 @@ For each algorithm:
 - MGM
   - Priority: 2
   - Implementation: `pydcop/algorithms/mgm.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/mgm.pdf`
   - Check File: `verification_archive/mgm_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: In progress
+  - Notes: Paper contract and implementation mapping drafted; focused test
+    review still pending.
 
 - DSA
   - Priority: 3
@@ -132,10 +133,11 @@ For each algorithm:
 - MGM2
   - Priority: 11
   - Implementation: `pydcop/algorithms/mgm2.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/mgm.pdf`
   - Check File: `verification_archive/mgm2_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: In progress
+  - Notes: Paper contract and implementation mapping drafted; focused test
+    review still pending.
 
 - MixedDSA
   - Priority: 12
