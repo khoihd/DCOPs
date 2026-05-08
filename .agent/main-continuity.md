@@ -92,8 +92,16 @@
 - `pydcop/commands/generators/graphcoloring.py` is the current graph-coloring
   generator implementation; generated DCOP YAML is serialized via
   `pydcop/dcop/yamldcop.py`.
-- Graph-coloring generation now supports `--objective min|max`. The default
-  remains `min`.
+- Generator argument inventory is saved in `generator_arguments.txt`; it lists
+  the registered `pydcop generate ...` arguments, including aliases, required
+  flags, defaults, choices, and positional trailing-file arguments.
+- Graph-coloring generation now requires an explicit `--objective min|max`;
+  there is no default objective for `pydcop generate graph_coloring`.
+- The focused graph-coloring objective change was committed as
+  `8f3c243 Require graph coloring objective`. Targeted validation passed:
+  `conda run -n khoihd python -m pytest tests/dcop_cli/test_generate_graphcoloring.py`
+  and
+  `conda run -n khoihd ruff check pydcop/commands/generators/graphcoloring.py tests/dcop_cli/test_generate_graphcoloring.py`.
 - IoT generation now requires an explicit `--objective min|max` CLI argument
   from `pydcop generate iot`; `pydcop/commands/generators/iot.py` no longer
   hardcodes `min` when constructing the intermediate or final `DCOP`.
@@ -115,6 +123,15 @@
   changes:
   `conda run -n khoihd python -m pytest tests/unit` reported
   `1095 passed, 6 deselected`.
+- Current generator review context includes `meetingscheduling.py`: it uses a
+  PEAV meeting model with one agent per resource. Variables are named
+  `v_<resource_id>_<event_id>` and assigned a start slot; value `0` means the
+  resource-event pair is not scheduled. Constraint types are `ci_...`
+  intra-resource conflict/utility constraints, `ce_...` inter-resource
+  same-event synchronization constraints, and `cu_...` unary utility
+  constraints for resources with a single event variable. The DCOP objective is
+  `max`; assigning a resource is only beneficial when event value over the
+  occupied slots exceeds the generated free-slot opportunity value.
 
 ## Solve/LP Notes
 
