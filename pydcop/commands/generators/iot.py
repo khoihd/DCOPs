@@ -34,7 +34,6 @@ This generator generates both a dcop and its initial distribution.
 
 """
 
-
 import logging
 import os
 from importlib import import_module
@@ -216,7 +215,7 @@ def generate_powerlaw_var_constraints(
         constraints[c.name] = c
 
     logger.info(
-        "Generates %s variables and %s constraints in a powerlaw" "network",
+        "Generates %s variables and %s constraints in a powerlawnetwork",
         len(variables),
         len(constraints),
     )
@@ -330,7 +329,7 @@ def distribute_factors(
 
     # 1st objective : minimize communication costs:
     comm = LpAffineExpression()
-    for (fn, an_f) in xs:
+    for fn, an_f in xs:
         for vn in cg.neighbors(fn):
             an_v = inverse_mapping[vn]  # agt hosting neighbor var vn
             comm += agents[an_f].route(an_v) * msg_load(vn, fn) * xs[(fn, an_f)]
