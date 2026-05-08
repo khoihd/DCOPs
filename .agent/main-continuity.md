@@ -52,6 +52,9 @@
   and `verification_archive/mgm2_paper_check.md`.
 - Current MGM verification focus: confirm min/max gain behavior with small
   deterministic experiment runs.
+- `DCOP` objects now require both `name` and `objective` constructor
+  arguments explicitly; there is no longer a default objective at the model
+  layer. Tests and production call sites were updated accordingly.
 
 ## DPOP Paper Check Notes
 
@@ -91,6 +94,12 @@
   `pydcop/dcop/yamldcop.py`.
 - Graph-coloring generation now supports `--objective min|max`. The default
   remains `min`.
+- IoT generation now requires an explicit `--objective min|max` CLI argument
+  from `pydcop generate iot`; `pydcop/commands/generators/iot.py` no longer
+  hardcodes `min` when constructing the intermediate or final `DCOP`.
+- The IoT generator creates a power-law Barabási-Albert binary DCOP with random
+  matrix costs in `range(--range)`, plus a computed factor-graph distribution
+  when output is written.
 - Graph-coloring color domains now use capital English letters from `A` to
   `Z`; `--colors_count` is restricted to 1 through 26.
 - Graph-coloring pseudo-hard constraints use
@@ -167,6 +176,9 @@
   - update the tracker status and notes
 - For any new optimization, pick one file or subsystem, update/create a focused
   `*_optimization_steps.txt` plan, then run targeted tests and Ruff.
+- Generator cleanup currently focuses on shared/explicit generator arguments
+  such as instance name, objective, variable/domain/utility ranges, seed, and
+  eventually multiple-instance generation.
 
 ## Important Paths
 
