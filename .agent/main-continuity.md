@@ -45,7 +45,7 @@
 - Paper verification tracking lives in
   `verification_archive/algorithm_paper_check_tracker.md`.
 - Source PDFs should live in `verification_archive/papers/`.
-- DPOP has been checked against `verification_archive/papers/dpop_petcu_05.pdf`
+- DPOP has been checked against `verification_archive/papers/dpop.pdf`
   and documented in `verification_archive/dpop_paper_check.md`.
 
 ## DPOP Paper Check Notes

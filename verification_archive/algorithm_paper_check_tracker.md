@@ -50,7 +50,7 @@ For each algorithm:
 - DPOP
   - Priority: 1
   - Implementation: `pydcop/algorithms/dpop.py`
-  - Paper / Source: `verification_archive/papers/dpop_petcu_05.pdf`
+  - Paper / Source: `verification_archive/papers/dpop.pdf`
   - Check File: `verification_archive/dpop_paper_check.md`
   - Status: Verified
   - Notes: Core UTIL/VALUE logic matches the paper; `memory_footprint_estimate()` is

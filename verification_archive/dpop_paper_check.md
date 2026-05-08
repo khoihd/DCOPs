@@ -2,7 +2,7 @@
 
 ## Source
 
-- Paper: `verification_archive/papers/dpop_petcu_05.pdf`
+- Paper: `verification_archive/papers/dpop.pdf`
 - Title: "A Scalable Method for Multiagent Constraint Optimization"
 - Authors: Adrian Petcu and Boi Faltings
 - Implementation: `pydcop/algorithms/dpop.py`
