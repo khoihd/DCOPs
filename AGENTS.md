@@ -83,7 +83,7 @@ Prefer targeted tests first.
 
 Use:
 ```bash
-conda run -n khoihd python -m pytest path/to/test_file.py
+pytest path/to/test_file.py
 ```
 
 ## Python linting
@@ -91,10 +91,10 @@ Use Ruff as the preferred Python linter.
 
 Prefer targeted lint checks first:
 ```bash
-conda run -n khoihd ruff check path/to/file.py
+ruff check path/to/file.py
 ```
 
 For broader checks, use:
 ```bash
-conda run -n khoihd ruff check .
+ruff check .
 ```
