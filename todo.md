@@ -1,6 +1,6 @@
 - Review instance generators:
-    - Let difference instances share common arguments from generate
-      - Seed value
+  - (WIP) Add seed value
+  - Add random graph
   
 - Add option for the generator to name the instances:
   - Instance file name and in the instance file
