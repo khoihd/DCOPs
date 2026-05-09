@@ -52,6 +52,7 @@ Synopsis
                 [--intentional]
                 [--noagents]
                 --objective <objective>
+                [--seed <seed>]
                 [--p_edge <p_edge>]
                 [--m_edge <m_edge>]
 
@@ -116,6 +117,10 @@ Options
 
 ``--objective <objective>``
   Optimization objective for the generated DCOP, ``min`` or ``max``.
+
+``--seed <seed>``
+  Seed value for random graph generation, scale-free node shuffling, and soft
+  constraint costs.
 
 ``--p_edge <p_edge>`` / ``-p <p_edge>``
   Only used for random graph, probability for edge creation in the random
@@ -229,6 +234,14 @@ def init_cli_parser(parent_parser):
         help="Optimization objective for the generated DCOP",
     )
 
+    parser.add_argument(
+        "--seed",
+        required=False,
+        type=int,
+        default=None,
+        help="Seed value for random graph generation and soft constraint costs",
+    )
+
     # For random graphs
     parser.add_argument(
         "-p",
@@ -257,6 +270,8 @@ def generate(args):
     """
     Generate and output a graph coloring problem
     """
+    random_generator = random.Random(args.seed)
+
     if args.colors_count < 1 or args.colors_count > len(COLORS):
         raise ValueError(
             f"The number of colors must be between 1 and {len(COLORS)}"
@@ -269,7 +284,7 @@ def generate(args):
                 "problem based on a random graph."
             )
         graph = generate_random_graph(
-            args.variables_count, args.p_edge, args.allow_subgraph
+            args.variables_count, args.p_edge, args.allow_subgraph, random_generator
         )
         name = "Random "
     elif args.graph == "scalefree":
@@ -279,7 +294,7 @@ def generate(args):
                 "problem based on a barabasi graph."
             )
         graph = generate_scalefree_graph(
-            args.variables_count, args.m_edge, args.allow_subgraph
+            args.variables_count, args.m_edge, args.allow_subgraph, random_generator
         )
         name = "Scale-free "
     elif args.graph == "grid":
@@ -305,7 +320,9 @@ def generate(args):
             agents[agt.name] = agt
 
     if args.soft:
-        constraints = generate_soft_constraints(graph, variables, args.intentional)
+        constraints = generate_soft_constraints(
+            graph, variables, args.intentional, random_generator
+        )
         name += "soft graph coloring"
     else:
         constraints = generate_hard_constraints(
@@ -330,32 +347,36 @@ def generate(args):
         print(dcop_yaml(dcop))
 
 
-def generate_random_graph(variables_count, p_edge, allow_subgraph):
+def generate_random_graph(variables_count, p_edge, allow_subgraph, random_generator):
     if not allow_subgraph:
-        graph = nx.gnp_random_graph(variables_count, p_edge)
+        graph = nx.gnp_random_graph(variables_count, p_edge, seed=random_generator)
         is_connected = nx.is_connected(graph)
         while not is_connected:
-            graph = nx.gnp_random_graph(variables_count, p_edge)
+            graph = nx.gnp_random_graph(variables_count, p_edge, seed=random_generator)
             is_connected = nx.is_connected(graph)
     else:
-        graph = nx.gnp_random_graph(variables_count, p_edge)
+        graph = nx.gnp_random_graph(variables_count, p_edge, seed=random_generator)
     return graph
 
 
-def generate_scalefree_graph(variables_count, m_edge, allow_subgraph):
+def generate_scalefree_graph(variables_count, m_edge, allow_subgraph, random_generator):
     if not allow_subgraph:
-        graph = nx.barabasi_albert_graph(variables_count, m_edge)
+        graph = nx.barabasi_albert_graph(
+            variables_count, m_edge, seed=random_generator
+        )
         is_connected = nx.is_connected(graph)
         while not is_connected:
-            graph = nx.barabasi_albert_graph(variables_count, m_edge)
+            graph = nx.barabasi_albert_graph(
+                variables_count, m_edge, seed=random_generator
+            )
             is_connected = nx.is_connected(graph)
     else:
-        graph = nx.barabasi_albert_graph(variables_count, m_edge)
+        graph = nx.barabasi_albert_graph(variables_count, m_edge, seed=random_generator)
 
     # In the obtained graph, low rank nodes will have a much higher edge count
     # than high rank nodes. We shuffle the nodes names to avoid this effect:
     new_nodes = list(range(variables_count))
-    random.shuffle(new_nodes)
+    random_generator.shuffle(new_nodes)
     node_mapping = {n: nn for n, nn in zip(graph.nodes, new_nodes)}
 
     new_graph = nx.Graph((node_mapping[e1], node_mapping[e2]) for e1, e2 in graph.edges)
@@ -375,7 +396,7 @@ def generate_grid_graph(variables_count):
     return graph
 
 
-def generate_soft_constraints(graph, variables, intentional):
+def generate_soft_constraints(graph, variables, intentional, random_generator):
     constraints = {}
     if intentional:
         raise ValueError(
@@ -390,7 +411,7 @@ def generate_soft_constraints(graph, variables, intentional):
         for val1 in v1.domain:
             for val2 in v2.domain:
                 constraint = constraint.set_value_for_assignment(
-                    {v1.name: val1, v2.name: val2}, random.randint(0, 9)
+                    {v1.name: val1, v2.name: val2}, random_generator.randint(0, 9)
                 )
         constraints[name] = constraint
         logger.debug(repr(constraints[name]))

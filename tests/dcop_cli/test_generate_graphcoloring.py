@@ -55,6 +55,13 @@ def test_scalefree_hard():
     assert len(dcop.variables) == 20
 
 
+def test_seed_makes_random_soft_generation_reproducible():
+    output1 = run_generate_output("random", 10, 3, soft=True, p_edge=0.5, seed=12)
+    output2 = run_generate_output("random", 10, 3, soft=True, p_edge=0.5, seed=12)
+
+    assert output1 == output2
+
+
 def test_objective_is_required():
     cmd = (
         f"{pydcop_cmd()} generate graph_coloring --graph grid "
@@ -64,10 +71,43 @@ def test_objective_is_required():
         check_output(cmd, stderr=STDOUT, timeout=10, shell=True)
 
 
-def run_generate(graph, variables_count, colors_count, intentional=False,
-                 soft=False,
-                 p_edge=None, m_edge=None, objective="min"):
-    # filename = instance_path(filename)
+def run_generate(
+    graph,
+    variables_count,
+    colors_count,
+    intentional=False,
+    soft=False,
+    p_edge=None,
+    m_edge=None,
+    objective="min",
+    seed=None,
+):
+    output = run_generate_output(
+        graph,
+        variables_count,
+        colors_count,
+        intentional,
+        soft,
+        p_edge,
+        m_edge,
+        objective,
+        seed,
+    )
+    dcop = load_dcop(output)
+    return dcop
+
+
+def run_generate_output(
+    graph,
+    variables_count,
+    colors_count,
+    intentional=False,
+    soft=False,
+    p_edge=None,
+    m_edge=None,
+    objective="min",
+    seed=None,
+):
     cmd = f"{pydcop_cmd()} generate graph_coloring --graph {graph} " \
           f" --variables_count {variables_count} " \
           f" --colors_count {colors_count} "
@@ -81,6 +121,7 @@ def run_generate(graph, variables_count, colors_count, intentional=False,
         cmd += " --soft"
     if objective:
         cmd += f" --objective {objective}"
+    if seed is not None:
+        cmd += f" --seed {seed}"
     output = check_output(cmd, stderr=STDOUT, timeout=10, shell=True)
-    dcop = load_dcop(output)
-    return dcop
+    return output
