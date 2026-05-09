@@ -92,8 +92,7 @@ import os
 
 # from numpy.random import random
 from pydcop.commands.generators import graphcoloring, meetingscheduling, ising, agents, \
-    scenario
-from pydcop.commands.generators.iot import generate_iot
+    scenario, iot
 from pydcop.commands.generators.secp import parser_secp
 from pydcop.commands.generators.smallworld import generate_small_world
 from pydcop.dcop.objects import VariableDomain, Variable, AgentDef
@@ -142,49 +141,9 @@ def set_parser(main_subparsers):
 
     parser_ising_soft(subparsers)
 
-    parser_iot_problem(subparsers)
+    iot.init_cli_parser(subparsers)
 
     parser_secp(subparsers)
-
-
-def parser_iot_problem(subparsers):
-    parser = subparsers.add_parser(
-        "iot",
-        help="generate a DCOP modelling a "
-        "typical IoT problem. All constraints "
-        "are binary and cost are random.",
-    )
-    parser.set_defaults(func=generate_iot)
-    parser.add_argument(
-        "-d",
-        "--domain",
-        type=int,
-        required=True,
-        help="domain of the variables domain: 0, 1, ..., d-1",
-    )
-    parser.add_argument(
-        "-n", "--num", type=int, required=True, help="number of variables in the graph"
-    )
-    # parser.add_argument('-p', '--p', type=float, required=True,
-    #                     help='probability of edge creation')
-    parser.add_argument(
-        "-r", "--range", type=int, default=10, help="range of the constraints values"
-    )
-    parser.add_argument(
-        "--objective",
-        choices=["min", "max"],
-        required=True,
-        help="Optimization objective for the generated DCOP",
-    )
-    parser.add_argument(
-        "--seed",
-        required=False,
-        type=int,
-        default=None,
-        help="Seed value for random graph generation and costs",
-    )
-    # parser.add_argument('-a', '--agents', type=int, required=True,
-    #                     help='number of agents')
 
 
 def parser_ising_soft(subparsers):
