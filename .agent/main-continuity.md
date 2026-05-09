@@ -13,14 +13,18 @@
 
 ## Environment And Test Commands
 
-- The project has been used from the `khoihd` Conda environment, but the
-  Makefile now intentionally defaults to the active user's environment:
+- The active shell resolves `python` to
+  `/Users/khoihd/miniconda3/bin/python` and `pytest` to
+  `/Users/khoihd/miniconda3/bin/pytest`; `ruff` resolves to
+  `/opt/homebrew/bin/ruff`.
+- AGENTS.md now intentionally uses the active environment directly:
+  `pytest path/to/test_file.py`, `ruff check path/to/file.py`, and
+  `ruff check .`. This was committed as
+  `bfa9873 Use default environment commands`.
+- The Makefile intentionally defaults to the active user's environment:
   - `PYTHON ?= python`
   - `PYTEST ?= $(PYTHON) -m pytest`
   - `RUFF ?= ruff`
-- For explicit environment runs, use the desired environment directly, e.g.
-  `conda run -n khoihd python -m pytest ...` or
-  `conda run -n base python -m pytest ...`.
 - Plain `pytest` is now configured as a correctness run and excludes tests
   marked `perf`.
 - Run performance/benchmark tests explicitly with `pytest -m perf` or
@@ -40,8 +44,10 @@
   and SyncBB.
 - The memory-estimation hook was renamed repo-wide from
   `computation_memory()` to `memory_footprint_estimate()`.
-- `todo.md` currently prioritizes verifying algorithm implementation
-  correctness against source papers.
+- `todo.md` currently includes generator review/cleanup items, with seed
+  support marked WIP, plus later paper verification and optimization items.
+- The latest generator todo wording was committed as
+  `5fc003f Update generator todo list`.
 - Paper verification tracking lives in
   `verification_archive/algorithm_paper_check_tracker.md`.
 - Source PDFs should live in `verification_archive/papers/`.
@@ -102,12 +108,31 @@
   `conda run -n khoihd python -m pytest tests/dcop_cli/test_generate_graphcoloring.py`
   and
   `conda run -n khoihd ruff check pydcop/commands/generators/graphcoloring.py tests/dcop_cli/test_generate_graphcoloring.py`.
+- Graph-coloring generation now also accepts optional `--seed <int>`,
+  committed as `4b0575e Add graph coloring generator seed`. One
+  `random.Random(args.seed)` stream controls NetworkX graph generation,
+  scale-free node shuffling, and soft constraint random costs. Targeted
+  validation passed with
+  `pytest tests/dcop_cli/test_generate_graphcoloring.py` and
+  `ruff check pydcop/commands/generators/graphcoloring.py tests/dcop_cli/test_generate_graphcoloring.py`.
 - IoT generation now requires an explicit `--objective min|max` CLI argument
   from `pydcop generate iot`; `pydcop/commands/generators/iot.py` no longer
   hardcodes `min` when constructing the intermediate or final `DCOP`.
 - The IoT generator creates a power-law Barabási-Albert binary DCOP with random
   matrix costs in `range(--range)`, plus a computed factor-graph distribution
   when output is written.
+- IoT generation now accepts optional `--seed <int>`, committed as
+  `19b8724 Add IoT generator seed`. The seeded RNG is threaded through the
+  Barabási graph, random constraint matrices, and random hosting costs.
+- IoT now owns its CLI parser in
+  `pydcop/commands/generators/iot.py:init_cli_parser`, matching the
+  graph-coloring generator pattern. `pydcop/commands/generate.py` calls
+  `iot.init_cli_parser(subparsers)`. This was committed as
+  `791bb8d Move IoT parser into generator`.
+- Focused IoT validation passed with
+  `pytest tests/unit/test_generators_iot.py`,
+  `ruff check pydcop/commands/generate.py pydcop/commands/generators/iot.py tests/unit/test_generators_iot.py`,
+  and `python -m pydcop.dcop_cli generate iot --help`.
 - Graph-coloring color domains now use capital English letters from `A` to
   `Z`; `--colors_count` is restricted to 1 through 26.
 - Graph-coloring pseudo-hard constraints use
