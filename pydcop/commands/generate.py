@@ -82,7 +82,6 @@ Planned
 
 import logging
 import random
-from math import floor
 from collections import defaultdict
 from typing import Dict, List
 from typing import Tuple
@@ -139,36 +138,14 @@ def set_parser(main_subparsers):
     scenario.init_cli_parser(subparsers)
     parser_mixed_problem(subparsers)
 
-    parser_ising_soft(subparsers)
+    parser_small_world(subparsers)
 
     iot.init_cli_parser(subparsers)
 
     parser_secp(subparsers)
 
 
-def parser_ising_soft(subparsers):
-    parser = subparsers.add_parser(
-        "ising_soft",
-        help="Generates a random problem with soft "
-        "constraints and an ising-based "
-        "constraints graph",
-    )
-    parser.set_defaults(func=generate_ising)
-    parser.add_argument(
-        "-s",
-        "--size",
-        type=int,
-        required=True,
-        help="size of the izing graph (which will contains s*s "
-        "variables and 2*s*s constraints)",
-    )
-    parser.add_argument(
-        "-r",
-        "--range",
-        type=int,
-        required=True,
-        help="range of the variables domain: 0, 1, ..., r-1",
-    )
+def parser_small_world(subparsers):
     parser = subparsers.add_parser(
         "small_world",
         help="generate a DCOP with a small world "
@@ -805,46 +782,3 @@ def correct_density(filename: str, real_density: float):
 
     return "/".join(path_elts)
 
-
-def generate_ising(args):
-    domain_size = args.range
-    size = args.size
-    d = VariableDomain("d", "dummy", range(domain_size))
-    variables = {}
-    constraints = {}
-    for i in range(size):
-        for j in range(size):
-            v = Variable("v{}_{}".format(i, j), d, floor(domain_size * random.random()))
-            variables[(i, j)] = v
-
-    for i, j in variables:
-        c = _create_ising_constraint(i, j, i, (j + 1) % size, domain_size, variables)
-        constraints[(i, j, i, (j + 1) % size)] = c
-
-        c = _create_ising_constraint(i, j, (i + 1) % size, j, domain_size, variables)
-        constraints[(i, j, (i + 1) % size), j] = c
-
-    dcop = DCOP("radom ising", "min")
-    # dcop.domains = {'d': d}
-    # dcop.variables = variables
-    dcop._agents_def = {}
-    for c in constraints.values():
-        dcop.add_constraint(c)
-
-    if args.output:
-        outputfile = args.output[0]
-        write_in_file(outputfile, dcop_yaml(dcop))
-    else:
-        print(dcop_yaml(dcop))
-
-
-def _create_ising_constraint(i, j, i1, j1, domain_size, variables):
-    target = floor(domain_size * random.random())
-    v = "v{}_{}".format(i, j)
-    v1 = "v{}_{}".format(i1, j1)
-    c = relation_from_str(
-        "c_{}_{}_{}_{}".format(i, j, i1, j1),
-        "{} + {} - {}".format(v, v1, target),
-        [variables[(i, j)], variables[i1, j1]],
-    )
-    return c
