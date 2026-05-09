@@ -132,6 +132,22 @@
   constraints for resources with a single event variable. The DCOP objective is
   `max`; assigning a resource is only beneficial when event value over the
   occupied slots exceeds the generated free-slot opportunity value.
+- `pydcop/commands/generators/secp.py` now has clearer `build_models`
+  documentation with a smart-office lighting example. The generated DCOP name
+  was corrected from `"graph coloring"` to `"secp"`. Committed as
+  `da1e413 Document SECP model generation`; targeted Ruff passed.
+- `pydcop/commands/generators/smallworld.py` now has a module docstring with a
+  small CLI example and a prominent note that the generator is incomplete and
+  experimental. The generated DCOP name was corrected from `"graph coloring"`
+  to `"small world"`. Committed as
+  `fcd7079 Document experimental small world generator`; targeted Ruff passed.
+- `generator_summary.txt` was added as a short bullet summary of the generator
+  modules, including notes that `scenario` is for Dynamic DCOPs,
+  `small_world` is incomplete/experimental, and generator-specific CLI
+  arguments should stay with each generator for now. Committed as
+  `242f33e Add generator summary`.
+- `generator_arguments.txt` is being retired in favor of the shorter
+  `generator_summary.txt`.
 
 ## Solve/LP Notes
 
