@@ -1,3 +1,5 @@
+import random
+
 import pytest
 
 from pydcop.commands.generators.graphcoloring import (
@@ -21,7 +23,7 @@ def test_grid_graph():
 
 
 def test_generate_scale_free():
-    graph = generate_scalefree_graph(10, 2, False)
+    graph = generate_scalefree_graph(10, 2, False, random.Random(0))
     assert len(graph.nodes) == 10
 
 
