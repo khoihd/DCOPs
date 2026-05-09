@@ -160,7 +160,7 @@ def generate_secp(args):
     constraints.update(rules_constraints)
 
     dcop = DCOP(
-        "graph coloring",
+        "secp",
         "min",
         domains={"light_domain": light_domain},
         variables=variables,
@@ -199,13 +199,39 @@ def build_agents(lights_vars, lights_costs, capacity=None):
 
 
 def build_models(light_domain, lights, max_model_size, model_count):
-    # Models: for each model
-    #  * one constraint depends on 2 =< k =<max_model_size lights
-    #  * one variable ,
-    # Example:
-    #   function: 0 if 0.7 * l_d1 + 0.5 * l_d2 + 0.3 * l_lv3 == mv_desk else
-    #             1000
-    # function: '0 if 10 * abs(m0 - ( 0.2 * l1 + 0.5 * l2 + 0.8 * l3 )) < 3 else 1000'
+    """
+    Build model variables and constraints from light variables.
+
+    Each generated model variable represents an observed or estimated value
+    derived from a random subset of light variables. Its matching constraint
+    has zero cost when the model value is close to the weighted sum of these
+    lights, and a high penalty otherwise.
+
+    For example, in a smart office, ``l0`` and ``l2`` could be controllable
+    lamps and ``m0`` the predicted brightness at a desk. A generated constraint
+    such as
+    ``0 if 10 * abs(m0 - (l0 * 0.6 + l2 * 0.3)) < 5 else 10000`` means that the
+    desk brightness should stay within ``0.5`` of ``l0 * 0.6 + l2 * 0.3``;
+    otherwise the constraint contributes a large penalty to the minimization
+    objective.
+
+    Parameters
+    ----------
+    light_domain: Domain
+        Domain used by both light and model variables.
+    lights: dict
+        Light variables indexed by their names.
+    max_model_size: int
+        Maximum number of light variables involved in each model constraint.
+    model_count: int
+        Number of model variables and constraints to generate.
+
+    Returns
+    -------
+    tuple
+        A pair ``(models_var, models)`` where ``models_var`` contains the
+        generated model variables and ``models`` contains their constraints.
+    """
 
     models = {}
     models_var = {}
@@ -215,11 +241,9 @@ def build_models(light_domain, lights, max_model_size, model_count):
 
         model_size = randint(2, max_model_size)
         light_expression_parts = []
-        for k, model_light in enumerate(sample(list(lights), model_size)):
+        for model_light in sample(list(lights), model_size):
             impact = randint(1, 7) / 10
             light_expression_parts.append(" {} * {}".format(model_light, impact))
-            # model_lights.append((model_light, impact))
-            # model_light.
         light_expression = " + ".join(light_expression_parts)
         model_expression = f"0 if 10* abs({model_var.name} - ({light_expression})) < 5 else 10000 ".format(
             light_expression, model_var.name
