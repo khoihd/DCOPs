@@ -1,0 +1,25 @@
+Generator Summary
+=================
+
+Instance generators in pydcop/commands/generators/:
+
+- agents: generates agent definitions, capacities, hosting costs, and route
+  costs.
+- graph_coloring: generates hard or soft graph coloring DCOPs on random,
+  scale-free, or grid graphs.
+- iot: generates an IoT-style binary DCOP with a power-law graph, agents, and
+  an initial factor-graph distribution.
+- ising: generates Ising grid DCOPs with unary and binary costs, optionally
+  with distribution files.
+- meetings: generates PEAV meeting scheduling DCOPs, optionally with agents
+  and a distribution.
+- scenario: generates scenario YAML files for Dynamic DCOPs. It currently
+  creates timed agent-removal events, not static DCOP instances.
+- secp: generates SECP-style DCOPs with lights, model variables, rules, and
+  one agent per light.
+- small_world: generates a Barabasi-Albert small-world-like DCOP with random
+  binary costs and fixed heterogeneous agents.
+
+Notes:
+- Each generator should keep its own CLI arguments as they are now.
+- small_world is not complete and is for experimental use only.
