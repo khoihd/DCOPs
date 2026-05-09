@@ -90,11 +90,11 @@ Options
 -------
 
 ``--row_count <row_count>``
-  Number of rows in the grid, must be >= 2.
+  Number of rows in the grid, must be > 2.
 
 ``--col_count <col_count>``
   Number of columns in the grid, optional. If ``col_count`` is not given, the generated
-  will be a square of size ``row_count``. If given, ``col_count`` must be >= 2.
+  will be a square of size ``row_count``. If given, ``col_count`` must be > 2.
 
 ``--bin_range <bin_range>``
   :math:`\\beta` value used for binary constraints. Defaults to 1.6.
