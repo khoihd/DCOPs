@@ -176,6 +176,13 @@ def parser_iot_problem(subparsers):
         required=True,
         help="Optimization objective for the generated DCOP",
     )
+    parser.add_argument(
+        "--seed",
+        required=False,
+        type=int,
+        default=None,
+        help="Seed value for random graph generation and costs",
+    )
     # parser.add_argument('-a', '--agents', type=int, required=True,
     #                     help='number of agents')
 

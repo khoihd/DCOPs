@@ -36,8 +36,8 @@ This generator generates both a dcop and its initial distribution.
 
 import logging
 import os
+import random
 from importlib import import_module
-from random import randint
 from typing import List, Tuple, Dict, Callable
 
 import networkx as nx
@@ -58,7 +58,6 @@ from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Variable, Domain, AgentDef
 from pydcop.dcop.relations import (
     NAryMatrixRelation,
-    random_assignment_matrix,
     Constraint,
 )
 from pydcop.dcop.yamldcop import dcop_yaml
@@ -72,10 +71,11 @@ RATIO_HOST_COMM = 0.8
 
 def generate_iot(args):
     print("generate iot ", args.output)
+    random_generator = random.Random(getattr(args, "seed", None))
 
     # Constraints and variables with a power-law constraint graph:
     variables, constraints, domain = generate_powerlaw_var_constraints(
-        args.num, args.domain, args.range
+        args.num, args.domain, args.range, random_generator
     )
 
     # Build a dcop and computation graph with no agents, just to be able to
@@ -105,7 +105,7 @@ def generate_iot(args):
                 a_name,
                 capacity=footprints[comp.name] * 100,
                 default_hosting_cost=10,
-                hosting_costs=agt_hosting_costs(comp, cg),
+                hosting_costs=agt_hosting_costs(comp, cg, random_generator),
                 default_route=1,
                 routes=agt_route_costs(comp, cg),
             )
@@ -166,7 +166,10 @@ def generate_iot(args):
 
 
 def generate_powerlaw_var_constraints(
-    num_var: int, domain_size: int, constraint_range: int
+    num_var: int,
+    domain_size: int,
+    constraint_range: int,
+    random_generator: random.Random,
 ) -> Tuple[Dict[str, Variable], Dict[str, Constraint], Domain]:
     """
     Generate variables and constraints for a power-law based constraints
@@ -184,6 +187,8 @@ def generate_powerlaw_var_constraints(
     constraint_range: int
         range in which constraints take their value (uniform random value of
         ech possible assignment).
+    random_generator: random.Random
+        random number generator used for graph generation and constraints.
 
     Returns
     -------
@@ -191,7 +196,7 @@ def generate_powerlaw_var_constraints(
     """
 
     # Use a barabasi powerlaw based constraints graph
-    graph = nx.barabasi_albert_graph(num_var, 2)
+    graph = nx.barabasi_albert_graph(num_var, 2, seed=random_generator)
 
     # import matplotlib.pyplot as plt
     # plt.subplot(121)
@@ -209,7 +214,9 @@ def generate_powerlaw_var_constraints(
     for i, (n1, n2) in enumerate(graph.edges):
         v1 = variables[var_name(n1)]
         v2 = variables[var_name(n2)]
-        values = random_assignment_matrix([v1, v2], range(constraint_range))
+        values = random_assignment_matrix(
+            [v1, v2], range(constraint_range), random_generator
+        )
         c = NAryMatrixRelation([v1, v2], values, name=c_name(n1, n2))
         logger.debug("Create constraints for edge (%s, %s) : %s", v1, v2, c)
         constraints[c.name] = c
@@ -221,6 +228,19 @@ def generate_powerlaw_var_constraints(
     )
 
     return variables, constraints, domain
+
+
+def random_assignment_matrix(variables: List[Variable], values: List, random_generator):
+    """
+    Generate a matrix that defines a random value for each possible assignment.
+    """
+    if len(variables) == 1:
+        return [random_generator.choice(values) for _ in variables[0].domain]
+
+    return [
+        random_assignment_matrix(variables[1:], values, random_generator)
+        for _ in variables[0].domain
+    ]
 
 
 def agt_route_costs(
@@ -254,7 +274,9 @@ def agt_route_costs(
 
 
 def agt_hosting_costs(
-    var_comp: ComputationNode, cg: ComputationGraph
+    var_comp: ComputationNode,
+    cg: ComputationGraph,
+    random_generator: random.Random,
 ) -> Dict[str, float]:
     """
     Build the hosting costs dict for the agent hosting the variable whose
@@ -269,13 +291,15 @@ def agt_hosting_costs(
         Computation for the variable hosted by the agent
     cg:
         computation graph
+    random_generator: random.Random
+        random number generator used for hosting costs.
 
     Returns
     -------
     a dict {computation_name: float} representing the hosting cost for each
     computation on this agent.
     """
-    hosting_costs = {c.name: randint(0, 10) for c in cg.nodes}
+    hosting_costs = {c.name: random_generator.randint(0, 10) for c in cg.nodes}
     hosting_costs[var_comp.name] = 0
     return hosting_costs
 
