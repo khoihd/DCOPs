@@ -28,6 +28,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""
+Generate a DCOP with a Barabasi-Albert small-world-like constraint graph.
+
+NOTE: THIS GENERATOR IS INCOMPLETE AND INTENDED FOR EXPERIMENTAL USE ONLY.
+ITS PARAMETERS, AGENT MODEL, AND OUTPUT FORMAT SHOULD NOT BE TREATED AS A
+STABLE OR FULLY VALIDATED INSTANCE GENERATOR.
+
+The command creates one variable per graph node, one random binary cost
+constraint per graph edge, and a fixed set of heterogeneous agents used by
+distribution algorithms.
+
+Example
+-------
+Generate a small instance with 6 variables, domain values ``0..2``, and random
+constraint costs in ``0..4``::
+
+    python -m pydcop.dcop_cli generate small_world --num 6 --domain 3 --range 5
+"""
+
 
 import logging
 import os
@@ -76,7 +95,7 @@ def generate_small_world(args):
         constraints[c.name] = c
 
     dcop = DCOP(
-        "graph coloring",
+        "small world",
         "min",
         domains={"d": domain},
         variables=variables,
