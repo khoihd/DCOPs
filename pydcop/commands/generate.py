@@ -91,8 +91,7 @@ import os
 
 # from numpy.random import random
 from pydcop.commands.generators import graphcoloring, meetingscheduling, ising, agents, \
-    scenario, iot
-from pydcop.commands.generators.secp import parser_secp
+    scenario, iot, secp
 from pydcop.commands.generators.smallworld import generate_small_world
 from pydcop.dcop.objects import VariableDomain, Variable, AgentDef
 from pydcop.dcop.dcop import DCOP
@@ -142,7 +141,7 @@ def set_parser(main_subparsers):
 
     iot.init_cli_parser(subparsers)
 
-    parser_secp(subparsers)
+    secp.init_cli_parser(subparsers)
 
 
 def parser_small_world(subparsers):
@@ -781,4 +780,3 @@ def correct_density(filename: str, real_density: float):
             path_elts[i] = "density={}".format(round(real_density, 1))
 
     return "/".join(path_elts)
-

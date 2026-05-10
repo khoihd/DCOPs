@@ -103,7 +103,7 @@ from pydcop.dcop.yamldcop import dcop_yaml
 logger = logging.getLogger("pydcop.generate")
 
 
-def parser_secp(subparser):
+def init_cli_parser(subparser):
     parser = subparser.add_parser("secp", help="generate an secp")
     parser.set_defaults(func=generate_secp)
     parser.add_argument(
