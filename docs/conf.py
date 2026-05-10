@@ -42,6 +42,8 @@ extensions = [
     'sphinxcontrib.bibtex'  # for bibtex based bibliography and citation
 ]
 
+bibtex_bibfiles = ['biblio.bib']
+
 
 # generate autosummary pages
 # autosummary_generate = True
@@ -175,5 +177,4 @@ texinfo_documents = [
      author, 'pydcop', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
