@@ -28,6 +28,11 @@ To generate documentation, you need to install the corresponding dependencies::
 
   pip install -e .[doc]
 
+When building documentation locally, disable autosummary generation to avoid
+rewriting committed autosummary files::
+
+  SPHINXOPTS="-D autosummary_generate=0" make html
+
 
 Additionally, for computations distribution, pyDCOP uses the
 `glpk <https://www.gnu.org/software/glpk/>`_ linear program solver, which must

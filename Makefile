@@ -4,6 +4,7 @@ PYTEST ?= $(PYTHON) -m pytest
 RUFF ?= ruff
 MYPY ?= $(PYTHON) -m mypy
 COVERAGE ?= $(PYTHON) -m coverage
+SPHINXOPTS ?=
 
 all: test integ
 
@@ -37,5 +38,7 @@ coverage:
 	$(COVERAGE) run --source=. -m unittest discover ./tests/unit
 	$(COVERAGE) report
 
-doc: 
-	$(PYTHON) -m sphinx ./docs ./docs/_build/
+doc:
+	$(PYTHON) -m sphinx $(SPHINXOPTS) ./docs ./docs/_build/
+
+html: doc
