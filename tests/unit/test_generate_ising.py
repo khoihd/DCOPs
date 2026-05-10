@@ -1,14 +1,20 @@
+from random import Random
+
 import networkx as nx
 
 from pydcop.commands.generators.ising import (
-    generate_unary_extensive_constraint,
-    generate_unary_intentional_constraint,
-    generate_unary_constraints,
+    generate_binary_constraints,
+    generate_binary_extensive_constraint,
     generate_binary_intentional_constraint,
     generate_binary_variables,
-    generate_binary_constraints, generate_binary_extensive_constraint)
+    generate_ising,
+    generate_unary_constraints,
+    generate_unary_extensive_constraint,
+    generate_unary_intentional_constraint,
+)
 from pydcop.dcop.objects import Variable, Domain
 from pydcop.dcop.relations import NAryMatrixRelation, Constraint, NAryFunctionRelation
+from pydcop.dcop.yamldcop import dcop_yaml
 
 
 def test_generate_unary_constraints():
@@ -107,6 +113,19 @@ def test_generate_binary_constraints():
     for constraint in constraints.values():
         assert isinstance(constraint, NAryFunctionRelation)
         check_binary_constraint(constraint, bin_range)
+
+
+def test_seed_makes_ising_generation_reproducible():
+    dcop1, var_mapping1, fg_mapping1 = generate_ising(
+        3, 3, 1.6, 0.05, True, False, True, True, random_generator=Random(12)
+    )
+    dcop2, var_mapping2, fg_mapping2 = generate_ising(
+        3, 3, 1.6, 0.05, True, False, True, True, random_generator=Random(12)
+    )
+
+    assert dcop_yaml(dcop1) == dcop_yaml(dcop2)
+    assert var_mapping1 == var_mapping2
+    assert fg_mapping1 == fg_mapping2
 
 
 def check_binary_constraint(constraint, bin_range):

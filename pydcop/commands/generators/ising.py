@@ -46,6 +46,7 @@ Ising benchmark problem generator
                 [--bin_range <bin_range>]
                 {--un_range <un_range>]
                 [-intentional]
+                [--seed <seed>]
                 [--fg_dist]
 
 
@@ -101,6 +102,9 @@ Options
 
 ``--un_range <un_range>``
   :math:`\\rho` value used for unary constraints. Defaults to 0.05.
+
+``--seed <seed>``
+  Seed for random constraint generation. Optional.
 
 ``--intentional``
   When using this flag, constraints are generated in the intentional form
@@ -174,6 +178,12 @@ def init_cli_parser(parent_parser):
         "--un_range", type=float, default=0.05, help="Range of unary constraints"
     )
     parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed for random constraint generation",
+    )
+    parser.add_argument(
         "--intentional",
         default=False,
         required=False,
@@ -221,6 +231,7 @@ def generate(args):
     else:
         col_count = args.row_count
 
+    random_generator = random.Random(args.seed)
     dcop, var_mapping, fg_mapping = generate_ising(
         args.row_count,
         col_count,
@@ -230,6 +241,7 @@ def generate(args):
         no_agents=args.no_agents,
         fg_dist=args.fg_dist,
         var_dist=args.var_dist,
+        random_generator=random_generator,
     )
 
     graph = "factor_graph" if args.fg_dist else "constraints_graph"
@@ -279,17 +291,23 @@ def generate_ising(
     no_agents: bool,
     fg_dist: bool,
     var_dist: bool,
+    random_generator=None,
 ) -> Tuple[DCOP, Dict, Dict]:
+    if random_generator is None:
+        random_generator = random
+
     grid_graph = nx.grid_2d_graph(row_count, col_count, periodic=True)
     domain = Domain("var_domain", "binary", [0, 1])
 
     variables = generate_binary_variables(grid_graph, domain)
 
     constraints = {}
-    unary_constraints = generate_unary_constraints(variables, un_range, extensive)
+    unary_constraints = generate_unary_constraints(
+        variables, un_range, extensive, random_generator
+    )
     constraints.update(unary_constraints)
     binary_constraints = generate_binary_constraints(
-        grid_graph, variables, bin_range, extensive
+        grid_graph, variables, bin_range, extensive, random_generator
     )
     constraints.update(binary_constraints)
 
@@ -340,8 +358,15 @@ def generate_binary_variables(grid_graph: nx.Graph, domain: Domain):
 
 
 def generate_binary_constraints(
-    grid_graph: nx.Graph, variables, bin_range: float, extensive: bool
+    grid_graph: nx.Graph,
+    variables,
+    bin_range: float,
+    extensive: bool,
+    random_generator=None,
 ) -> Dict[str, Constraint]:
+    if random_generator is None:
+        random_generator = random
+
     constraints: Dict[str, Constraint] = {}
     for nodes in grid_graph.edges:
         (r1, c1), (r2, c2) = sorted(nodes)
@@ -351,20 +376,30 @@ def generate_binary_constraints(
         v2 = variables[name2]
 
         if extensive:
-            constraint = generate_binary_extensive_constraint(v1, v2, bin_range)
+            constraint = generate_binary_extensive_constraint(
+                v1, v2, bin_range, random_generator
+            )
         else:
-            constraint = generate_binary_intentional_constraint(v1, v2, bin_range)
+            constraint = generate_binary_intentional_constraint(
+                v1, v2, bin_range, random_generator
+            )
         constraints[constraint.name] = constraint
     return constraints
 
 
 def generate_binary_extensive_constraint(
-    variable1: Variable, variable2: Variable, bin_range: float
+    variable1: Variable,
+    variable2: Variable,
+    bin_range: float,
+    random_generator=None,
 ) -> Constraint:
+    if random_generator is None:
+        random_generator = random
+
     constraint = NAryMatrixRelation(
         [variable1, variable2], name=f"cb_{variable1.name}_{variable2.name}"
     )
-    value = random.uniform(-bin_range, bin_range)
+    value = random_generator.uniform(-bin_range, bin_range)
     constraint = constraint.set_value_for_assignment(
         {variable1.name: 0, variable2.name: 0}, value
     )
@@ -381,9 +416,15 @@ def generate_binary_extensive_constraint(
 
 
 def generate_binary_intentional_constraint(
-    variable1: Variable, variable2: Variable, bin_range: float
+    variable1: Variable,
+    variable2: Variable,
+    bin_range: float,
+    random_generator=None,
 ) -> Constraint:
-    value = random.uniform(-bin_range, bin_range)
+    if random_generator is None:
+        random_generator = random
+
+    value = random_generator.uniform(-bin_range, bin_range)
 
     constraint = constraint_from_str(
         name=f"cb_{variable1.name}_{variable2.name}",
@@ -395,30 +436,48 @@ def generate_binary_intentional_constraint(
 
 
 def generate_unary_constraints(
-    variables: Dict[Any, Variable], un_range: float, extensive: bool
+    variables: Dict[Any, Variable],
+    un_range: float,
+    extensive: bool,
+    random_generator=None,
 ) -> Dict[str, Constraint]:
+    if random_generator is None:
+        random_generator = random
+
     constraints: Dict[str, Constraint] = {}
     for variable in variables.values():
         if extensive:
-            constraint = generate_unary_extensive_constraint(variable, un_range)
+            constraint = generate_unary_extensive_constraint(
+                variable, un_range, random_generator
+            )
         else:
-            constraint = generate_unary_intentional_constraint(variable, un_range)
+            constraint = generate_unary_intentional_constraint(
+                variable, un_range, random_generator
+            )
         constraints[constraint.name] = constraint
     return constraints
 
 
 def generate_unary_extensive_constraint(
-    variable: Variable, un_range: float
+    variable: Variable, un_range: float, random_generator=None
 ) -> Constraint:
+    if random_generator is None:
+        random_generator = random
+
     constraint = NAryMatrixRelation([variable], name=f"cu_{variable.name}")
-    value = random.uniform(-un_range, un_range)
+    value = random_generator.uniform(-un_range, un_range)
     constraint = constraint.set_value_for_assignment({variable.name: 0}, value)
     constraint = constraint.set_value_for_assignment({variable.name: 1}, -value)
     return constraint
 
 
-def generate_unary_intentional_constraint(variable: Variable, un_range: float):
-    value = random.uniform(-un_range, un_range)
+def generate_unary_intentional_constraint(
+    variable: Variable, un_range: float, random_generator=None
+):
+    if random_generator is None:
+        random_generator = random
+
+    value = random_generator.uniform(-un_range, un_range)
     constraint = constraint_from_str(
         name=f"cu_{variable.name}",
         expression=f" -{value} if {variable.name} == 1 else {value}",
