@@ -1,14 +1,13 @@
 - Review instance generators:
   - (DONE) Add seed value
-  - (WIP) Add random graph
+  - (DONE) Add random graph
+  - Add support to generate multiple instances
+    - Check how we should name instances
   
-- Add option for the generator to name the instances:
-  - Instance file name and in the instance file
-
-- Add options for the generator to support multiple instances
-
 - Add print out when agent sends and receive messages for debugging
+
 - Check how the algorithm supports multi-threading
+
 - Investigate optional multicore PuLP solving with a CBC backend and a
   `threads` parameter; current `GLPK_CMD` path is effectively single-core.
 - Verify the correctness of the implementation with the provided paper
