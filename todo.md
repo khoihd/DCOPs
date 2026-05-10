@@ -1,6 +1,6 @@
 - Review instance generators:
-  - (WIP) Add seed value
-  - Add random graph
+  - (DONE) Add seed value
+  - (WIP) Add random graph
   
 - Add option for the generator to name the instances:
   - Instance file name and in the instance file
