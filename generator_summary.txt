@@ -7,6 +7,8 @@ Instance generators in pydcop/commands/generators/:
   costs.
 - graph_coloring: generates hard or soft graph coloring DCOPs on random,
   scale-free, or grid graphs.
+- random_graph: generates connected Erdos-Renyi random graph DCOPs with
+  extensive random binary costs in [0, 9].
 - iot: generates an IoT-style binary DCOP with a power-law graph, agents, and
   an initial factor-graph distribution.
 - ising: generates Ising grid DCOPs with unary and binary costs, optionally
