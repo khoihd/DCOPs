@@ -32,6 +32,7 @@ import pytest
 
 from pydcop.solvers.pulp_solver import solve_dcop
 from tests.utils.known_instances import KNOWN_INSTANCE_COSTS, KNOWN_INSTANCE_SOLUTIONS
+from tests.utils.known_instances import load_test_dcop
 
 
 @pytest.mark.parametrize(
@@ -61,3 +62,12 @@ def test_pulp_solver_matches_known_cost(known_case):
 
     assert result.status == "FINISHED"
     assert result.objective_value == pytest.approx(known_case.optimal_cost)
+
+
+def test_pulp_solver_solves_random_graph_instance():
+    dcop = load_test_dcop("random_graph_6_3_0.7.yaml")
+
+    result = solve_dcop(dcop)
+
+    assert result.status == "FINISHED"
+    assert result.objective_value == pytest.approx(35)

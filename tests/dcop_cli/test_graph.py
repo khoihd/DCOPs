@@ -85,6 +85,29 @@ class SecpSimple1(unittest.TestCase):
         self.assertEqual(result['density'], 1/3)
 
 
+class RandomGraph(unittest.TestCase):
+    def test_pseudotree(self):
+        result = run_graph('random_graph_6_3_0.7.yaml', 'pseudotree')
+
+        self.assertEqual(result['nodes_count'], 6)
+        self.assertEqual(result['edges_count'], 28)
+        self.assertEqual(result['density'], 14/15)
+
+    def test_factor_graph(self):
+        result = run_graph('random_graph_6_3_0.7.yaml', 'factor_graph')
+
+        self.assertEqual(result['nodes_count'], 20)
+        self.assertEqual(result['edges_count'], 28)
+        self.assertEqual(result['density'], 28/190)
+
+    def test_constraints_hypergraph(self):
+        result = run_graph('random_graph_6_3_0.7.yaml', 'constraints_hypergraph')
+
+        self.assertEqual(result['nodes_count'], 6)
+        self.assertEqual(result['edges_count'], 14)
+        self.assertEqual(result['density'], 14/15)
+
+
 def run_graph(filename, graph):
     filename = instance_path(filename)
     cmd = '{pydcop_bin} graph -g {graph} {file}'.format(

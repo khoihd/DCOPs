@@ -59,3 +59,26 @@ def test_solve_accepts_pulp_as_algorithm():
     assert result["solver"] == "pulp"
     assert result["assignment"] == {"v1": "R", "v2": "G", "v3": "R"}
     assert result["cost"] == pytest.approx(-0.1)
+
+
+def test_solve_pulp_handles_random_graph_instance():
+    output = check_output(
+        [
+            sys.executable,
+            "-m",
+            "pydcop.dcop_cli",
+            "-v",
+            "0",
+            "solve",
+            "-a",
+            "pulp",
+            instance_path("random_graph_6_3_0.7.yaml"),
+        ],
+        stderr=STDOUT,
+        timeout=10,
+    )
+
+    result = json.loads(output.decode(encoding="utf-8"))
+    assert result["status"] == "FINISHED"
+    assert result["solver"] == "pulp"
+    assert result["cost"] == pytest.approx(35)

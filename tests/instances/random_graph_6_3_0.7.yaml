@@ -1,0 +1,205 @@
+name: RandomGraph_6_3_0.7
+objective: min
+
+domains:
+  d:
+    type: value
+    values:
+    - 0
+    - 1
+    - 2
+
+variables:
+  v00:
+    domain: d
+  v01:
+    domain: d
+  v02:
+    domain: d
+  v03:
+    domain: d
+  v04:
+    domain: d
+  v05:
+    domain: d
+
+constraints:
+  c0:
+    type: extensional
+    values:
+      0.0: 0 1
+      1.0: 1 1 | 2 2
+      3.0: 0 0 | 1 0
+      5.0: 2 0
+      6.0: 2 1
+      8.0: 1 2
+      9.0: 0 2
+    variables:
+    - v00
+    - v01
+  c1:
+    type: extensional
+    values:
+      0.0: 0 0 | 0 1
+      1.0: 1 1 | 2 1
+      3.0: 1 0
+      6.0: 1 2 | 2 2
+      7.0: 2 0
+      8.0: 0 2
+    variables:
+    - v00
+    - v02
+  c10:
+    type: extensional
+    values:
+      2.0: 0 1 | 1 2
+      3.0: 0 0 | 2 0 | 2 1
+      5.0: 1 1
+      7.0: 0 2
+      8.0: 1 0
+      9.0: 2 2
+    variables:
+    - v02
+    - v05
+  c11:
+    type: extensional
+    values:
+      0.0: 0 0 | 1 2 | 2 1
+      2.0: 1 0
+      3.0: 1 1 | 2 2
+      4.0: 0 1
+      5.0: 0 2
+      8.0: 2 0
+    variables:
+    - v03
+    - v04
+  c12:
+    type: extensional
+    values:
+      0.0: 2 0
+      1.0: 0 1
+      2.0: 1 2
+      4.0: 2 2
+      5.0: 0 2 | 2 1
+      8.0: 1 0 | 1 1
+      9.0: 0 0
+    variables:
+    - v03
+    - v05
+  c13:
+    type: extensional
+    values:
+      1.0: 0 0
+      3.0: 0 1
+      4.0: 2 1
+      5.0: 2 0
+      7.0: 1 1 | 1 2 | 2 2
+      8.0: 0 2 | 1 0
+    variables:
+    - v04
+    - v05
+  c2:
+    type: extensional
+    values:
+      0.0: 2 0
+      2.0: 0 0 | 1 2 | 2 2
+      5.0: 0 2
+      8.0: 0 1 | 1 1 | 2 1
+      9.0: 1 0
+    variables:
+    - v00
+    - v03
+  c3:
+    type: extensional
+    values:
+      1.0: 0 1
+      6.0: 0 2 | 1 1
+      7.0: 2 0 | 2 1
+      8.0: 0 0
+      9.0: 1 0 | 1 2 | 2 2
+    variables:
+    - v00
+    - v04
+  c4:
+    type: extensional
+    values:
+      0.0: 0 2
+      1.0: 1 0
+      3.0: 1 1
+      4.0: 1 2
+      5.0: 2 0 | 2 1
+      6.0: 0 0 | 2 2
+      8.0: 0 1
+    variables:
+    - v00
+    - v05
+  c5:
+    type: extensional
+    values:
+      1.0: 0 1
+      3.0: 1 0
+      4.0: 0 0 | 0 2
+      5.0: 1 1 | 1 2 | 2 0
+      8.0: 2 1
+      9.0: 2 2
+    variables:
+    - v01
+    - v02
+  c6:
+    type: extensional
+    values:
+      0.0: 0 2 | 1 2 | 2 1
+      2.0: 0 1
+      3.0: 2 2
+      6.0: 1 0 | 1 1
+      8.0: 0 0 | 2 0
+    variables:
+    - v01
+    - v03
+  c7:
+    type: extensional
+    values:
+      0.0: 0 1
+      1.0: 1 2
+      2.0: 2 2
+      3.0: 1 0 | 2 1
+      6.0: 0 0 | 0 2
+      8.0: 2 0
+      9.0: 1 1
+    variables:
+    - v01
+    - v05
+  c8:
+    type: extensional
+    values:
+      0.0: 0 2 | 2 2
+      1.0: 0 0
+      4.0: 0 1 | 1 1
+      5.0: 2 0
+      6.0: 1 0
+      7.0: 1 2
+      9.0: 2 1
+    variables:
+    - v02
+    - v03
+  c9:
+    type: extensional
+    values:
+      3.0: 1 0
+      4.0: 1 2
+      5.0: 0 2 | 1 1
+      7.0: 0 1 | 2 0 | 2 1 | 2 2
+      8.0: 0 0
+    variables:
+    - v02
+    - v04
+
+agents:
+  a00: {}
+  a01: {}
+  a02: {}
+  a03: {}
+  a04: {}
+  a05: {}
+routes:
+  default: 1
