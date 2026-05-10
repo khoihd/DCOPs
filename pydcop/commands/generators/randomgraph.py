@@ -89,6 +89,7 @@ Generate a random graph DCOP with 10 variables and domain size 3::
 
 """
 import logging
+import math
 import random
 
 import networkx as nx
@@ -230,8 +231,38 @@ def generate_connected_random_graph(
 
     raise ValueError(
         "Could not generate a connected random graph after "
-        f"{max_attempts} attempts. Increase --p_edge or reduce --variables_count."
+        f"{max_attempts} attempts. "
+        f"Try p_edge >= {recommended_p_edge(variables_count):.2f} "
+        f"or variables_count >= {recommended_variables_count(p_edge)}."
     )
+
+
+def recommended_p_edge(variables_count):
+    if variables_count <= 1:
+        return 0
+    return min(1, (math.log(variables_count) + 2) / variables_count)
+
+
+def recommended_variables_count(p_edge):
+    if p_edge <= 0:
+        return 1
+    if p_edge >= 1:
+        return 2
+
+    low = 2
+    high = 2
+    while p_edge < recommended_p_edge(high):
+        low = high + 1
+        high *= 2
+
+    while low < high:
+        midpoint = (low + high) // 2
+        if p_edge >= recommended_p_edge(midpoint):
+            high = midpoint
+        else:
+            low = midpoint + 1
+
+    return low
 
 
 def generate_random_constraints(graph, variables, random_generator):
