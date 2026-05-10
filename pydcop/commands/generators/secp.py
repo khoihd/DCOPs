@@ -47,6 +47,7 @@ Synopsis
                       --capacity <capacity>
                       [--max_model_size <max_model_size>]
                       [--max_rule_size <max_rule_size>]
+                      [--seed <seed>]
 
 Description
 -----------
@@ -81,6 +82,9 @@ Options
   The maximum number of elements (lights and models) involved in a rule.
   Defaults to 3.
 
+``--seed <seed>``
+  Seed for random problem generation. Optional.
+
 
 Examples
 ========
@@ -92,7 +96,7 @@ Generating a DCOP for a SECP with 10 lights, 3 models and 2 rules.::
 """
 import logging
 import os
-from random import randint, sample
+import random
 
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Domain, Variable, AgentDef
@@ -124,6 +128,9 @@ def init_cli_parser(subparser):
     parser.add_argument(
         "--max_rule_size", type=int, default=3, help="maximum number of elements involved in a rule"
     )
+    parser.add_argument(
+        "--seed", type=int, default=None, help="Seed for random problem generation"
+    )
 
 
 def generate_secp(args):
@@ -134,16 +141,21 @@ def generate_secp(args):
     capacity = args.capacity
     max_model_size = args.max_model_size
     max_rule_size = args.max_rule_size
+    random_generator = random.Random(args.seed)
 
     light_domain = Domain("light", "light", range(0, 5))
 
-    lights_var, lights_cost = build_lights(light_count, light_domain)
-
-    models_var, models_constraints = build_models(
-        light_domain, lights_var, max_model_size, model_count
+    lights_var, lights_cost = build_lights(
+        light_count, light_domain, random_generator
     )
 
-    rules_constraints = build_rules(rule_count, lights_var, models_var, max_rule_size)
+    models_var, models_constraints = build_models(
+        light_domain, lights_var, max_model_size, model_count, random_generator
+    )
+
+    rules_constraints = build_rules(
+        rule_count, lights_var, models_var, max_rule_size, random_generator
+    )
 
     # Agents : one for each light
     agents = build_agents(lights_var, lights_cost, capacity)
@@ -198,7 +210,9 @@ def build_agents(lights_vars, lights_costs, capacity=None):
     return agents
 
 
-def build_models(light_domain, lights, max_model_size, model_count):
+def build_models(
+    light_domain, lights, max_model_size, model_count, random_generator=None
+):
     """
     Build model variables and constraints from light variables.
 
@@ -233,16 +247,19 @@ def build_models(light_domain, lights, max_model_size, model_count):
         generated model variables and ``models`` contains their constraints.
     """
 
+    if random_generator is None:
+        random_generator = random
+
     models = {}
     models_var = {}
     for j in range(model_count):
         model_var = Variable("m{}".format(j), domain=light_domain)
         models_var[model_var.name] = model_var
 
-        model_size = randint(2, max_model_size)
+        model_size = random_generator.randint(2, max_model_size)
         light_expression_parts = []
-        for model_light in sample(list(lights), model_size):
-            impact = randint(1, 7) / 10
+        for model_light in random_generator.sample(list(lights), model_size):
+            impact = random_generator.randint(1, 7) / 10
             light_expression_parts.append(" {} * {}".format(model_light, impact))
         light_expression = " + ".join(light_expression_parts)
         model_expression = f"0 if 10* abs({model_var.name} - ({light_expression})) < 5 else 10000 ".format(
@@ -258,7 +275,9 @@ def build_models(light_domain, lights, max_model_size, model_count):
     return models_var, models
 
 
-def build_rules(rule_count, lights_var, models_var, max_rule_size):
+def build_rules(
+    rule_count, lights_var, models_var, max_rule_size, random_generator=None
+):
     """
     Build a set of rules for the given lights and models.
 
@@ -281,6 +300,9 @@ def build_rules(rule_count, lights_var, models_var, max_rule_size):
     -------
     A dict containing the rules, indexed by their name.
     """
+    if random_generator is None:
+        random_generator = random
+
     # Rules : one constraint with a target for a model or a light
     # Example:
     #   function: 10 * (abs(mv_livingroom - 5) + abs(mv_kitchen - 4))
@@ -289,7 +311,7 @@ def build_rules(rule_count, lights_var, models_var, max_rule_size):
     for k in range(rule_count):
         # set rule size
         max_size = min(max_rule_size, len(models_var) + len(lights_var))
-        rule_size = randint(1, max_size)
+        rule_size = random_generator.randint(1, max_size)
 
         # A rule sets targets for lights and models.
         # it is represented by a function that returns a distance to these targets.
@@ -297,20 +319,20 @@ def build_rules(rule_count, lights_var, models_var, max_rule_size):
 
         # Lights in the rule
         # Example: "abs(l3 - 4)"
-        lights_count = randint(0, rule_size)
-        rules_lights = sample(list(lights_var), lights_count)
+        lights_count = random_generator.randint(0, rule_size)
+        rules_lights = random_generator.sample(list(lights_var), lights_count)
         expression_parts = []
         for light_var in rules_lights:
-            target = randint(0, 4)
+            target = random_generator.randint(0, 4)
             light_expression_part = f"abs({light_var} - {target} )"
             expression_parts.append(light_expression_part)
 
         # Models in the rule
         # Example:  "abs(m0 - 6 ) + abs(m2 - 4 )"
         models_count = rule_size - lights_count
-        rules_models = sample(list(models_var), models_count)
+        rules_models = random_generator.sample(list(models_var), models_count)
         for model_var in rules_models:
-            target = randint(0, 4)
+            target = random_generator.randint(0, 4)
             model_expression_part = f"abs({model_var} - {target} )"
             expression_parts.append(model_expression_part)
 
@@ -326,14 +348,17 @@ def build_rules(rule_count, lights_var, models_var, max_rule_size):
     return rules_constraints
 
 
-def build_lights(light_count, light_domain):
+def build_lights(light_count, light_domain, random_generator=None):
+    if random_generator is None:
+        random_generator = random
+
     # Lights : cost function & variable
     lights = {}
     lights_cost = {}
     for i in range(light_count):
         light = Variable("l{}".format(i), domain=light_domain)
         lights[light.name] = light
-        efficiency = randint(0, 90) / 100
+        efficiency = random_generator.randint(0, 90) / 100
         cost = constraint_from_str(
             "c_l{}".format(i),
             expression="{} * {}".format(light.name, efficiency),
