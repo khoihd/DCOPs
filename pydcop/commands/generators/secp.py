@@ -28,7 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 """
-.. _pydcop_commands_generate_scep:
+.. _pydcop_commands_generate_secp:
 
 
 pydcop generate secp
@@ -44,7 +44,7 @@ Synopsis
                       --lights <lights_counts>
                       --models <models_counts>
                       --rules <rules_count>
-                      --capacity <capacity>
+                      [--capacity <capacity>]
                       [--max_model_size <max_model_size>]
                       [--max_rule_size <max_rule_size>]
                       [--seed <seed>]
@@ -72,7 +72,7 @@ Options
   Number of rules in the SECP.
 
 ``--capacity <capacity>``
-  capacity of an agent
+  Capacity of an agent. Optional.
 
 ``--max_model_size <max_model_size>``
   The maximum number of lights involved in a model.

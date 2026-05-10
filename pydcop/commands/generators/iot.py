@@ -30,7 +30,52 @@
 
 
 """
-This generator generates both a dcop and its initial distribution.
+.. _pydcop_commands_generate_iot:
+
+pydcop generate iot
+===================
+
+IoT benchmark problem generator
+-------------------------------
+
+Synopsis
+--------
+
+::
+
+  pydcop generate iot
+                --domain <domain>
+                --num <num>
+                --objective <objective>
+                [--range <range>]
+                [--seed <seed>]
+
+Description
+-----------
+
+This command generates an IoT-style DCOP with binary constraints on a
+power-law Barabasi-Albert graph. Constraint costs are random integers in
+``range(--range)``. The generated DCOP uses the requested ``min`` or ``max``
+objective and, when output is written to a file, also writes a computed
+factor-graph distribution next to the DCOP file.
+
+Options
+-------
+
+``--domain <domain>``
+  Number of values in each variable domain.
+
+``--num <num>``
+  Number of variables in the graph.
+
+``--objective <objective>``
+  Optimization objective for the generated DCOP, either ``min`` or ``max``.
+
+``--range <range>``
+  Range of random constraint costs. Defaults to 10.
+
+``--seed <seed>``
+  Seed for random graph generation and costs. Optional.
 
 """
 

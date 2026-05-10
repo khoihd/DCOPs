@@ -53,7 +53,7 @@ Synopsis
 Description
 -----------
 
-This command generates a binary DCOP whose constraint graph is a connected
+This command generates a DCOP whose constraint graph is a connected
 Erdos-Renyi random graph. Each edge becomes an extensive binary constraint with
 integer costs sampled uniformly in ``[0, 9]`` for every joint assignment.
 
@@ -69,6 +69,8 @@ Options
 ``--p_edge <p_edge>``
   Probability for edge creation in the Erdos-Renyi graph. The generated graph
   is always connected; low probabilities may fail after repeated attempts.
+  When that happens, the error message recommends a larger ``p_edge`` or a
+  larger ``variables_count`` using a connectivity-threshold heuristic.
 
 ``--objective <objective>``
   Optimization objective for the generated DCOP, either ``min`` or ``max``.

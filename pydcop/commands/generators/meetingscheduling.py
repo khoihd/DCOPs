@@ -51,12 +51,16 @@ Synopsis
           [--max_length_event <max_length_event>]
           [--max_resource_value <max_resource_value>]
           [--seed <seed>]
+          [--no_agents]
+          [--routes_default <routes_default>]
+          [--hosting_default <hosting_default>]
+          [--capacity <capacity>]
 
 
 Description
 -----------
 
-This commands generate a meeting scheduling problem, based on
+This command generates a meeting scheduling problem, based on
 :cite:`maheswaran_taking_2004` with the *Private Event As Variable* (PEAV) model.
 
 Note that this command generates both a DCOP and a distribution, as the PEAV model
@@ -95,6 +99,18 @@ Options
 
 ``--seed <seed>``
   Seed for random problem generation. Optional.
+
+``--no_agents``
+  Do not generate agents or the PEAV distribution.
+
+``--routes_default <routes_default>``
+  Default route cost for generated agents. Optional.
+
+``--hosting_default <hosting_default>``
+  Default hosting cost for generated agents. Optional.
+
+``--capacity <capacity>``
+  Capacity for generated agents. Optional.
 
 
 Examples

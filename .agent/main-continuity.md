@@ -57,8 +57,8 @@
   graph-coloring pattern.
 - `iot` requires explicit `--objective min|max` and accepts optional
   `--seed <int>`.
-- The IoT generator creates a power-law Barabasi-Albert binary DCOP with
-  random matrix costs in `range(--range)`, plus a computed factor-graph
+- The IoT generator creates a power-law Barabasi-Albert DCOP with binary
+  random matrix constraints in `range(--range)`, plus a computed factor-graph
   distribution when output is written.
 - `ising`, `meetings`, and `secp` accept optional `--seed <int>` and thread a
   local random generator through their random builders.

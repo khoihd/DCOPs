@@ -43,14 +43,16 @@ Problem generator for benchmarks.
 
 
 The ``generate`` command is still a work in progress,
-it currently generate problems for the following types:
+it currently generates problems for the following types:
 
 .. toctree::
    :maxdepth: 1
 
    generate/graphcoloring
+   generate/randomgraph
    generate/meetingscheduling
    generate/ising
+   generate/iot
    generate/secp
 
 
@@ -58,7 +60,6 @@ Planned
 -------
 
 * mixed constraints: generate dcops with both hard and soft constraints
-* IoT-like problems
 * sensor network
 
 

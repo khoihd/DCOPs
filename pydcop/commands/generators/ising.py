@@ -44,10 +44,12 @@ Ising benchmark problem generator
                 --row_count <row_count>
                 [--col_count <col_count>]
                 [--bin_range <bin_range>]
-                {--un_range <un_range>]
-                [-intentional]
+                [--un_range <un_range>]
+                [--intentional]
+                [--no_agents]
                 [--seed <seed>]
                 [--fg_dist]
+                [--var_dist]
 
 
 Description
@@ -109,6 +111,9 @@ Options
 ``--intentional``
   When using this flag, constraints are generated in the intentional form
   (default is extensive).
+
+``--no_agents``
+  Do not generate agents.
 
 ``--fg_dist``
   When using this flag, the agents and distribution are generated for factor-graph
