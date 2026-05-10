@@ -50,6 +50,7 @@ Synopsis
           --max_resources_event <max_resources_event>
           [--max_length_event <max_length_event>]
           [--max_resource_value <max_resource_value>]
+          [--seed <seed>]
 
 
 Description
@@ -91,6 +92,9 @@ Options
   Each resources has a random value in [1, max_resource_value] for
   each time slot and a value for being kept free (in [1, max_resource_value])
   at a given time slot. Optional, defaults to 10.
+
+``--seed <seed>``
+  Seed for random problem generation. Optional.
 
 
 Examples
@@ -166,6 +170,12 @@ def init_cli_parser(parent_parser):
         "each time slot and a value for being kept free "
         "(in [1, max_resource_value]) at a given time slot",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed for random problem generation",
+    )
 
     parser.add_argument(
         "--no_agents",
@@ -208,6 +218,7 @@ def init_cli_parser(parent_parser):
 
 
 def generate(args):
+    random_generator = random.Random(args.seed)
     slots, events, resources = generate_problem_definition(
         args.slots_count,
         args.resources_count,
@@ -215,6 +226,7 @@ def generate(args):
         args.events_count,
         args.max_length_event,
         args.max_resources_event,
+        random_generator,
     )
 
     penalty = args.max_resource_value * args.slots_count * args.resources_count
@@ -372,6 +384,7 @@ def generate_problem_definition(
     events_count: int,
     max_length_event,
     max_resources_event,
+    random_generator=None,
 ) -> Tuple[List[SLOT], Dict[EVT, Event], Dict[RESOURCE, Resource]]:
     """
     Generate a  Multi-event scheduling problem definition.
@@ -391,26 +404,35 @@ def generate_problem_definition(
     -------
 
     """
+    if random_generator is None:
+        random_generator = random
+
     slots = list(range(1, slots_count + 1))
-    resources = generate_resources(resources_count, max_resource_value, slots)
+    resources = generate_resources(
+        resources_count, max_resource_value, slots, random_generator
+    )
     events = generate_events(
         events_count,
         max_resource_value,
         max_length_event,
         list(resources.values()),
         max_resources_event,
+        random_generator,
     )
 
     return slots, events, resources
 
 
 def generate_resources(
-    count: int, max_value: VALUE, slots: List[SLOT]
+    count: int, max_value: VALUE, slots: List[SLOT], random_generator=None
 ) -> Dict[RESOURCE, Resource]:
+    if random_generator is None:
+        random_generator = random
+
     resources: Dict[RESOURCE, Resource] = {}
     for i in range(count):
         # A resource has, for each time slot, a value if kept free:
-        value_free = {j: random.randint(0, max_value) for j in slots}
+        value_free = {j: random_generator.randint(0, max_value) for j in slots}
         resources[i] = Resource(i, value_free)
     return resources
 
@@ -421,17 +443,22 @@ def generate_events(
     max_length: int,
     resources: List[Resource],
     max_resources_count: int,
+    random_generator=None,
 ) -> Dict[EVT, Event]:
+    if random_generator is None:
+        random_generator = random
+
     events: Dict[EVT, Event] = {}
     for i in range(count):
         # Event's length:
-        length = random.randint(1, max_length)
+        length = random_generator.randint(1, max_length)
         # Resources required for this event:
-        resources_count = random.randint(1, max_resources_count)
-        event_resources = random.sample(resources, resources_count)
+        resources_count = random_generator.randint(1, max_resources_count)
+        event_resources = random_generator.sample(resources, resources_count)
         # Value for each required resource for this event:
         values = {
-            resource.id: random.randint(1, max_value) for resource in event_resources
+            resource.id: random_generator.randint(1, max_value)
+            for resource in event_resources
         }
         events[i] = Event(i, values, length)
     return events

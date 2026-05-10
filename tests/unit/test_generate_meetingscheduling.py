@@ -1,3 +1,5 @@
+from random import Random
+
 from pydcop.commands.generators.meetingscheduling import (
     generate_resources,
     generate_events,
@@ -54,3 +56,26 @@ def test_generate_variables():
         evt for evt in events.values() if resource.id in evt.resources
     ]
     assert len(variables) == len(events_with_resource)
+
+
+def test_seed_makes_problem_definition_reproducible():
+    problem1 = generate_problem_definition(
+        slots_count=5,
+        resources_count=4,
+        max_resource_value=10,
+        events_count=6,
+        max_length_event=2,
+        max_resources_event=3,
+        random_generator=Random(12),
+    )
+    problem2 = generate_problem_definition(
+        slots_count=5,
+        resources_count=4,
+        max_resource_value=10,
+        events_count=6,
+        max_length_event=2,
+        max_resources_event=3,
+        random_generator=Random(12),
+    )
+
+    assert problem1 == problem2
