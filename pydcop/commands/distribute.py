@@ -74,7 +74,7 @@ Options
   The distribution algorithm (``oneagent``, ``adhoc``, ``ilp_fgdp``, etc.,
   see :ref:`concepts_distribution`).
 
-        ``--cost <distribution_method_for_cost>``
+``--cost <distribution_method_for_cost>``
   A distribution method that can be used to evaluate the cost of a
   distribution. If not given, defaults to ``<distribution_method>``. If the
   distribution method does not define cost, a cost None will be returned in
