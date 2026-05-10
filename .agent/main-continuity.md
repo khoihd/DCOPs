@@ -23,8 +23,8 @@
 ## Current Focus
 
 - `todo.md` currently emphasizes generator cleanup:
-  - seed support
-  - random graph support
+  - seed support is done for the active generators recently touched
+  - random graph support is done
   - generated instance naming
   - multiple-instance generation
 - Generator cleanup should stay incremental. Prefer moving generator-specific
@@ -37,9 +37,11 @@
 - Generate YAML DCOP instances with
   `python -m pydcop.dcop_cli generate ...`; global `--output <file>` writes
   output to a file.
-- Live generator types include `graph_coloring`, `meetings`, `ising`,
-  `agents`, `scenario`, `mixed_problem`, `ising_soft`, `small_world`, `iot`,
-  and `secp`.
+- Live generator types include `graph_coloring`, `random_graph`, `meetings`,
+  `ising`, `agents`, `scenario`, `mixed_problem`, `small_world`, `iot`, and
+  `secp`.
+- `ising_soft` was removed from `pydcop/commands/generate.py`; the real Ising
+  generator is `pydcop/commands/generators/ising.py`.
 - `graph_coloring` now requires explicit `--objective min|max` and accepts
   optional `--seed <int>`.
 - Graph-coloring color domains use capital letters `A` through `Z`;
@@ -58,11 +60,30 @@
 - The IoT generator creates a power-law Barabasi-Albert binary DCOP with
   random matrix costs in `range(--range)`, plus a computed factor-graph
   distribution when output is written.
+- `ising`, `meetings`, and `secp` accept optional `--seed <int>` and thread a
+  local random generator through their random builders.
+- `secp` now follows the generator parser pattern with
+  `pydcop/commands/generators/secp.py:init_cli_parser`.
+- `random_graph` lives in `pydcop/commands/generators/randomgraph.py` and
+  requires `--variables_count`, `--domain_size`, `--p_edge`, and
+  `--objective min|max`; it accepts optional `--seed` and `--no_agents`.
+- `random_graph` always tries to generate a connected Erdos-Renyi graph, uses
+  extensive binary random costs in `[0, 9]`, and fails with concise guidance
+  such as `Try p_edge >= 0.43 or variables_count >= 878` if connected graph
+  generation exhausts bounded attempts.
+- A deterministic random-graph fixture lives at
+  `tests/instances/random_graph_6_3_0.7.yaml`; it has 6 variables, 14
+  constraints, 6 agents, and PuLP optimum cost `35`.
 - `small_world` is incomplete/experimental.
 - `scenario` is for Dynamic DCOPs.
 - Recent focused generator checks used:
   - `pytest tests/dcop_cli/test_generate_graphcoloring.py`
   - `pytest tests/unit/test_generators_iot.py`
+  - `pytest tests/unit/test_generate_ising.py`
+  - `pytest tests/unit/test_generate_meetingscheduling.py`
+  - `pytest tests/unit/test_generate_secp.py`
+  - `pytest tests/unit/test_generate_randomgraph.py tests/dcop_cli/test_generate_randomgraph.py`
+  - `pytest tests/dcop_cli/test_graph.py tests/unit/test_solvers_pulp.py tests/dcop_cli/test_solve_pulp.py`
   - `ruff check pydcop/commands/generate.py pydcop/commands/generators/iot.py tests/unit/test_generators_iot.py`
   - `python -m pydcop.dcop_cli generate iot --help`
 
