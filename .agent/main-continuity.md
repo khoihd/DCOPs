@@ -19,6 +19,9 @@
   `python -m pydcop.dcop_cli generate ...`.
 - Plain `pytest` excludes tests marked `perf`; run performance tests
   explicitly with `pytest -m perf` or `make perf`.
+- Documentation builds with Sphinx in the active environment. For local builds
+  use `SPHINXOPTS="-D autosummary_generate=0" make html` to avoid rewriting
+  committed autosummary files.
 
 ## Current Focus
 
@@ -31,6 +34,7 @@
   CLI arguments into the matching `pydcop/commands/generators/*.py` module.
 - `generator_summary.txt` is the short generator overview; the older
   `generator_arguments.txt` is being retired.
+- Generator docs were updated and Sphinx verified after docs config cleanup.
 
 ## Generator Notes
 
@@ -86,6 +90,16 @@
   - `pytest tests/dcop_cli/test_graph.py tests/unit/test_solvers_pulp.py tests/dcop_cli/test_solve_pulp.py`
   - `ruff check pydcop/commands/generate.py pydcop/commands/generators/iot.py tests/unit/test_generators_iot.py`
   - `python -m pydcop.dcop_cli generate iot --help`
+
+## Docs Notes
+
+- `docs/conf.py` now configures `bibtex_bibfiles = ["biblio.bib"]`, sets
+  `language = "en"`, and no longer points at a missing `_static` directory.
+- `pydcop/commands/distribute.py` docstring formatting was fixed so the
+  distribute command docs no longer trigger a block-quote warning.
+- `Makefile` supports `SPHINXOPTS` and `make html` as an alias for `make doc`.
+- Recent docs check: `SPHINXOPTS="-D autosummary_generate=0" make html`
+  completed without warnings.
 
 ## Solve/LP Notes
 
