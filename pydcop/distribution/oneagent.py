@@ -53,7 +53,7 @@ Functions
 
 """
 
-from typing import Iterable, Callable
+from collections.abc import Iterable, Callable
 from collections import defaultdict
 
 from pydcop.computations_graph.objects import ComputationGraph, ComputationNode
@@ -126,8 +126,8 @@ def distribute(computation_graph: ComputationGraph,
 
     if len(agents) < len(computation_graph.nodes):
         raise ImpossibleDistributionException(
-            'Not enough agents for one agent for each computation : {} < {}'
-                .format(len(agents),len(computation_graph.nodes)))
+            f'Not enough agents for one agent for each computation : {len(agents)} < {len(computation_graph.nodes)}'
+                )
 
     agent_names = [a.name for a in agents]
     distribution = defaultdict(lambda : list())

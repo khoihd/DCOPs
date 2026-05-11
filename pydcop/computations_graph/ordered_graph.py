@@ -27,7 +27,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 from pydcop.computations_graph.objects import ComputationNode, ComputationGraph, Link
 from pydcop.dcop.dcop import DCOP
@@ -79,12 +79,10 @@ class VariableComputationNode(ComputationNode):
         return False
 
     def __str__(self):
-        return "VariableComputationNode({})".format(self._variable.name)
+        return f"VariableComputationNode({self._variable.name})"
 
     def __repr__(self):
-        return "VariableComputationNode({}, {})".format(
-            self._variable, self.constraints
-        )
+        return f"VariableComputationNode({self._variable}, {self.constraints})"
 
     def __hash__(self):
         return hash(
@@ -102,10 +100,10 @@ class ConstraintLink(Link):
         return self._name
 
     def __str__(self):
-        return "ConstraintLink({})".format(self._name)
+        return f"ConstraintLink({self._name})"
 
     def __repr__(self):
-        return "ConstraintLink({}, {})".format(self._name, self.nodes)
+        return f"ConstraintLink({self._name}, {self.nodes})"
 
     def __eq__(self, other):
         if super().__eq__(other) and self.name == other.name:
@@ -180,7 +178,7 @@ class OrderedConstraintGraph(ComputationGraph):
 
 
 def build_computation_graph(
-    dcop: Optional[DCOP] = None,
+    dcop: DCOP | None = None,
     variables: Iterable[Variable] = None,
     constraints: Iterable[Constraint] = None,
 ) -> OrderedConstraintGraph:

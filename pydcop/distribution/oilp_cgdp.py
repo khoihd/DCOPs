@@ -49,7 +49,7 @@ References:
 import logging
 import time
 from itertools import combinations
-from typing import Iterable, Callable
+from collections.abc import Iterable, Callable
 
 import pulp
 from pulp import (
@@ -200,7 +200,7 @@ def ilp_cgdp(
                 if (c1, a1, c2, a2) in betas:
                     continue
                 count += 2
-                b = LpVariable("b_{}_{}_{}_{}".format(c1, a1, c2, a2), cat=LpBinary)
+                b = LpVariable(f"b_{c1}_{a1}_{c2}_{a2}", cat=LpBinary)
                 betas[(c1, a1, c2, a2)] = b
                 # Linearization constraints :
                 # a_ijmn <= x_im
@@ -216,7 +216,7 @@ def ilp_cgdp(
                     pb += b <= xs[(c2, a2)]
                     pb += b >= xs[(c2, a2)] + xs[(c1, a1)] - 1
 
-                b = LpVariable("b_{}_{}_{}_{}".format(c1, a2, c2, a1), cat=LpBinary)
+                b = LpVariable(f"b_{c1}_{a2}_{c2}_{a1}", cat=LpBinary)
                 if (c1, a2) in x_fixed_to_0 or (c2, a1) in x_fixed_to_0:
                     pb += b == 0
                 elif (c1, a2) in x_fixed_to_1:
@@ -240,14 +240,14 @@ def ilp_cgdp(
     for a in agt_names:
         pb += (
             lpSum([footprint(i) * xs[i, a] for i in cg.node_names()]) <= capacity(a),
-            "Agent {} capacity".format(a),
+            f"Agent {a} capacity",
         )
 
     # Constraints: all computations must be hosted.
     for c in cg.node_names():
         pb += (
             lpSum([xs[c, a] for a in agt_names]) == 1,
-            "Computation {} hosted".format(c),
+            f"Computation {c} hosted",
         )
 
     # the timeout for the solver must be minored by the time spent to build the pb:

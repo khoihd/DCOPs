@@ -87,7 +87,7 @@ def memory_footprint_estimate(computation):
     if getattr(computation, "type", None) != "PseudoTreeComputation":
         raise ValueError(
             "dpop memory_footprint_estimate only supports PseudoTreeComputation, "
-            "invalid computation: {}".format(computation)
+            f"invalid computation: {computation}"
         )
 
     parent, pseudo_parents, _, _ = get_dfs_relations(computation)
@@ -106,8 +106,8 @@ def memory_footprint_estimate(computation):
             variable = variables[variable_name]
         except KeyError as e:
             raise ValueError(
-                "Could not find separator variable {} in constraints of "
-                "computation {}".format(variable_name, computation)
+                f"Could not find separator variable {variable_name} in constraints of "
+                f"computation {computation}"
             ) from e
         memory *= len(variable.domain)
 
@@ -140,7 +140,7 @@ def _relation_join_order_key(relation):
 
 class DpopMessage(Message):
     def __init__(self, msg_type, content):
-        super(DpopMessage, self).__init__(msg_type, content)
+        super().__init__(msg_type, content)
 
     @property
     def size(self):

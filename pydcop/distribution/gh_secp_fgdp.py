@@ -68,7 +68,7 @@ the DCOP (which are always satisfied if the SECP has been generated using
 
 """
 import logging
-from typing import Iterable, Callable
+from collections.abc import Iterable, Callable
 from collections import defaultdict
 
 from pydcop.computations_graph.factor_graph import (

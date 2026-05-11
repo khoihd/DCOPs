@@ -60,7 +60,7 @@ def local_messaging():
     messaging = Messaging('a1', comm)
     return messaging
 
-class TestMessaging(object):
+class TestMessaging:
     def test_messaging_local_msg(self, local_messaging):
         local_messaging.discovery.register_computation('c1', 'a1')
         local_messaging.discovery.register_computation('c2', 'a1')
@@ -184,7 +184,7 @@ class TestMessaging(object):
         assert local_messaging.size_all_ext_msg == 0
 
 
-class TestInProcessCommunictionLayer(object):
+class TestInProcessCommunictionLayer:
     def test_address(self):
         # for in-process, the address is the object it-self
         comm1 = InProcessCommunicationLayer()
@@ -296,7 +296,7 @@ def httpd():
     httpd.server_close()
 
 
-class TestHttpHandler(object):
+class TestHttpHandler:
     @pytest.mark.skipif(skip_http_tests(), reason='HTTP_TESTS == NO')
     def test_http_handler_one_message(self, httpd):
         t = Thread(name='http_thread',
@@ -370,7 +370,7 @@ def http_comms():
     comm2.shutdown()
 
 
-class TestHttpCommLayer(object):
+class TestHttpCommLayer:
     @pytest.mark.skipif(skip_http_tests(), reason='HTTP_TESTS == NO')
     def test_one_message_between_two(self, http_comms):
         comm1, comm2 = http_comms

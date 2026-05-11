@@ -161,7 +161,7 @@ def run_cmd(args, timer: Timer = None, timeout= None):
     global orchestrator
 
     # global dcop
-    logger.info("loading dcop from {}".format(args.dcop_files))
+    logger.info(f"loading dcop from {args.dcop_files}")
     dcop = load_dcop_from_file(args.dcop_files)
 
     try:
@@ -171,7 +171,7 @@ def run_cmd(args, timer: Timer = None, timeout= None):
         )  # FIXME : algo params needed?
 
         graph_module = import_module(
-            "pydcop.computations_graph.{}".format(algo_module.GRAPH_TYPE)
+            f"pydcop.computations_graph.{algo_module.GRAPH_TYPE}"
         )
         logger.info("Building computation graph ")
         cg = graph_module.build_computation_graph(dcop)
@@ -179,11 +179,11 @@ def run_cmd(args, timer: Timer = None, timeout= None):
 
     except ImportError:
         _error(
-            "Could not find module for algorithm {} or graph model "
-            "for this algorithm".format(args.algo)
+            f"Could not find module for algorithm {args.algo} or graph model "
+            "for this algorithm"
         )
 
-    logger.info("loading distribution from {}".format(args.distribution))
+    logger.info(f"loading distribution from {args.distribution}")
     distribution = load_dist_from_file(args.distribution)
 
     INFINITY = 10000  # FIXME should not be mandatory
@@ -270,7 +270,7 @@ def on_force_exit(sig, frame):
 
 
 def _error(msg, e=None):
-    print("Error: {}".format(msg))
+    print(f"Error: {msg}")
     if e is not None:
         print(e)
         tb = traceback.format_exc()

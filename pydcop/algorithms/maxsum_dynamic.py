@@ -164,8 +164,8 @@ class FactorWithReadOnlyVariableComputation(DynamicFunctionFactorComputation):
         for v in self._read_only_variables:
             if v not in relation_dimensions:
                 raise ValueError(
-                    "Read only {} variable must be in relation "
-                    "scope {}".format(v.name, relation.dimensions)
+                    f"Read only {v.name} variable must be in relation "
+                    f"scope {relation.dimensions}"
                 )
             writable_vars.remove(v)
 
@@ -346,9 +346,9 @@ class DynamicFactorComputation(MaxSumFactorComputation):
             msg_size += MaxSumMessage(costs_v).size
             msg_count += 1
 
-        debug = ["ADD VAR MSG {} ".format(self.name)]
+        debug = [f"ADD VAR MSG {self.name} "]
         for dest, msg in msg_debug.items():
-            debug.append("  * {} -> {} : {}".format(self.name, dest, msg))
+            debug.append(f"  * {self.name} -> {dest} : {msg}")
         self.logger.info("\n".join(debug) + "\n")
 
         return msg_count, msg_size
@@ -369,9 +369,9 @@ class DynamicFactorComputation(MaxSumFactorComputation):
             self.post_msg(v.name, msg)
             msg_size += msg.size
             msg_count += 1
-        debug = ["REMOVE VAR INIT MSG {} ".format(self.name)]
+        debug = [f"REMOVE VAR INIT MSG {self.name} "]
         for dest in var_removed:
-            debug.append("  * {} -> {} ".format(self.name, dest))
+            debug.append(f"  * {self.name} -> {dest} ")
         self.logger.info("\n".join(debug) + "\n")
 
         return msg_count, msg_size
@@ -419,9 +419,7 @@ class DynamicFactorVariableComputation(MaxSumVariableComputation):
         try:
             self._factors.remove(factor_name)
         except ValueError:
-            msg = "CANNOT remove factor {} from variable {}, not in {}".format(
-                factor_name, self.name, self._factors
-            )
+            msg = f"CANNOT remove factor {factor_name} from variable {self.name}, not in {self._factors}"
             self.logger.error(msg)
             raise ValueError(msg)
 

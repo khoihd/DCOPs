@@ -31,7 +31,6 @@ import logging
 from importlib import import_module
 from multiprocessing import Process
 from queue import Queue
-from typing import Union
 
 from pydcop.algorithms import AlgorithmDef, load_algorithm_module
 from pydcop.computations_graph.objects import ComputationGraph
@@ -50,9 +49,9 @@ INFINITY = 10000
 
 
 def solve(dcop: DCOP,
-          algo_def: Union[str, AlgorithmDef],
-          distribution: Union[str, Distribution],
-          graph: Union[str, ComputationGraph]=None,
+          algo_def: str | AlgorithmDef,
+          distribution: str | Distribution,
+          graph: str | ComputationGraph=None,
           timeout=5):
     """Solve a dcop in a single process.
 
@@ -106,8 +105,7 @@ def solve(dcop: DCOP,
         algo_module = load_algorithm_module(algo_def.algo)
 
     if graph is None:
-        graph_module = import_module('pydcop.computations_graph.{}'.
-                                     format(algo_module.GRAPH_TYPE))
+        graph_module = import_module(f'pydcop.computations_graph.{algo_module.GRAPH_TYPE}')
         graph = graph_module.build_computation_graph(dcop)
 
     elif isinstance(graph, str):

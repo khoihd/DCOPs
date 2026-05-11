@@ -93,7 +93,6 @@ generate a scenario with 3 events, for a DCOP which is given as two files.::
 """
 import logging
 import random
-from typing import List
 
 from pydcop.dcop.scenario import DcopEvent, Scenario, EventAction
 from pydcop.dcop.yamldcop import yaml_scenario, load_dcop_from_file
@@ -134,7 +133,7 @@ def init_cli_parser(parent_parser):
 
 
 def generate(args):
-    logger.info("loading dcop from {}".format(args.dcop_files))
+    logger.info(f"loading dcop from {args.dcop_files}")
 
     if args.dcop_files:
         dcop_files = args.dcop_files
@@ -167,7 +166,7 @@ def generate_scenario(
     evts_count, actions_count, delay, initial_delay, end_delay, agents
 ) -> Scenario:
     agents = set(agents)
-    events: List[DcopEvent] = []
+    events: list[DcopEvent] = []
 
     events.append(generate_delay("init", initial_delay))
 

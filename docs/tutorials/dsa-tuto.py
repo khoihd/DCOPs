@@ -12,7 +12,7 @@ and avoided some details you would generally care about:
 """
 
 
-from typing import Any, Tuple
+from typing import Any
 
 from numpy import random
 
@@ -102,7 +102,7 @@ class DsaTutoComputation(VariableComputation):
         # The cycle is complete if we received a value from all the neighbors:
         return len(self.current_cycle) == len(self.neighbors)
 
-    def compute_best_value(self) -> Tuple[Any, float]:
+    def compute_best_value(self) -> tuple[Any, float]:
 
         arg_min, min_cost = None, float('inf')
         for value in self.variable.domain:

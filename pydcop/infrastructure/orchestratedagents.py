@@ -30,7 +30,6 @@
 
 
 import logging
-from typing import Dict, List, Set
 
 from pydcop.dcop.objects import AgentDef
 from pydcop.infrastructure.agents import ResilientAgent
@@ -163,12 +162,12 @@ class OrchestratedAgent(ResilientAgent):
         super()._on_computation_finished(comp_name)
         self._mgt_computation.on_computation_finished(comp_name, *args, **kwargs)
 
-    def _on_replication_done(self, replica_hosts: Dict[str, Set[str]]):
+    def _on_replication_done(self, replica_hosts: dict[str, set[str]]):
         super()._on_replication_done(replica_hosts)
         # Overwritten from ResilientAgent
         self._mgt_computation.on_replication_done(replica_hosts)
 
-    def _on_repair_done(self, selected_computation: List[str], metrics):
+    def _on_repair_done(self, selected_computation: list[str], metrics):
         # Overwritten from ResilientAgent
         self._mgt_computation.on_repair_done(selected_computation, metrics)
 
@@ -333,12 +332,12 @@ class OrchestrationComputation(MessagePassingComputation):
             ComputationFinishedMessage(self.agent.name, computation)
         )
 
-    def on_repair_done(self, selected_computation: List[str], metrics):
+    def on_repair_done(self, selected_computation: list[str], metrics):
         self.send_to_orchestrator(
             RepairDoneMessage(self.agent.name, selected_computation, metrics)
         )
 
-    def on_replication_done(self, replica_hosts: Dict[str, Set[str]]):
+    def on_replication_done(self, replica_hosts: dict[str, set[str]]):
         """
         Called when all computations have been replicated.
         Parameters
@@ -381,4 +380,4 @@ class OrchestrationComputation(MessagePassingComputation):
         self.post_msg(ORCHESTRATOR_MGT, msg, MSG_MGT)
 
     def __str__(self):
-        return "OrchestrationComputation({}".format(self.name)
+        return f"OrchestrationComputation({self.name}"

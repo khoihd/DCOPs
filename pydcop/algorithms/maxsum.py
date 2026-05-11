@@ -81,7 +81,7 @@ Max-Sum.
 
 """
 import logging
-from typing import Optional, List, Dict, Any, Tuple, Union
+from typing import Any
 from collections import defaultdict
 
 
@@ -125,7 +125,7 @@ def build_computation(comp_def: ComputationDef):
 
 
 def memory_footprint_estimate(
-    computation: Union[FactorComputationNode, VariableComputationNode]
+    computation: FactorComputationNode | VariableComputationNode
 ) -> float:
     """Memory footprint associated with the maxsum computation node.
 
@@ -166,13 +166,13 @@ def memory_footprint_estimate(
         return num_neighbors * domain_size * VARIABLE_UNIT_SIZE
 
     raise ValueError(
-        "Invalid computation node type {}, maxsum only defines "
-        "VariableComputationNodeand FactorComputationNode".format(computation)
+        f"Invalid computation node type {computation}, maxsum only defines "
+        "VariableComputationNodeand FactorComputationNode"
     )
 
 
 def communication_load(
-    src: Union[FactorComputationNode, VariableComputationNode], target: str
+    src: FactorComputationNode | VariableComputationNode, target: str
 ) -> float:
     """The communication cost of an edge between a variable and a factor.
 
@@ -198,8 +198,8 @@ def communication_load(
                 d_size = len(v.domain)
                 return UNIT_SIZE * d_size + HEADER_SIZE
         raise ValueError(
-            "Could not find variable {} in constraint of factor "
-            "{}".format(target, src)
+            f"Could not find variable {target} in constraint of factor "
+            f"{src}"
         )
 
     raise ValueError(
@@ -221,7 +221,7 @@ algo_params = [
 
 
 class MaxSumMessage(Message):
-    def __init__(self, costs: Dict):
+    def __init__(self, costs: dict):
         super().__init__("max_sum", None)
         self._costs = costs
 
@@ -235,10 +235,10 @@ class MaxSumMessage(Message):
         return len(self._costs) * 2
 
     def __str__(self):
-        return "MaxSumMessage({})".format(self._costs)
+        return f"MaxSumMessage({self._costs})"
 
     def __repr__(self):
-        return "MaxSumMessage({})".format(self._costs)
+        return f"MaxSumMessage({self._costs})"
 
     def __eq__(self, other):
         if type(other) is not MaxSumMessage:
@@ -291,7 +291,7 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
         # {v -> {d -> costs} }
         # For each variable, we keep a dict mapping the values for this
         # variable to an associated cost.
-        self._costs: Dict[VarName, Dict[VarVal:Cost]] = {}
+        self._costs: dict[VarName, dict[VarVal:Cost]] = {}
 
         self.damping = comp_def.algo.params["damping"]
         self.damping_nodes = comp_def.algo.params["damping_nodes"]
@@ -335,7 +335,7 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
     def footprint(self) -> float:
         return memory_footprint_estimate(self.computation_def.node)
 
-    def on_new_cycle(self, messages, cycle_id) -> Optional[List]:
+    def on_new_cycle(self, messages, cycle_id) -> list | None:
         # Collect costs messages from neighbor variables for this cycle (aka iteration)
         for sender, (message, t) in messages.items():
             self._costs[sender] = message.costs
@@ -518,7 +518,7 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
                 )
                 self.post_msg(f, MaxSumMessage(costs_f))
 
-    def on_new_cycle(self, messages, cycle_id) -> Optional[List]:
+    def on_new_cycle(self, messages, cycle_id) -> list | None:
         # Collect costs messages from neighbor factors for this cycle (aka iteration)
         for sender, (message, t) in messages.items():
             self.costs[sender] = message.costs
@@ -577,8 +577,8 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
 
 
 def select_value(
-    variable: Variable, costs: Dict[str, Dict], mode: str
-) -> Tuple[Any, float]:
+    variable: Variable, costs: dict[str, dict], mode: str
+) -> tuple[Any, float]:
     """
     Select the value for `variable` with the best cost / reward (depending on `mode`)
 
@@ -614,8 +614,8 @@ def select_value(
 
 
 def costs_for_factor(
-    variable: Variable, factor: FactorName, factors: List[Constraint], costs: Dict
-) -> Dict[VarVal, Cost]:
+    variable: Variable, factor: FactorName, factors: list[Constraint], costs: dict
+) -> dict[VarVal, Cost]:
     """
     Produce the message that must be sent to factor f.
 

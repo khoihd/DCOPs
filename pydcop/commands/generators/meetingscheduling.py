@@ -131,7 +131,7 @@ distribution is written in ``meetings_dist.yaml``::
 """
 import random
 from os.path import splitext
-from typing import Dict, List, Tuple, NamedTuple
+from typing import NamedTuple
 
 import itertools
 
@@ -333,24 +333,24 @@ VALUE = int
 class Event(NamedTuple):
     id: EVT
     """Resources required for this event, with corresponding value"""
-    resources: Dict[RESOURCE, VALUE]
+    resources: dict[RESOURCE, VALUE]
     length: int
 
 
 class Resource(NamedTuple):
     id: RESOURCE
-    value_free: Dict[SLOT, VALUE]
+    value_free: dict[SLOT, VALUE]
 
 
 def peav_model(
-    slots: List[SLOT],
-    events: Dict[EVT, Event],
-    resources: Dict[RESOURCE, Resource],
+    slots: list[SLOT],
+    events: dict[EVT, Event],
+    resources: dict[RESOURCE, Resource],
     penalty,
-) -> Tuple[
-    Dict[Tuple[RESOURCE, EVT], Variable],
-    Dict[str, Constraint],
-    Dict[str, List[Variable]],
+) -> tuple[
+    dict[tuple[RESOURCE, EVT], Variable],
+    dict[str, Constraint],
+    dict[str, list[Variable]],
 ]:
     """
     In the PEAV model
@@ -365,9 +365,9 @@ def peav_model(
     -------
 
     """
-    all_variables: Dict[Tuple[RESOURCE, EVT], Variable] = {}
-    all_constraints: Dict[str, Constraint] = {}
-    all_agents: Dict[str, List[Variable]] = {}
+    all_variables: dict[tuple[RESOURCE, EVT], Variable] = {}
+    all_constraints: dict[str, Constraint] = {}
+    all_agents: dict[str, list[Variable]] = {}
 
     # Each resource is represented by an agent, which controls one variable
     # for each event it could participate.
@@ -401,7 +401,7 @@ def generate_problem_definition(
     max_length_event,
     max_resources_event,
     random_generator=None,
-) -> Tuple[List[SLOT], Dict[EVT, Event], Dict[RESOURCE, Resource]]:
+) -> tuple[list[SLOT], dict[EVT, Event], dict[RESOURCE, Resource]]:
     """
     Generate a  Multi-event scheduling problem definition.
 
@@ -440,12 +440,12 @@ def generate_problem_definition(
 
 
 def generate_resources(
-    count: int, max_value: VALUE, slots: List[SLOT], random_generator=None
-) -> Dict[RESOURCE, Resource]:
+    count: int, max_value: VALUE, slots: list[SLOT], random_generator=None
+) -> dict[RESOURCE, Resource]:
     if random_generator is None:
         random_generator = random
 
-    resources: Dict[RESOURCE, Resource] = {}
+    resources: dict[RESOURCE, Resource] = {}
     for i in range(count):
         # A resource has, for each time slot, a value if kept free:
         value_free = {j: random_generator.randint(0, max_value) for j in slots}
@@ -457,14 +457,14 @@ def generate_events(
     count: int,
     max_value: VALUE,
     max_length: int,
-    resources: List[Resource],
+    resources: list[Resource],
     max_resources_count: int,
     random_generator=None,
-) -> Dict[EVT, Event]:
+) -> dict[EVT, Event]:
     if random_generator is None:
         random_generator = random
 
-    events: Dict[EVT, Event] = {}
+    events: dict[EVT, Event] = {}
     for i in range(count):
         # Event's length:
         length = random_generator.randint(1, max_length)
@@ -481,9 +481,9 @@ def generate_events(
 
 
 def peav_variables_for_resource(
-    resource: Resource, events: Dict[EVT, Event], slots_count: int
-) -> Dict[Tuple[RESOURCE, EVT], Variable]:
-    variables: Dict[Tuple[RESOURCE, EVT], Variable] = {}
+    resource: Resource, events: dict[EVT, Event], slots_count: int
+) -> dict[tuple[RESOURCE, EVT], Variable]:
+    variables: dict[tuple[RESOURCE, EVT], Variable] = {}
     for event in events.values():
         if resource.id in event.resources:
             name = f"v_{resource.id:02d}_{event.id:02d}"
@@ -501,8 +501,8 @@ def peav_variables_for_resource(
 
 def peav_intra_extensive_constraints(
     resource: Resource,
-    events: Dict[EVT, Event],
-    variables: Dict[Tuple[RESOURCE, EVT], Variable],
+    events: dict[EVT, Event],
+    variables: dict[tuple[RESOURCE, EVT], Variable],
     penalty,
 ):
     resource_events_count = len(variables)

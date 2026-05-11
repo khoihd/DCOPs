@@ -146,7 +146,7 @@ Computation
   :members:
 
 """
-from typing import Optional, List, Any, Tuple
+from typing import Any
 
 from pydcop.algorithms import ComputationDef
 from pydcop.dcop.objects import Variable
@@ -165,8 +165,8 @@ INFINITY = float("inf")
 VarName = str
 VarVal = Any
 Cost = float
-PathElement = Tuple[VarName, VarVal, Cost]
-Path = List[PathElement]
+PathElement = tuple[VarName, VarVal, Cost]
+Path = list[PathElement]
 
 SyncBBForwardMessage = message_type("forward", ["current_path", "ub"])
 SyncBBBackwardMessage = message_type("backward", ["current_path", "ub"])
@@ -418,8 +418,8 @@ class SyncBBComputation(VariableComputation):
 
 def get_next_assignment(
     variable: Variable,
-    current_value: Optional[VarVal],
-    constraints: List[Constraint],
+    current_value: VarVal | None,
+    constraints: list[Constraint],
     current_path: Path,
     upper_bound: Cost,
     mode: str,
@@ -484,8 +484,8 @@ def get_next_assignment(
 
 
 def constraints_for_variable(
-    constraints: List[Constraint], var: VarName
-) -> List[Constraint]:
+    constraints: list[Constraint], var: VarName
+) -> list[Constraint]:
     return [c for c in constraints if any(v.name == var for v in c.dimensions)]
 
 
@@ -494,7 +494,7 @@ def _path_assignment_cost(
     candidate: VarVal,
     path_var: VarName,
     path_value: VarVal,
-    constraints: List[Constraint],
+    constraints: list[Constraint],
 ) -> Cost:
     assignment = {path_var: path_value, variable_name: candidate}
     cost = 0
@@ -509,8 +509,8 @@ def _path_assignment_cost(
 
 
 def get_value_candidates(
-    variable: Variable, current_value: Optional[VarVal]
-) -> List[VarVal]:
+    variable: Variable, current_value: VarVal | None
+) -> list[VarVal]:
     """
     Build an ordered list of candidates values for variable.
 

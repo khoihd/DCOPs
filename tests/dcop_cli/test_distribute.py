@@ -171,11 +171,7 @@ def run_distribute(filename, distribution, graph=None, algo=None):
     filename = instance_path(filename)
     algo_opt = '' if algo is None else '-a ' + algo
     graph_opt = '' if graph is None else '-g ' + graph
-    cmd = '{pydcop_bin} distribute -d {distribution} {graph_opt} ' \
-          '{algo_opt} {file}'.format(distribution=distribution,
-                                     pydcop_bin=pydcop_cmd(),
-                                     graph_opt=graph_opt,
-                                     algo_opt=algo_opt,
-                                     file=filename)
+    cmd = f'{pydcop_cmd()} distribute -d {distribution} {graph_opt} ' \
+          f'{algo_opt} {filename}'
     output = check_output(cmd, stderr=STDOUT, timeout=10, shell=True)
     return yaml.load(output.decode(encoding='utf-8'), Loader=yaml.FullLoader)

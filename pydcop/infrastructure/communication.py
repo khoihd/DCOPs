@@ -38,7 +38,6 @@ from json import JSONDecodeError
 from queue import Empty, PriorityQueue
 from threading import Thread
 from time import perf_counter, sleep
-from typing import Tuple, Optional
 
 import requests
 from requests.exceptions import ConnectionError
@@ -53,7 +52,7 @@ ComputationMessage = namedtuple(
 )
 
 
-class CommunicationLayer(object):
+class CommunicationLayer:
     """
     Base class for CommunicationLayer objects.
 
@@ -155,9 +154,7 @@ class CommunicationLayer(object):
     def _on_send_error(self, src_agent, dest_agent, msg, on_error, exception):
         if on_error == "fail":
             raise exception(
-                "Error when sending message {} -> {} : {}".format(
-                    src_agent, dest_agent, msg
-                )
+                f"Error when sending message {src_agent} -> {dest_agent} : {msg}"
             )
         elif on_error == "ignore":
             logger.warning(
@@ -303,10 +300,10 @@ class InProcessCommunicationLayer(CommunicationLayer):
     #         .discovery.agent_address(agt_name)
 
     def __str__(self):
-        return "InProcessCommunicationLayer({})".format(self.messaging)
+        return f"InProcessCommunicationLayer({self.messaging})"
 
     def __repr__(self):
-        return "Comm({})".format(self.messaging)
+        return f"Comm({self.messaging})"
 
 
 def find_local_ip():
@@ -348,8 +345,8 @@ class HttpCommunicationLayer(CommunicationLayer):
 
     def __init__(
         self,
-        address_port: Optional[Tuple[str, int]] = None,
-        on_error: Optional[str] = "ignore",
+        address_port: tuple[str, int] | None = None,
+        on_error: str | None = "ignore",
     ):
         super().__init__(on_error)
         if not address_port:
@@ -381,7 +378,7 @@ class HttpCommunicationLayer(CommunicationLayer):
             self.httpd = HTTPServer(("0.0.0.0", port), MPCHttpHandler)
         except OSError:
             self.logger.error(
-                "Cannot bind http server on adress {}".format(self.address)
+                f"Cannot bind http server on adress {self.address}"
             )
             raise
         self.httpd.comm = self
@@ -394,7 +391,7 @@ class HttpCommunicationLayer(CommunicationLayer):
         self.messaging.post_msg(msg.src_comp, msg.dest_comp, msg.msg, msg.msg_type)
 
     @property
-    def address(self) -> Tuple[str, int]:
+    def address(self) -> tuple[str, int]:
         """
         An address that can be used to sent messages to this communication
         layer.
@@ -425,7 +422,7 @@ class HttpCommunicationLayer(CommunicationLayer):
                 src_agent, dest_agent, msg, on_error, UnknownAgent
             )
 
-        dest_address = "http://{}:{}/pydcop".format(server, port)
+        dest_address = f"http://{server}:{port}/pydcop"
         msg_repr = simple_repr(msg.msg)
         if hasattr(msg.msg, "cycle_id"):
             msg_repr["__cycle_id__"] = msg.msg.cycle_id
@@ -521,7 +518,7 @@ MSG_VALUE = 15
 MSG_ALGO = 20
 
 
-class Messaging(object):
+class Messaging:
     """
     A `Messaging` instance is responsible for all messaged-based communication
     (sending and receiving messages) for an agent.
@@ -747,4 +744,4 @@ class Messaging(object):
                 self._failed.remove(failed)
 
     def __str__(self):
-        return "Messaging({})".format(self._local_agent)
+        return f"Messaging({self._local_agent})"

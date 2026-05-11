@@ -30,7 +30,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Mapping
+from collections.abc import Callable, Mapping
 
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.yamldcop import load_dcop_from_file

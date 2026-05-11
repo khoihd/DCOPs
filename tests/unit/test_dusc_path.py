@@ -30,7 +30,6 @@
 
 
 from queue import Queue, Empty
-from typing import List, Dict, Tuple
 
 import networkx as nx
 
@@ -79,8 +78,8 @@ Invariants
 """
 
 
-def cheapest_path_to(target: str, paths: Dict[Tuple, float])\
-        -> Tuple[float, Tuple]:
+def cheapest_path_to(target: str, paths: dict[tuple, float])\
+        -> tuple[float, tuple]:
     c = float('inf')
     path = ()
     for p in paths:
@@ -89,8 +88,8 @@ def cheapest_path_to(target: str, paths: Dict[Tuple, float])\
     return c, path
 
 
-def path_starting_with(start_path: Tuple, paths: Dict[Tuple, float]) \
-        -> List[Tuple[float, Tuple]]:
+def path_starting_with(start_path: tuple, paths: dict[tuple, float]) \
+        -> list[tuple[float, tuple]]:
     prefix_len = len(start_path)
     found = [(c, p[prefix_len:]) for p, c in paths.items()
              if p[:prefix_len] == start_path]
@@ -101,8 +100,8 @@ def route(a: str, b: str) -> float:
     return G[a][b]['cost']
 
 
-def replicate(rq_path: Tuple, budget: float, spent: float,
-              paths: Dict[Tuple, float],
+def replicate(rq_path: tuple, budget: float, spent: float,
+              paths: dict[tuple, float],
               visited):
     print('replicate', rq_path, budget, spent, paths, visited)
 
@@ -141,8 +140,8 @@ def replicate(rq_path: Tuple, budget: float, spent: float,
                    paths, visited))
 
 
-def replicated(rq_path: Tuple, budget: float, spent: float,
-               paths: Dict[Tuple, float], visited: List):
+def replicated(rq_path: tuple, budget: float, spent: float,
+               paths: dict[tuple, float], visited: list):
     print('replicated ', budget, spent, rq_path, paths, visited)
 
     *_, current, sender = rq_path

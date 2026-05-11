@@ -159,12 +159,12 @@ def memory_footprint_estimate(computation: VariableComputationNode) -> float:
 
     """
     neighbors = set(
-        (
+
             n
             for link in computation.links
             for n in link.nodes
             if n != computation.name
-        )
+
     )
     return len(neighbors) * UNIT_SIZE
 
@@ -207,10 +207,10 @@ class DsaMessage(Message):
         return 1
 
     def __str__(self):
-        return "DsaMessage({})".format(self.value)
+        return f"DsaMessage({self.value})"
 
     def __repr__(self):
-        return "DsaMessage({})".format(self.value)
+        return f"DsaMessage({self.value})"
 
     def __eq__(self, other):
         if type(other) is not DsaMessage:

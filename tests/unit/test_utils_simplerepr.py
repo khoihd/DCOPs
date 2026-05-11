@@ -173,7 +173,7 @@ class TestAttrHaveSameNameAsInitParams(unittest.TestCase):
         self.assertEqual(r['attr2'][1]['k2']['attr2'], 'bar2')
 
     def test_raise_when_object_does_not_use_mixin(self):
-        class NoMixin(object):
+        class NoMixin:
             def __init__(self, a1):
                 self.foo = a1
 

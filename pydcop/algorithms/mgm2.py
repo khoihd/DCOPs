@@ -42,7 +42,7 @@ import random
 
 from collections import defaultdict
 from functools import lru_cache
-from typing import Dict, Any, Tuple, List
+from typing import Any
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef
 from pydcop.infrastructure.computations import Message, VariableComputation, register
@@ -116,7 +116,7 @@ def communication_load(src: VariableComputationNode, target: str) -> float:
                 target_v = v
     if not target_v:
         raise ValueError(
-            "target variable {} not found in constraints for {}".format(target, src)
+            f"target variable {target} not found in constraints for {src}"
         )
 
     nb_pairs = len(target_v.domain) * len(src.variable.domain)
@@ -164,10 +164,10 @@ class Mgm2ValueMessage(Message):
         return 1
 
     def __str__(self):
-        return "Mgm2ValueMessage({})".format(self.value)
+        return f"Mgm2ValueMessage({self.value})"
 
     def __repr__(self):
-        return "Mgm2ValueMessage({})".format(self.value)
+        return f"Mgm2ValueMessage({self.value})"
 
     def __eq__(self, other):
         if type(other) is not Mgm2ValueMessage:
@@ -203,10 +203,10 @@ class Mgm2GainMessage(Message):
         return 1
 
     def __str__(self):
-        return "Mgm2GainMessage({})".format(self.value)
+        return f"Mgm2GainMessage({self.value})"
 
     def __repr__(self):
-        return "Mgm2GainMessage({})".format(self.value)
+        return f"Mgm2GainMessage({self.value})"
 
     def __eq__(self, other):
         if type(other) is not Mgm2GainMessage:
@@ -231,13 +231,13 @@ class Mgm2OfferMessage(Message):
     received all the offers they should before processing next step.
     """
 
-    def __init__(self, offers: Dict[Tuple[Any, Any], float] = None, is_offering=False):
+    def __init__(self, offers: dict[tuple[Any, Any], float] = None, is_offering=False):
         super().__init__("offer", None)
         self._offers = offers if offers is not None else dict()
         self._is_offering = is_offering
 
     @property
-    def offers(self) -> Dict[Tuple[Any, Any], float]:
+    def offers(self) -> dict[tuple[Any, Any], float]:
         if self._offers is None:
             return dict()
         return self._offers
@@ -288,10 +288,10 @@ class Mgm2OfferMessage(Message):
         return Mgm2OfferMessage(dict(), r["is_offering"])
 
     def __str__(self):
-        return "Mgm2OfferMessage({},{})".format(self.is_offering, self.offers)
+        return f"Mgm2OfferMessage({self.is_offering},{self.offers})"
 
     def __repr__(self):
-        return "Mgm2OfferMessage({},{})".format(self.is_offering, self.offers)
+        return f"Mgm2OfferMessage({self.is_offering},{self.offers})"
 
     def __eq__(self, other):
         if type(other) is not Mgm2OfferMessage:
@@ -347,10 +347,10 @@ class Mgm2ResponseMessage(Message):
         return 3
 
     def __str__(self):
-        return "Mgm2ResponseMessage({},{})".format(self.accept, self.value, )
+        return f"Mgm2ResponseMessage({self.accept},{self.value})"
 
     def __repr__(self):
-        return "Mgm2ResponseMessage({},{})".format(self.accept, self.value, )
+        return f"Mgm2ResponseMessage({self.accept},{self.value})"
 
     def __eq__(self, other):
         if type(other) is not Mgm2ResponseMessage:
@@ -383,10 +383,10 @@ class Mgm2GoMessage(Message):
         return 1
 
     def __str__(self):
-        return "Mgm2GoMessage({})".format(self.go)
+        return f"Mgm2GoMessage({self.go})"
 
     def __repr__(self):
-        return "Mgm2GoMessage({})".format(self.go)
+        return f"Mgm2GoMessage({self.go})"
 
     def __eq__(self, other):
         if type(other) is not Mgm2GoMessage:
@@ -519,7 +519,7 @@ class Mgm2Computation(VariableComputation):
 
         return best_val, best_cost
 
-    def _compute_offers_to_send(self) -> Dict[Tuple[float, float], float]:
+    def _compute_offers_to_send(self) -> dict[tuple[float, float], float]:
         """
         Computes all the coordinated moves with the partner (if exists).
         It also set the attribute best_unilateral_move, which corresponds to
@@ -560,8 +560,8 @@ class Mgm2Computation(VariableComputation):
         return offers
 
     def _find_best_offer(
-        self, all_offers: List[Tuple[str, Dict]]
-    ) -> Tuple[List, float]:
+        self, all_offers: list[tuple[str, dict]]
+    ) -> tuple[list, float]:
         """
         Find the offer that maximize the global gain of both partners in
         the given offers and for the given partner.

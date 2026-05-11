@@ -42,7 +42,7 @@ from pydcop.distribution.objects import Distribution
 
 
 def load_dist_from_file(filename: str) -> Distribution:
-    with open(filename, mode='r', encoding='utf-8') as f:
+    with open(filename, encoding='utf-8') as f:
         content = f.read()
     if content:
         return load_dist(content)

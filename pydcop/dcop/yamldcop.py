@@ -30,7 +30,7 @@
 import pathlib
 from collections import defaultdict
 from collections.abc import Iterable as CollectionIterable
-from typing import Dict, Iterable, Union, List
+from collections.abc import Iterable
 
 import yaml
 
@@ -59,7 +59,7 @@ class DcopInvalidFormatError(Exception):
     pass
 
 
-def load_dcop_from_file(filenames: Union[str, Iterable[str]]):
+def load_dcop_from_file(filenames: str | Iterable[str]):
     """
     load a dcop from one or several files
 
@@ -137,7 +137,7 @@ def _yaml_domains(domains):
     return yaml.dump({"domains": d_dict})  #  , default_flow_style=False)
 
 
-def _build_domains(loaded) -> Dict[str, VariableDomain]:
+def _build_domains(loaded) -> dict[str, VariableDomain]:
     domains = {}
     if "domains" in loaded:
         for d_name in loaded["domains"]:
@@ -162,7 +162,7 @@ def _yaml_variables(variables):
     return yaml.dump({"variables": var_dict}, default_flow_style=False)
 
 
-def _build_variables(loaded, dcop) -> Dict[str, Variable]:
+def _build_variables(loaded, dcop) -> dict[str, Variable]:
     variables = {}
     if "variables" in loaded:
         for v_name in loaded["variables"]:
@@ -171,8 +171,8 @@ def _build_variables(loaded, dcop) -> Dict[str, Variable]:
             initial_value = v["initial_value"] if "initial_value" in v else None
             if initial_value and initial_value not in domain.values:
                 raise ValueError(
-                    "initial value {} is not in the domain {} "
-                    "of the variable {}".format(initial_value, domain.name, v_name)
+                    f"initial value {initial_value} is not in the domain {domain.name} "
+                    f"of the variable {v_name}"
                 )
 
             if "cost_function" in v:
@@ -196,7 +196,7 @@ def _build_variables(loaded, dcop) -> Dict[str, Variable]:
     return variables
 
 
-def _build_external_variables(loaded, dcop) -> Dict[str, ExternalVariable]:
+def _build_external_variables(loaded, dcop) -> dict[str, ExternalVariable]:
     ext_vars = {}
     if "external_variables" in loaded:
         for v_name in loaded["external_variables"]:
@@ -205,23 +205,23 @@ def _build_external_variables(loaded, dcop) -> Dict[str, ExternalVariable]:
             initial_value = v["initial_value"] if "initial_value" in v else None
             if initial_value and initial_value not in domain.values:
                 raise ValueError(
-                    "initial value {} is not in the domain {} "
-                    "of the variable {}".format(initial_value, domain.name, v_name)
+                    f"initial value {initial_value} is not in the domain {domain.name} "
+                    f"of the variable {v_name}"
                 )
             ext_vars[v_name] = ExternalVariable(v_name, domain, initial_value)
     return ext_vars
 
 
-def _build_constraints(loaded, dcop, main_dir) -> Dict[str, RelationProtocol]:
+def _build_constraints(loaded, dcop, main_dir) -> dict[str, RelationProtocol]:
     constraints = {}
     if "constraints" in loaded:
         for c_name in loaded["constraints"]:
             c = loaded["constraints"][c_name]
             if "type" not in c:
                 raise ValueError(
-                    "Error in contraints {} definition: type is "
+                    f"Error in contraints {c_name} definition: type is "
                     'mandatory and only "intention" is '
-                    "supported for now".format(c_name)
+                    "supported for now"
                 )
             elif c["type"] == "intention":
                 if "source" in c:
@@ -276,8 +276,8 @@ def _build_constraints(loaded, dcop, main_dir) -> Dict[str, RelationProtocol]:
 
             else:
                 raise ValueError(
-                    "Error in contraints {} definition: type is  mandatory "
-                    'and must be "intention" or "intensional"'.format(c_name)
+                    f"Error in contraints {c_name} definition: type is  mandatory "
+                    'and must be "intention" or "intensional"'
                 )
 
     return constraints
@@ -311,7 +311,7 @@ def _yaml_constraints(constraints: Iterable[RelationProtocol]):
     return yaml.dump({"constraints": constraints_dict}, default_flow_style=False)
 
 
-def _build_agents(loaded) -> Dict[str, AgentDef]:
+def _build_agents(loaded) -> dict[str, AgentDef]:
     # Read agents list, without creating AgentDef object yet.
     # We need the preferences to create the AgentDef objects
     agents_list = {}
@@ -343,10 +343,8 @@ def _build_agents(loaded) -> Dict[str, AgentDef]:
                 if (a2, a1) in routes or (a1, a2) in routes:
                     if routes[(a2, a1)] != a1_routes[a2]:
                         raise DcopInvalidFormatError(
-                            "Multiple route definition r{} = {}"
-                            " != r({}) = {}".format(
-                                (a2, a1), routes[(a2, a1)], (a1, a2), a1_routes[a2]
-                            )
+                            f"Multiple route definition r{(a2, a1)} = {routes[(a2, a1)]}"
+                            f" != r({(a1, a2)}) = {a1_routes[a2]}"
                         )
                 routes[(a1, a2)] = a1_routes[a2]
 
@@ -391,7 +389,7 @@ def _build_agents(loaded) -> Dict[str, AgentDef]:
     return agents
 
 
-def yaml_agents(agents: List[AgentDef]) -> str:
+def yaml_agents(agents: list[AgentDef]) -> str:
     """
     Serialize a list of agents into a json string.
 
@@ -448,13 +446,13 @@ def _build_dist_hints(loaded, dcop):
         for a in loaded["must_host"]:
             if a not in dcop.agents:
                 raise ValueError(
-                    "Cannot use must_host with unknown agent " "{}".format(a)
+                    "Cannot use must_host with unknown agent " f"{a}"
                 )
             for c in loaded["must_host"][a]:
                 if c not in dcop.variables and c not in dcop.constraints:
                     raise ValueError(
                         "Cannot use must_host with unknown "
-                        "variable or constraint {}".format(c)
+                        f"variable or constraint {c}"
                     )
 
         must_host = loaded["must_host"]
@@ -504,7 +502,7 @@ def load_scenario_from_file(filename: str) -> Scenario:
     :param filename:
     :return:
     """
-    with open(filename, mode="r", encoding="utf-8") as f:
+    with open(filename, encoding="utf-8") as f:
         content = f.read()
     if content:
         return load_scenario(content)
@@ -540,7 +538,7 @@ def yaml_scenario(scenario: Scenario) -> str:
     return yaml.dump(scenario_dict, default_flow_style=False)
 
 
-def _dict_event(event: DcopEvent) -> Dict:
+def _dict_event(event: DcopEvent) -> dict:
     evt_dict = {"id": event.id}
     if event.is_delay:
         evt_dict["delay"] = event.delay
@@ -550,7 +548,7 @@ def _dict_event(event: DcopEvent) -> Dict:
     return evt_dict
 
 
-def _dict_action(action: EventAction) -> Dict:
+def _dict_action(action: EventAction) -> dict:
     action_dict = {"type": action.type}
     action_dict.update(action.args)
     return action_dict

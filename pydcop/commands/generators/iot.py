@@ -83,7 +83,7 @@ import logging
 import os
 import random
 from importlib import import_module
-from typing import List, Tuple, Dict, Callable
+from collections.abc import Callable
 
 import networkx as nx
 from collections import defaultdict
@@ -255,7 +255,7 @@ def generate_powerlaw_var_constraints(
     domain_size: int,
     constraint_range: int,
     random_generator: random.Random,
-) -> Tuple[Dict[str, Variable], Dict[str, Constraint], Domain]:
+) -> tuple[dict[str, Variable], dict[str, Constraint], Domain]:
     """
     Generate variables and constraints for a power-law based constraints
     graph.
@@ -315,7 +315,7 @@ def generate_powerlaw_var_constraints(
     return variables, constraints, domain
 
 
-def random_assignment_matrix(variables: List[Variable], values: List, random_generator):
+def random_assignment_matrix(variables: list[Variable], values: list, random_generator):
     """
     Generate a matrix that defines a random value for each possible assignment.
     """
@@ -330,7 +330,7 @@ def random_assignment_matrix(variables: List[Variable], values: List, random_gen
 
 def agt_route_costs(
     var_comp: ComputationNode, cg: ComputationGraph
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Generate route cost between the agent hosting var_comp and all other agents.
 
@@ -362,7 +362,7 @@ def agt_hosting_costs(
     var_comp: ComputationNode,
     cg: ComputationGraph,
     random_generator: random.Random,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Build the hosting costs dict for the agent hosting the variable whose
     computation is var_comp.
@@ -390,12 +390,12 @@ def agt_hosting_costs(
 
 
 def distribute_factors(
-    agents: Dict[str, AgentDef],
+    agents: dict[str, AgentDef],
     cg: ComputationGraph,
-    footprints: Dict[str, float],
-    mapping: Dict[str, List[str]],
+    footprints: dict[str, float],
+    mapping: dict[str, list[str]],
     msg_load: Callable[[str, str], float],
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     """
     Optimal distribution of factors on agents.
 
@@ -429,12 +429,12 @@ def distribute_factors(
         pb += (
             lpSum([footprints[fn] * xs[fn, a] for fn in factor_names])
             <= (agents[a].capacity - v_footprint),
-            "Agent {} capacity".format(a),
+            f"Agent {a} capacity",
         )
 
     # Hard constraints: all computations must be hosted.
     for c in factor_names:
-        pb += lpSum([xs[c, a] for a in agents]) == 1, "Factor {} hosted".format(c)
+        pb += lpSum([xs[c, a] for a in agents]) == 1, f"Factor {c} hosted"
 
     # 1st objective : minimize communication costs:
     comm = LpAffineExpression()
@@ -466,15 +466,15 @@ def distribute_factors(
 
 
 def agt_name(var_name: str):
-    return "a{}".format(var_name[1:])
+    return f"a{var_name[1:]}"
 
 
 def var_name(i: int):
-    return "v{:03d}".format(i)
+    return f"v{i:03d}"
 
 
 def c_name(i: int, j: int):
-    return "c{:03d}_{:03d}".format(i, j)
+    return f"c{i:03d}_{j:03d}"
 
 
 def msg_load_func(

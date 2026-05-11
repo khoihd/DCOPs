@@ -36,14 +36,13 @@ from importlib import import_module
 
 import sys
 from queue import Queue, Empty
-from typing import List
 
 from pydcop.algorithms import AlgorithmDef, prepare_algo_params, load_algorithm_module
 
 logger = logging.getLogger("pydcop")
 
 
-def build_algo_def(algo_module, algo_name: str, objective, cli_params: List[str]):
+def build_algo_def(algo_module, algo_name: str, objective, cli_params: list[str]):
     """
     Build the AlgorithmDef, which contains the full algorithm specification (
     name, objective and parameters)
@@ -89,23 +88,18 @@ def build_algo_def(algo_module, algo_name: str, objective, cli_params: List[str]
                 valid_values = (
                     ""
                     if param_def.values is None
-                    else "values: {}".format(param_def.values)
+                    else f"values: {param_def.values}"
                 )
-                param_msg = "  * {} ({}) default : {}  {} ".format(
-                    param_def.name,
-                    param_def.type,
-                    param_def.default_value,
-                    valid_values,
-                )
+                param_msg = f"  * {param_def.name} ({param_def.type}) default : {param_def.default_value}  {valid_values} "
                 param_msgs.append(param_msg)
             msg = str(e)
-            msg += "\nAvailable parameters for {}:\n".format(algo_name)
+            msg += f"\nAvailable parameters for {algo_name}:\n"
             msg += "\n".join(param_msgs)
             _error(msg, e)
 
     else:
         if cli_params:
-            _error("Algo {} does not support any parameter".format(algo_name))
+            _error(f"Algo {algo_name} does not support any parameter")
         return AlgorithmDef(algo_name, {}, objective=objective)
 
 
@@ -172,13 +166,13 @@ def prepare_metrics_files(run, end, mode):
 
 def add_csvline(file, mode, metrics):
     data = [metrics[c] for c in columns[mode]]
-    with open(file, mode="at", encoding="utf-8", newline="") as f:
+    with open(file, mode="a", encoding="utf-8", newline="") as f:
         csvwriter = csv.writer(f)
         csvwriter.writerow(data)
 
 
 def _error(msg, e=None):
-    print("Error: {}".format(msg))
+    print(f"Error: {msg}")
     if e is not None:
         print(e)
         tb = traceback.format_exc()
@@ -190,24 +184,24 @@ def _load_modules(dist, algo):
     dist_module, algo_module, graph_module = None, None, None
     if dist is not None:
         try:
-            dist_module = import_module("pydcop.distribution.{}".format(dist))
+            dist_module = import_module(f"pydcop.distribution.{dist}")
             # TODO check the imported module has the right methods ?
         except ImportError:
-            _error("Could not find distribution method {}".format(dist))
+            _error(f"Could not find distribution method {dist}")
 
     try:
         algo_module = load_algorithm_module(algo)
 
         graph_module = import_module(
-            "pydcop.computations_graph.{}".format(algo_module.GRAPH_TYPE)
+            f"pydcop.computations_graph.{algo_module.GRAPH_TYPE}"
         )
 
     except ImportError as e:
-        _error("Could not find module for algorithm: {}".format(algo), e)
+        _error(f"Could not find module for algorithm: {algo}", e)
     except Exception as e:
         _error(
             "Error loading algorithm module  and associated "
-            "computation graph type for : {}".format(algo),
+            f"computation graph type for : {algo}",
             e,
         )
 

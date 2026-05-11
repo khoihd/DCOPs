@@ -185,7 +185,7 @@ def dmaxsum_external_variable():
     for i in range(5):
         time.sleep(2)
         current_value = e1_computation.current_value
-        print('###  Iteration {} - function {}'.format(i, current_value))
+        print(f'###  Iteration {i} - function {current_value}')
         print(runner.status_string())
         results = runner.variable_values()
         if current_value:
@@ -193,21 +193,19 @@ def dmaxsum_external_variable():
                 r2(filter_assignment_dict(results, r2.dimensions)) + \
                 r3(filter_assignment_dict(results, r3.dimensions))
             if c != 0:
-                print('Error on results for {} : \nGot {}  !'.format(
-                        current_value, results))
+                print(f'Error on results for {current_value} : \nGot {results}  !')
                 fail = True
                 break
         else:
             c = r2(filter_assignment_dict(results, r2.dimensions)) + \
                 r3(filter_assignment_dict(results, r3.dimensions))
         if c != 0:
-            print('Error on results for {} : \nGot {} !'.format(
-                current_value, results))
+            print(f'Error on results for {current_value} : \nGot {results} !')
             fail = True
             break
 
         new_val = not current_value
-        print('## Changing e1 value to {}'.format(new_val))
+        print(f'## Changing e1 value to {new_val}')
         e1_computation.change_value(new_val)
 
     print('Finished, stopping agents')

@@ -30,14 +30,14 @@
 
 
 import collections.abc
-from typing import List, Tuple, Dict, Iterable, Union, Mapping
+from collections.abc import Iterable, Mapping
 
 from pydcop.dcop.objects import AgentDef, Variable, ExternalVariable, Domain
 from pydcop.dcop.relations import RelationProtocol, constraint_from_str, \
     Constraint, filter_assignment_dict
 
 
-class DCOP(object):
+class DCOP:
     """A DCOP representation.
 
     A DCOP is a Constraints Optimization Problem distribution on a set of
@@ -57,10 +57,10 @@ class DCOP(object):
     """
 
     def __init__(self, name: str, objective: str, description: str='',
-                 domains: Dict[str, Domain]=None,
-                 variables: Dict[str, Variable]=None,
-                 constraints: Dict[str, Constraint]=None,
-                 agents: Dict[str, AgentDef]=None):
+                 domains: dict[str, Domain]=None,
+                 variables: dict[str, Variable]=None,
+                 constraints: dict[str, Constraint]=None,
+                 agents: dict[str, AgentDef]=None):
         self.name = name
         self.description = description
         self.objective = objective
@@ -87,7 +87,7 @@ class DCOP(object):
         return self._constraints
 
     @property
-    def agents(self) -> Dict[str, AgentDef]:
+    def agents(self) -> dict[str, AgentDef]:
         return self._agents_def
 
     def agent(self, agt_name: str) -> AgentDef:
@@ -143,14 +143,14 @@ class DCOP(object):
         for v in constraint.dimensions:
             current = self.variables.get(v.name, None)
             if current is not None and v != current:
-                raise ValueError('Duplicate variable declaration {} from '
-                                 'constraint {}'.format(v.name, constraint))
+                raise ValueError(f'Duplicate variable declaration {v.name} from '
+                                 f'constraint {constraint}')
             self.variables[v.name] = v
             self.domains[v.domain.name] = v.domain
         return constraint
 
     def __add__(self,
-                info: Tuple[str, str, List[Variable]]):
+                info: tuple[str, str, list[Variable]]):
         """Convenience notation for adding a constraint to te dcop.
 
         Parameters
@@ -203,9 +203,7 @@ class DCOP(object):
         return self
 
     def add_agents(self,
-                   agents: Union[AgentDef,
-                                 Iterable[AgentDef],
-                                 Mapping[str, AgentDef]])-> None:
+                   agents: AgentDef | Iterable[AgentDef] | Mapping[str, AgentDef])-> None:
         """Add agents to the DCOP.
 
         Agents are given as AgentDef objects.
@@ -330,8 +328,8 @@ def solution_cost(relations, variables, assignment, infinity):
     cost_hard, cost_soft = 0, 0
     if len(variables) != len(assignment):
         raise ValueError('Cannot compute solution cost : incomplete '
-                         'assignment, missing values for vars {}'
-                         .format(set(variables) - set(assignment)))
+                         f'assignment, missing values for vars {set(variables) - set(assignment)}'
+                         )
 
     for r in relations:
         # values = filter_assignment_dict(assignment, r.dimensions)

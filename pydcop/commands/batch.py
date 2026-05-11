@@ -84,7 +84,6 @@ from subprocess import (
     Popen,
     PIPE,
 )
-from typing import Dict, Tuple, Union, List
 
 import itertools
 
@@ -114,7 +113,7 @@ progress_file = None
 
 
 def run_cmd(args):
-    with open(args.bench_file, mode="r", encoding="utf-8") as f:
+    with open(args.bench_file, encoding="utf-8") as f:
         bench_def = yaml.load(f, Loader=yaml.FullLoader)
 
     # Search for already run jobs in a 'progress' file, if any.
@@ -124,7 +123,7 @@ def run_cmd(args):
     progress_file = f"progress_{batch_file}"
 
     if os.path.exists(progress_file):
-        with open(progress_file, encoding="utf-8", mode="r") as f:
+        with open(progress_file, encoding="utf-8") as f:
             jobs = [line[5:-2] for line in f.readlines() if line.startswith("JID: ")]
         jobs = set(jobs)
     else:
@@ -145,7 +144,7 @@ global pbar
 
 def run_batches(batches_definition, simulate: bool, jobs=None):
     jobs = set() if not jobs else jobs
-    context: Dict[str, str] = {"jobs": jobs}
+    context: dict[str, str] = {"jobs": jobs}
     problems_sets = batches_definition["sets"]
     batches = batches_definition["batches"]
     global_options = (
@@ -271,7 +270,7 @@ def run_batches(batches_definition, simulate: bool, jobs=None):
                         )
 
 
-def input_files_glob(path_glob: str) -> List[str]:
+def input_files_glob(path_glob: str) -> list[str]:
     """
     Find files matching a glob expression.
 
@@ -318,8 +317,8 @@ def _path_matches(parts, context):
 
 
 def input_files_re(
-    path: str, file_re: str, extra_paths: List[str]
-) -> Tuple[List[str], List[List[str]], List[Dict]]:
+    path: str, file_re: str, extra_paths: list[str]
+) -> tuple[list[str], list[list[str]], list[dict]]:
     """
 
     Parameters
@@ -377,7 +376,7 @@ def input_files_re(
     return found_files, found_extras, match_contexts
 
 
-def estimate_set(set_def: Dict) -> int:
+def estimate_set(set_def: dict) -> int:
     iterations = 1 if "iterations" not in set_def else set_def["iterations"]
 
     if "path_re" in set_def:
@@ -440,10 +439,10 @@ def run_batch_for_files(
 
 
 def run_batch(
-    batch_definition: Dict,
-    context: Dict[str, str],
-    global_options: Dict[str, str],
-    files: List[str] = None,
+    batch_definition: dict,
+    context: dict[str, str],
+    global_options: dict[str, str],
+    files: list[str] = None,
     simulate: bool = True,
 ):
     command = batch_definition["command"]
@@ -582,12 +581,12 @@ def check_output_group_kill(*popenargs, timeout=None, **kwargs):
 
 def build_final_command(
     command: str,
-    context: Dict[str, str],
-    global_options: Dict[str, str],
-    command_option_combination: Dict,
+    context: dict[str, str],
+    global_options: dict[str, str],
+    command_option_combination: dict,
     current_dir: str = "",
-    files: List[str] = None,
-) -> Tuple[str, str]:
+    files: list[str] = None,
+) -> tuple[str, str]:
     context = context.copy()
     context.update(global_options)
     context.update(command_option_combination)
@@ -616,8 +615,8 @@ def build_final_command(
 
 
 def regularize_parameters(
-    yaml_params: Dict
-) -> Dict[str, Union[List[str], Dict[str, List[str]]]]:
+    yaml_params: dict
+) -> dict[str, list[str] | dict[str, list[str]]]:
     """
     Makes sure that parameters values are always represented as a list of string.
 
@@ -647,8 +646,8 @@ def regularize_parameters(
 
 
 def parameters_configuration(
-    algo_parameters: Dict[str, Union[List[str], Dict]]
-) -> List[Dict[str, Union[str, Dict]]]:
+    algo_parameters: dict[str, list[str] | dict]
+) -> list[dict[str, str | dict]]:
     """
     Return a list of dict, each dict representing one parameters combination.
 
@@ -690,7 +689,7 @@ def parameters_configuration(
     return param_combinations
 
 
-def build_option_for_parameters(params: Dict[str, Union[str, Dict]]) -> str:
+def build_option_for_parameters(params: dict[str, str | dict]) -> str:
     options_str = []
     for p, v in params.items():
         if isinstance(v, dict):
@@ -711,7 +710,7 @@ def build_option_string(option_name: str, option_value: str = None):
 
 
 def expand_variables(
-    to_expand: Union[str, List, Dict], context: Dict[str, Union[str, Dict]]
+    to_expand: str | list | dict, context: dict[str, str | dict]
 ):
     if isinstance(to_expand, str):
         return to_expand.format(**context)

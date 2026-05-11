@@ -84,8 +84,6 @@ Planned
 import logging
 import random
 from collections import defaultdict
-from typing import Dict, List
-from typing import Tuple
 
 import networkx as nx
 import os
@@ -368,7 +366,7 @@ def generate_graph_coloring(args):
         logger.debug("edge %s - %s", edge, i)
         name = "c" + str(i)
         u, v = edge
-        expression = "1000 if v{} == v{} else 0".format(u, v)
+        expression = f"1000 if v{u} == v{v} else 0"
         constraints[name] = relation_from_str(name, expression, variables.values())
         logger.debug(repr(constraints[name]))
 
@@ -425,31 +423,29 @@ def generate_mixed_problem(args):
     if arity > variable_count:
         raise ValueError(
             "The arity of a constraint must be at most the "
-            "number of variable. Arity: {}, Nb variables: {}".format(
-                arity, variable_count
-            )
+            f"number of variable. Arity: {arity}, Nb variables: {variable_count}"
         )
 
     if hard_count < 0:
         raise ValueError(
             "The argument '-h' (or '--hard_count') must be "
-            "between 0 and 1. Currently set to: {}".format(hard_count)
+            f"between 0 and 1. Currently set to: {hard_count}"
         )
     # Create sets for the bipartite graph
     if constraint_count <= 0:
         raise ValueError(
             "The argument '-c' (or '--constraint_count') must be "
-            "strictly positive. Currently set to: {}".format(constraint_count)
+            f"strictly positive. Currently set to: {constraint_count}"
         )
     if variable_count < 0:
         raise ValueError(
             "The argument '-v' (or '--variable_count') must be "
-            "at least 1. Currently set to: {}".format(variable_count)
+            f"at least 1. Currently set to: {variable_count}"
         )
     if arity <= 0:
         raise ValueError(
             "The argument '-a' (or '--arity') must be "
-            "at least 1. Currently set to: {}".format(arity)
+            f"at least 1. Currently set to: {arity}"
         )
 
     d = VariableDomain("levels", "level", range(domain_range))
@@ -462,15 +458,13 @@ def generate_mixed_problem(args):
             raise ValueError(
                 "For max arity 1 you need the same number of "
                 "variables, constraints and edges. You asked "
-                "for {} variables and {} constraints.".format(
-                    variable_count, constraint_count
-                )
+                f"for {variable_count} variables and {constraint_count} constraints."
             )
         nodes = [i + 1 for i in range(variable_count)]
         constraints_list = [
-            ("c{}".format(i + 1), "hard")
+            (f"c{i + 1}", "hard")
             if i < hard_count
-            else ("c{}".format(i + 1), "soft")
+            else (f"c{i + 1}", "soft")
             for i in range(constraint_count)
         ]
         variables = {}
@@ -511,10 +505,10 @@ def generate_mixed_problem(args):
         edges_count = int(variable_count * (variable_count - 1) * density / 2)
         if constraint_count != edges_count:
             logger.warning(
-                "edges count is different of constraint count ({} "
-                "!= {}) but for arity 2, constraints are the deges"
-                "of the graph. We use the density ({}) to determine"
-                " the number of edges".format(edges_count, constraint_count, density)
+                f"edges count is different of constraint count ({edges_count} "
+                f"!= {constraint_count}) but for arity 2, constraints are the deges"
+                f"of the graph. We use the density ({density}) to determine"
+                " the number of edges"
             )
         is_connected = False
         while not is_connected:
@@ -554,12 +548,10 @@ def generate_mixed_problem(args):
             # Create hard_constraints
             if i < hard_count:
                 objective = round(find_objective(weights, domain_range, True), 2)
-                expression = "0 if v{} != v{} else float(" "'inf')".format(u, v)
+                expression = f"0 if v{u} != v{v} else float(" "'inf')"
             else:
                 max_val = (weights[0] + weights[1]) * domain_range
-                expression = "abs(v{} + v{} - {})".format(
-                    u, v, round(random.uniform(0, max_val), 2)
-                )
+                expression = f"abs(v{u} + v{v} - {round(random.uniform(0, max_val), 2)})"
 
             constraints[name] = relation_from_str(name, expression, variables.values())
             logger.debug(repr(constraints[name]))
@@ -569,13 +561,11 @@ def generate_mixed_problem(args):
             raise ValueError(
                 "The number of edges must be greater or equal to the "
                 "number of constraints. Otherwise you have unused "
-                "constraints. Edges: {}, Constraints: {}".format(
-                    edges_count, constraint_count
-                )
+                f"constraints. Edges: {edges_count}, Constraints: {constraint_count}"
             )
         nodes = [i for i in list(range(variable_count))]
         constraints = [
-            ("c{}".format(i), "hard") if i < hard_count else ("c{}".format(i), "soft")
+            (f"c{i}", "hard") if i < hard_count else (f"c{i}", "soft")
             for i in list(range(constraint_count))
         ]
         # Randomly add edges
@@ -727,9 +717,9 @@ def choose_weight() -> float:
 
 def add_edge(
     n: int,
-    c: Tuple[str, str],
-    available: Dict[int, List[Tuple[str, str]]],
-    edges: Dict[Tuple[str, str], List[int]],
+    c: tuple[str, str],
+    available: dict[int, list[tuple[str, str]]],
+    edges: dict[tuple[str, str], list[int]],
     arity: int,
 ):
     edges[c].append(n)
@@ -763,7 +753,7 @@ def write_in_file(filename: str, dcop_str: str):
         f.write(dcop_str)
 
 
-def find_objective(weights: List[float], n: int, is_hard: bool):
+def find_objective(weights: list[float], n: int, is_hard: bool):
     objective = 0
     if is_hard:
         # Choose an objective which is reachable
@@ -779,6 +769,6 @@ def correct_density(filename: str, real_density: float):
     path_elts = filename.split("/")
     for i in range(len(path_elts)):
         if path_elts[i].split("=")[0] == "density":
-            path_elts[i] = "density={}".format(round(real_density, 1))
+            path_elts[i] = f"density={round(real_density, 1)}"
 
     return "/".join(path_elts)

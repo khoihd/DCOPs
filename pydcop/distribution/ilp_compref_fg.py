@@ -53,7 +53,7 @@ does no use the distribution hints (if some are given, they are just ignored).
 
 
 import logging
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 from itertools import combinations
 
 from pulp.constants import LpBinary, LpMinimize, LpStatusOptimal
@@ -159,14 +159,14 @@ def lp_model(cg: ComputationGraph,
             # As we support hypergraph, we may have more than 2 ends to a link
             for c1, c2 in combinations(link.nodes, 2):
                 count += 2
-                b = LpVariable('b_{}_{}_{}_{}'.format(c1, a1, c2, a2),
+                b = LpVariable(f'b_{c1}_{a1}_{c2}_{a2}',
                                cat=LpBinary)
                 betas[(c1, a1, c2, a2)] = b
                 pb += b <= xs[(c1, a1)]
                 pb += b <= xs[(c2, a2)]
                 pb += b >= xs[(c2, a2)] + xs[(c1, a1)] - 1
 
-                b = LpVariable('b_{}_{}_{}_{}'.format(c1, a2, c2, a1),
+                b = LpVariable(f'b_{c1}_{a2}_{c2}_{a1}',
                                cat=LpBinary)
                 betas[(c1, a2, c2, a1)] = b
                 pb += b <= xs[(c2, a1)]
@@ -182,12 +182,12 @@ def lp_model(cg: ComputationGraph,
     for a in agt_names:
         pb += lpSum([footprint(i) * xs[i, a] for i in comp_names])\
               <= capacity(a), \
-              'Agent {} capacity'.format(a)
+              f'Agent {a} capacity'
 
     # Constraints: all computations must be hosted.
     for c in comp_names:
         pb += lpSum([xs[c, a] for a in agt_names]) == 1, \
-            'Computation {} hosted'.format(c)
+            f'Computation {c} hosted'
 
     # solve using GLPK
     status = pb.solve(solver=GLPK_CMD(keepFiles=1, msg=False,

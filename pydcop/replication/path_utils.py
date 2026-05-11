@@ -29,13 +29,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from typing import Optional, Tuple, List, Set
 
 Node = str
-Path = Tuple[Node, ...]
+Path = tuple[Node, ...]
 
 
-def head(path) -> Optional[Node]:
+def head(path) -> Node | None:
     """
     Returns
     -------
@@ -47,7 +46,7 @@ def head(path) -> Optional[Node]:
         return None
 
 
-def last(path) -> Optional[Node]:
+def last(path) -> Node | None:
     """
 
     Returns
@@ -74,7 +73,7 @@ def before_last(path):
     return path[-2]
 
 
-PathsTable = List[Tuple[float, Path]]
+PathsTable = list[tuple[float, Path]]
 
 
 def remove_path(paths: PathsTable, path: Path) -> PathsTable:
@@ -96,7 +95,7 @@ def remove_path(paths: PathsTable, path: Path) -> PathsTable:
     return paths
 
 
-def cheapest_path_to(target: Node, paths: PathsTable) -> Tuple[float, Path]:
+def cheapest_path_to(target: Node, paths: PathsTable) -> tuple[float, Path]:
     """
     Search the cheapest path and its costs in `paths` that ends at `target`.
 
@@ -133,7 +132,7 @@ def affordable_path_from(prefix: Path, max_path_cost: float, paths: PathsTable):
 
 
 def filter_missing_agents_paths(
-    paths: PathsTable, removed_agents: Set
+    paths: PathsTable, removed_agents: set
 ) -> PathsTable:
     """
     Filters out all paths passing through an agent that is not

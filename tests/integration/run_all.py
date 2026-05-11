@@ -61,7 +61,7 @@ def run_all_integ_tests():
                         tests_nums[2] += 1
 
                 except Exception as e:
-                    tests_run[module_name] = 'ERROR : {}'.format(e)
+                    tests_run[module_name] = f'ERROR : {e}'
                     tests_nums[2] += 1
             except AttributeError:
                 print('No "run_test" method in '+ entry)
@@ -80,7 +80,7 @@ def run_all_integ_tests():
     print('TESTS WITH ERROR:')
     for (k, v) in [(k, v) for k, v in tests_run.items() if v.startswith(\
             'ERROR')]:
-        print('* {} : {}'.format(k, v))
+        print(f'* {k} : {v}')
 
     print('FILES WITH NO TEST:')
     for k in [k for k, v in tests_run.items() if v.startswith( 'No tests')]:

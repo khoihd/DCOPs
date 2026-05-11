@@ -110,8 +110,6 @@ class RandomGraph(unittest.TestCase):
 
 def run_graph(filename, graph):
     filename = instance_path(filename)
-    cmd = '{pydcop_bin} graph -g {graph} {file}'.format(
-        pydcop_bin=pydcop_cmd(), graph=graph, file=filename
-    )
+    cmd = f'{pydcop_cmd()} graph -g {graph} {filename}'
     output = check_output(cmd, stderr=STDOUT, timeout=10, shell=True)
     return yaml.load(output.decode(encoding='utf-8'), Loader=yaml.FullLoader)

@@ -35,7 +35,7 @@ where pseudo-parent and pseudo-children links are added to the tree.
  
  This model is typically used for the dpop algorithm.
 """
-from typing import Dict, Iterable, List
+from collections.abc import Iterable
 
 from collections import defaultdict
 
@@ -73,8 +73,8 @@ class PseudoTreeLink(Link):
         if link_type not in ["children", "pseudo_children", "pseudo_parent", "parent"]:
             raise ValueError(
                 "Invalid link type in pseudo-tree "
-                'graph: {}. Supported types are "children",'
-                '"pseudo_children" and "pseudo_parent"'.format(link_type)
+                f'graph: {link_type}. Supported types are "children",'
+                '"pseudo_children" and "pseudo_parent"'
             )
         super().__init__(link_type=link_type, nodes=[source, target])
         self._source = source
@@ -157,10 +157,10 @@ class PseudoTreeNode(ComputationNode):
         return self._constraints
 
     def __str__(self):
-        return "PseudoTreeNode({},{})".format(self._variable, self._constraints)
+        return f"PseudoTreeNode({self._variable},{self._constraints})"
 
     def __repr__(self):
-        return "PseudoTreeNode({},{})".format(self._variable, self._constraints)
+        return f"PseudoTreeNode({self._variable},{self._constraints})"
 
     def __eq__(self, other):
         if type(other) is not PseudoTreeNode:
@@ -205,7 +205,7 @@ def get_dfs_relations(tree_node: PseudoTreeNode):
     return parent, pseudo_parents, children, pseudo_children
 
 
-class _BuildingNode(object):
+class _BuildingNode:
     """
     This class is only used when building the pseudo tree and should never be
     used outside this module.
@@ -370,10 +370,7 @@ def _visit_tree(root):
     """
     yield root
     for c in root.children:
-        # Using 'yield from would be nicer, but is only available with python
-        #  >= 3.3
-        for n in _visit_tree(c):
-            yield n
+        yield from _visit_tree(c)
 
 
 def tree_str_desc(root, indent_num=0):
@@ -408,7 +405,7 @@ class ComputationPseudoTree(ComputationGraph):
         self._roots = list(roots)
 
         # build the list of links
-        links: Dict[str, List] = defaultdict(lambda: [])
+        links: dict[str, list] = defaultdict(lambda: [])
         _nodes = {}
         for root in self._roots:
             for n in _visit_tree(root):

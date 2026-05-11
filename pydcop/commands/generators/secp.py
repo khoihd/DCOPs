@@ -194,14 +194,14 @@ def build_agents(lights_vars, lights_costs, capacity=None):
         logger.debug(f"Creating agent for {light_var} with hosting {hosting_costs}")
         if capacity:
             agt = AgentDef(
-                "a{}".format(light_var),
+                f"a{light_var}",
                 hosting_costs=hosting_costs,
                 capacity=capacity,
                 default_hosting_cost=100,
             )
         else:
             agt = AgentDef(
-                "a{}".format(light_var),
+                f"a{light_var}",
                 hosting_costs=hosting_costs,
                 default_hosting_cost=100,
             )
@@ -253,20 +253,20 @@ def build_models(
     models = {}
     models_var = {}
     for j in range(model_count):
-        model_var = Variable("m{}".format(j), domain=light_domain)
+        model_var = Variable(f"m{j}", domain=light_domain)
         models_var[model_var.name] = model_var
 
         model_size = random_generator.randint(2, max_model_size)
         light_expression_parts = []
         for model_light in random_generator.sample(list(lights), model_size):
             impact = random_generator.randint(1, 7) / 10
-            light_expression_parts.append(" {} * {}".format(model_light, impact))
+            light_expression_parts.append(f" {model_light} * {impact}")
         light_expression = " + ".join(light_expression_parts)
         model_expression = f"0 if 10* abs({model_var.name} - ({light_expression})) < 5 else 10000 ".format(
             light_expression, model_var.name
         )
         model = constraint_from_str(
-            "c_m{}".format(j),
+            f"c_m{j}",
             expression=model_expression,
             all_variables=list(lights.values()) + [model_var],
         )
@@ -356,12 +356,12 @@ def build_lights(light_count, light_domain, random_generator=None):
     lights = {}
     lights_cost = {}
     for i in range(light_count):
-        light = Variable("l{}".format(i), domain=light_domain)
+        light = Variable(f"l{i}", domain=light_domain)
         lights[light.name] = light
         efficiency = random_generator.randint(0, 90) / 100
         cost = constraint_from_str(
-            "c_l{}".format(i),
-            expression="{} * {}".format(light.name, efficiency),
+            f"c_l{i}",
+            expression=f"{light.name} * {efficiency}",
             all_variables=[light],
         )
         lights_cost[cost.name] = cost

@@ -31,7 +31,7 @@
 
 import logging
 from random import choice, shuffle
-from typing import Iterable
+from collections.abc import Iterable
 
 from collections import defaultdict
 
@@ -170,8 +170,8 @@ def _distribute_try(computation_graph: ComputationGraph,
             # distribution.
             if attempt > 2:
                 raise ImpossibleDistributionException(
-                    'Could not find feasible distribution after {} '
-                    'attempts'.format(attempt))
+                    f'Could not find feasible distribution after {attempt} '
+                    'attempts')
             else:
                 _distribute_try(computation_graph, agents, hints,
                                 memory_footprint_estimate, computation_graph,

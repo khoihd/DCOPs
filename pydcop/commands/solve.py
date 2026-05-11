@@ -394,7 +394,7 @@ output_file = None
 
 def add_csvline(file, mode, metrics):
     data = [metrics[c] for c in columns[mode]]
-    with open(file, mode="at", encoding="utf-8", newline="") as f:
+    with open(file, mode="a", encoding="utf-8", newline="") as f:
         csvwriter = csv.writer(f)
         csvwriter.writerow(data)
 
@@ -451,7 +451,7 @@ def prepare_metrics_files(run, end, mode):
 
 
 def run_cmd(args, timer=None, timeout=None):
-    logger.debug('dcop command "solve" with arguments {}'.format(args))
+    logger.debug(f'dcop command "solve" with arguments {args}')
 
     global INFINITY, collect_on, output_file
     INFINITY = args.infinity
@@ -466,7 +466,7 @@ def run_cmd(args, timer=None, timeout=None):
             _error('Cannot use "period" argument when collect_on is not ' '"period"')
 
     global dcop
-    logger.info("loading dcop from {}".format(args.dcop_files))
+    logger.info(f"loading dcop from {args.dcop_files}")
     dcop = load_dcop_from_file(args.dcop_files)
     logger.debug(f"dcop  {dcop} ")
 
@@ -507,7 +507,7 @@ def run_cmd(args, timer=None, timeout=None):
         distribution = load_dist_from_file(args.distribution)
     logger.debug("Distribution Computation graph: %s ", distribution)
 
-    logger.info("Dcop distribution : {}".format(distribution))
+    logger.info(f"Dcop distribution : {distribution}")
 
     algo = build_algo_def(algo_module, args.algo, dcop.objective, args.algo_params)
 

@@ -64,7 +64,7 @@ class SimpleReprException(Exception):
     pass
 
 
-class SimpleRepr(object):
+class SimpleRepr:
     """
     Mixin to transform python objects into a representation composed only of
     simple python types.
@@ -100,15 +100,12 @@ class SimpleRepr(object):
                         r[arg] = self.__getattribute__(
                             self._repr_mapping[arg])
                     except AttributeError:
-                        SimpleReprException('Invalid repr_mapping in {}, '
-                                            'no attribute for {}'.
-                                            format(self,
-                                                   self._repr_mapping[arg]))
+                        SimpleReprException(f'Invalid repr_mapping in {self}, '
+                                            f'no attribute for {self._repr_mapping[arg]}')
 
                 else:
-                    raise SimpleReprException('Could not build repr for {}, '
-                                              'no attribute for {}'.
-                                              format(self, arg))
+                    raise SimpleReprException(f'Could not build repr for {self}, '
+                                              f'no attribute for {arg}')
         return r
 
     @classmethod
@@ -204,4 +201,4 @@ def simple_repr(o):
         return None
     else:
         raise SimpleReprException('Could not build a simple representation '
-                                  'for "{}" type={}'.format(o, type(o)))
+                                  f'for "{o}" type={type(o)}')

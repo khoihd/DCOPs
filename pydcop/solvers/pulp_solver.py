@@ -30,7 +30,8 @@
 
 from dataclasses import dataclass
 import math
-from typing import Any, Dict, Mapping
+from typing import Any
+from collections.abc import Mapping
 
 from pulp import GLPK_CMD, LpBinary, LpMaximize, LpMinimize, LpProblem, LpStatus
 from pulp import LpStatusOptimal, LpVariable, lpSum, value
@@ -43,7 +44,7 @@ from pydcop.dcop.relations import generate_assignment_as_dict
 @dataclass(frozen=True)
 class PulpDcopResult:
     status: str
-    assignment: Dict[str, Any]
+    assignment: dict[str, Any]
     objective_value: float | None
     solver_status: str
 

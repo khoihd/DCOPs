@@ -30,8 +30,9 @@
 
 
 import random
-from typing import Callable, Sized
-from typing import Iterable, Any, Dict, Union, Tuple
+from collections.abc import Callable, Sized
+from typing import Any
+from collections.abc import Iterable
 
 import itertools
 
@@ -98,10 +99,10 @@ class Domain(Sized, SimpleRepr, Iterable[Any]):
         return False
 
     def __str__(self):
-        return "VariableDomain({})".format(self.name)
+        return f"VariableDomain({self.name})"
 
     def __repr__(self):
-        return "VariableDomain({}, {}, {})".format(self.name, self.type, self.values)
+        return f"VariableDomain({self.name}, {self.type}, {self.values})"
 
     def __hash__(self):
         return hash((self._name, self._domain_type, self._values))
@@ -195,7 +196,7 @@ class Variable(SimpleRepr):
     has_cost = False
 
     def __init__(
-        self, name: str, domain: Union[Domain, Iterable[Any]], initial_value=None
+        self, name: str, domain: Domain | Iterable[Any], initial_value=None
     ) -> None:
         self._name = name
         # If the domain has no name, simply use a named derived from the
@@ -209,8 +210,8 @@ class Variable(SimpleRepr):
         self._domain = domain
         if initial_value is not None and initial_value not in self.domain.values:
             raise ValueError(
-                "Invalid initial value {}, not in domain values"
-                " {}".format(initial_value, self.domain.values)
+                f"Invalid initial value {initial_value}, not in domain values"
+                f" {self.domain.values}"
             )
         self._initial_value = initial_value
 
@@ -230,10 +231,10 @@ class Variable(SimpleRepr):
         return 0
 
     def __str__(self):
-        return "Variable({})".format(self.name)
+        return f"Variable({self.name})"
 
     def __repr__(self):
-        return "Variable({}, {}, {})".format(self.name, self.initial_value, self.domain)
+        return f"Variable({self.name}, {self.initial_value}, {self.domain})"
 
     def __eq__(self, other):
         if type(self) is not type(other):
@@ -255,10 +256,10 @@ class Variable(SimpleRepr):
 
 def create_variables(
     name_prefix: str,
-    indexes: Union[str, Tuple, Iterable],
+    indexes: str | tuple | Iterable,
     domain: Domain,
     separator: str = "_",
-) -> Dict[Union[str, Tuple[str, ...]], Variable]:
+) -> dict[str | tuple[str, ...], Variable]:
     """Mass creation of variables.
 
     Parameters
@@ -335,10 +336,10 @@ class BinaryVariable(Variable):
         super().__init__(name, binary_domain, initial_value)
 
     def __str__(self):
-        return "BinaryVariable({})".format(self.name)
+        return f"BinaryVariable({self.name})"
 
     def __repr__(self):
-        return "BinaryVariable({}, {})".format(self.name, self.initial_value)
+        return f"BinaryVariable({self.name}, {self.initial_value})"
 
     def clone(self):
         return BinaryVariable(self.name, initial_value=self.initial_value)
@@ -346,7 +347,7 @@ class BinaryVariable(Variable):
 
 def create_binary_variables(
     name_prefix: str, indexes, separator: str = "_"
-) -> Dict[Union[str, Tuple], BinaryVariable]:
+) -> dict[str | tuple, BinaryVariable]:
     """Mass creation of binary variables.
 
     Parameters
@@ -411,8 +412,8 @@ class VariableWithCostDict(Variable):
     def __init__(
         self,
         name: str,
-        domain: Union[VariableDomain, Iterable[Any]],
-        costs: Dict[Any, float],
+        domain: VariableDomain | Iterable[Any],
+        costs: dict[Any, float],
         initial_value=None,
     ) -> None:
         """
@@ -431,12 +432,10 @@ class VariableWithCostDict(Variable):
             return 0.0
 
     def __str__(self):
-        return "VariableWithCostDict({})".format(self.name)
+        return f"VariableWithCostDict({self.name})"
 
     def __repr__(self):
-        return "VariableWithCostDict" "({}, {}, {}, {})".format(
-            self.name, self.initial_value, self.domain, self._costs
-        )
+        return "VariableWithCostDict" f"({self.name}, {self.initial_value}, {self.domain}, {self._costs})"
 
     def __eq__(self, other):
         if type(self) is not type(other):
@@ -465,8 +464,8 @@ class VariableWithCostFunc(Variable):
     def __init__(
         self,
         name: str,
-        domain: Union[VariableDomain, Iterable[Any]],
-        cost_func: Union[Callable[..., float], ExpressionFunction],
+        domain: VariableDomain | Iterable[Any],
+        cost_func: Callable[..., float] | ExpressionFunction,
         initial_value: Any = None,
     ) -> None:
         """
@@ -485,11 +484,9 @@ class VariableWithCostFunc(Variable):
                 or name not in cost_func.variable_names
             ):
                 raise ValueError(
-                    "Cost function for var {} must have a single "
+                    f"Cost function for var {name} must have a single "
                     "variable, which must be the same as "
-                    'the variable : "{} != {}'.format(
-                        name, name, cost_func.variable_names
-                    )
+                    f'the variable : "{name} != {cost_func.variable_names}'
                 )
         self._cost_func = cost_func
 
@@ -501,12 +498,10 @@ class VariableWithCostFunc(Variable):
             return self._cost_func(val)
 
     def __str__(self):
-        return "VariableWithCostFunc({})".format(self.name)
+        return f"VariableWithCostFunc({self.name})"
 
     def __repr__(self):
-        return "VariableWithCostFunc" "({}, {}, {}, {})".format(
-            self.name, self.initial_value, self.domain, self._cost_func
-        )
+        return "VariableWithCostFunc" f"({self.name}, {self.initial_value}, {self.domain}, {self._cost_func})"
 
     def __eq__(self, other):
         if type(self) is not type(other):
@@ -548,7 +543,7 @@ class VariableNoisyCostFunc(VariableWithCostFunc):
     def __init__(
         self,
         name: str,
-        domain: Union[VariableDomain, Iterable[Any]],
+        domain: VariableDomain | Iterable[Any],
         cost_func,
         initial_value=None,
         noise_level: float = 0.02,
@@ -572,16 +567,10 @@ class VariableNoisyCostFunc(VariableWithCostFunc):
         return self._costs[val]
 
     def __str__(self):
-        return "VariableNoisyCostFunc({})".format(self.name)
+        return f"VariableNoisyCostFunc({self.name})"
 
     def __repr__(self):
-        return "VariableNoisyCostFunc" "({}, {}, {}, {}, {})".format(
-            self.name,
-            self.initial_value,
-            self.domain,
-            self._cost_func,
-            self._noise_level,
-        )
+        return "VariableNoisyCostFunc" f"({self.name}, {self.initial_value}, {self.domain}, {self._cost_func}, {self._noise_level})"
 
     def __eq__(self, other):
         if type(self) is not type(other):
@@ -628,7 +617,7 @@ class ExternalVariable(Variable):
     """
 
     def __init__(
-        self, name: str, domain: Union[VariableDomain, Iterable[Any]], value=None
+        self, name: str, domain: VariableDomain | Iterable[Any], value=None
     ) -> None:
         super().__init__(name, domain)
         self._cb: list[Callable[[Any], Any]] = []
@@ -645,7 +634,7 @@ class ExternalVariable(Variable):
             return
         if val not in self._domain:
             raise ValueError(
-                "Invalid value {} for sensor variable {}".format(val, self._name)
+                f"Invalid value {val} for sensor variable {self._name}"
             )
         self._value = val
         self._fire(val)
@@ -716,10 +705,10 @@ class AgentDef(SimpleRepr):
         self,
         name: str,
         default_route: float = 1,
-        routes: Dict[str, float] = None,
+        routes: dict[str, float] = None,
         default_hosting_cost: float = 0,
-        hosting_costs: Dict[str, float] = None,
-        **kwargs: Union[str, int, float],
+        hosting_costs: dict[str, float] = None,
+        **kwargs: str | int | float,
     ) -> None:
         """Build an AgentDef, only the name is mandatory."""
         super().__init__()
@@ -772,7 +761,7 @@ class AgentDef(SimpleRepr):
         return self._default_hosting_cost
 
     @property
-    def hosting_costs(self) -> Dict[str, float]:
+    def hosting_costs(self) -> dict[str, float]:
         return self._hosting_costs
 
     @property
@@ -780,7 +769,7 @@ class AgentDef(SimpleRepr):
         return self._default_route
 
     @property
-    def routes(self) -> Dict[str, float]:
+    def routes(self) -> dict[str, float]:
         return self._routes
 
     def route(self, other_agt: str) -> float:
@@ -817,7 +806,7 @@ class AgentDef(SimpleRepr):
         except KeyError:
             return self.default_route
 
-    def extra_attr(self) -> Dict[str, Any]:
+    def extra_attr(self) -> dict[str, Any]:
         """
         Extra attributes for this agent definition.
 
@@ -856,10 +845,10 @@ class AgentDef(SimpleRepr):
         ) = state
 
     def __str__(self):
-        return "AgentDef({})".format(self.name)
+        return f"AgentDef({self.name})"
 
     def __repr__(self):
-        return "AgentDef({}, {})".format(self.name, self._attr)
+        return f"AgentDef({self.name}, {self._attr})"
 
     def __eq__(self, other):
         if type(other) is not AgentDef:
@@ -876,14 +865,14 @@ class AgentDef(SimpleRepr):
 
 def create_agents(
     name_prefix: str,
-    indexes: Union[Iterable, Tuple[Iterable]],
+    indexes: Iterable | tuple[Iterable],
     default_route: float = 1,
-    routes: Dict[str, float] = None,
+    routes: dict[str, float] = None,
     default_hosting_costs: float = 0,
-    hosting_costs: Dict[str, float] = None,
+    hosting_costs: dict[str, float] = None,
     separator: str = "_",
-    **kwargs: Union[str, int, float],
-) -> Dict[Union[str, Tuple[str, ...]], AgentDef]:
+    **kwargs: str | int | float,
+) -> dict[str | tuple[str, ...], AgentDef]:
     """Mass creation of agents definitions.
 
     Parameters

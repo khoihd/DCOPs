@@ -33,7 +33,7 @@ import random
 import networkx as nx
 
 
-class Node(object):
+class Node:
     """
     A generic Node for a bipartite graph
     """
@@ -58,7 +58,7 @@ class Node(object):
         if node.type is not None and self.type == node.type:
             raise ValueError(
                 "In a bipartite graph two nodes with the same "
-                "type cannot be connected : {} - {}".format(node, self)
+                f"type cannot be connected : {node} - {self}"
             )
         self.neighbors.append(node)
         if not directed:

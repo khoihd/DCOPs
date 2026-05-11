@@ -115,7 +115,6 @@ Generate agents, one for each variable, and hosting costs::
 import logging
 import re
 from collections import defaultdict
-from typing import List, Dict
 
 from pydcop.computations_graph import constraints_hypergraph
 from pydcop.dcop.objects import AgentDef
@@ -191,7 +190,7 @@ def generate(args):
 
     variables = []
     if args.dcop_files:
-        logger.info("loading dcop from {}".format(args.dcop_files))
+        logger.info(f"loading dcop from {args.dcop_files}")
         dcop = load_dcop_from_file(args.dcop_files)
         variables = list(dcop.variables)
 
@@ -262,7 +261,7 @@ def check_args(args):
 
 def generate_agents_names(
     mode: str, count=None, variables=None, agent_prefix="a"
-) -> List[str]:
+) -> list[str]:
     if mode == "count":
         return generate_agents_from_count(count, agent_prefix=agent_prefix)
     elif mode == "variables":
@@ -270,28 +269,28 @@ def generate_agents_names(
     raise ValueError(f"Invalid mode {mode}")
 
 
-def generate_agents_from_count(agent_count: int, agent_prefix="a") -> List[str]:
+def generate_agents_from_count(agent_count: int, agent_prefix="a") -> list[str]:
     digit_count = len(str(agent_count - 1))
     agents = [f"{agent_prefix}{i:0{digit_count}d}" for i in range(agent_count)]
     return agents
 
 
-def generate_agents_from_variables(variables: List[str], agent_prefix="a") -> List[str]:
+def generate_agents_from_variables(variables: list[str], agent_prefix="a") -> list[str]:
     prefix_length = len(find_prefix(variables))
 
     return [agent_prefix + variable[prefix_length:] for variable in variables]
 
 
 def agent_variables_mapping(
-    hosting_mode: str, agents: List[str], variables: List[str]
-) -> Dict[str, List[str]]:
+    hosting_mode: str, agents: list[str], variables: list[str]
+) -> dict[str, list[str]]:
     if hosting_mode == "name_mapping":
         return find_corresponding_variables(agents, variables)
     elif hosting_mode == "var_startswith":
         return find_corresponding_variables_start_with(agents, variables)
 
 
-def generate_hosting_costs(mode: str,  mapping: Dict[str, List[str]]):
+def generate_hosting_costs(mode: str,  mapping: dict[str, list[str]]):
     costs = {}
     for agt_name in mapping:
         agt_costs = {}
@@ -303,7 +302,7 @@ def generate_hosting_costs(mode: str,  mapping: Dict[str, List[str]]):
 
 def generate_routes_costs(
     mode: str, mapping, dcop
-) -> Dict[str, Dict[str, float]]:
+) -> dict[str, dict[str, float]]:
     routes = {}
     if mode == "graph":
         graph = constraints_hypergraph.build_computation_graph(dcop)
@@ -345,8 +344,8 @@ def generate_routes_costs(
 
 
 def find_corresponding_variables(
-    agents: List[str], variables: List[str], agt_prefix=None, var_prefix=None
-) -> Dict[str, List[str]]:
+    agents: list[str], variables: list[str], agt_prefix=None, var_prefix=None
+) -> dict[str, list[str]]:
     var_prefix = var_prefix if var_prefix else find_prefix(variables)
     var_regexp = re.compile(f"{var_prefix}(?P<index_var>\w+)")
     agt_prefix = agt_prefix if agt_prefix else find_prefix(agents)
@@ -386,8 +385,8 @@ def find_corresponding_variables(
 
 
 def find_corresponding_variables_start_with(
-    agents: List[str], variables: List[str], agt_prefix=None, var_prefix=None
-) -> Dict[str, List[str]]:
+    agents: list[str], variables: list[str], agt_prefix=None, var_prefix=None
+) -> dict[str, list[str]]:
     var_prefix = var_prefix if var_prefix else find_prefix(variables)
     var_regexp = re.compile(f"{var_prefix}(?P<index_var>\w+)")
     agt_prefix = agt_prefix if agt_prefix else find_prefix(agents)
@@ -414,7 +413,7 @@ def find_corresponding_variables_start_with(
     return dict(mapping)
 
 
-def find_prefix(names: List[str]) -> str:
+def find_prefix(names: list[str]) -> str:
     """
     Find a common prefix in a list of string?
     Parameters

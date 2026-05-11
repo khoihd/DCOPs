@@ -44,7 +44,7 @@ import logging
 import time
 from collections import defaultdict
 from itertools import combinations
-from typing import Iterable, List, Callable
+from collections.abc import Iterable, Callable
 
 from pulp import (
     LpVariable,
@@ -173,7 +173,7 @@ def distribution_cost(
 
 def fg_secp_ilp(
     cg: ComputationsFactorGraph,
-    agents: List[AgentDef],
+    agents: list[AgentDef],
     already_assigned: Distribution,
     memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
@@ -215,14 +215,14 @@ def fg_secp_ilp(
     for i in vars_to_host:
         pb += (
             lpSum([xs[(i, k)] for k in agents_names]) == 1,
-            "var {} is hosted".format(i),
+            f"var {i} is hosted",
         )
 
     # All factor computations must be hosted:
     for j in facs_to_host:
         pb += (
             lpSum([fs[(j, k)] for k in agents_names]) == 1,
-            "factor {} is hosted".format(j),
+            f"factor {j} is hosted",
         )
 
     # Each agent must host at least one computation:
@@ -236,7 +236,7 @@ def fg_secp_ilp(
             lpSum([xs[(i, k)] for i in vars_to_host])
             + lpSum([fs[(j, k)] for j in facs_to_host])
             >= 1,
-            "atleastone {}".format(k),
+            f"atleastone {k}",
         )
 
     # Memory capacity constraint for agents
@@ -265,7 +265,7 @@ def fg_secp_ilp(
                 ]
             )
             <= capacity,
-            "memory {}".format(a.name),
+            f"memory {a.name}",
         )
 
     # Linearization constraints for alpha_ijk.
@@ -274,11 +274,11 @@ def fg_secp_ilp(
         for k in agents_names:
 
             if i in vars_to_host and j in facs_to_host:
-                pb += alphas[((i, j), k)] <= xs[(i, k)], "lin1 {}{}{}".format(i, j, k)
-                pb += alphas[((i, j), k)] <= fs[(j, k)], "lin2 {}{}{}".format(i, j, k)
+                pb += alphas[((i, j), k)] <= xs[(i, k)], f"lin1 {i}{j}{k}"
+                pb += alphas[((i, j), k)] <= fs[(j, k)], f"lin2 {i}{j}{k}"
                 pb += (
                     alphas[((i, j), k)] >= xs[(i, k)] + fs[(j, k)] - 1,
-                    "lin3 {}{}{}".format(i, j, k),
+                    f"lin3 {i}{j}{k}",
                 )
 
             elif i in vars_to_host and j not in facs_to_host:

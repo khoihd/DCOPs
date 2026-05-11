@@ -130,7 +130,7 @@ def test_dpop_message_value_size():
     assert message.size == 2
 
 
-class DummySender(object):
+class DummySender:
     def __init__(self):
         self.util_sender_var = None
         self.util_dest_var = None

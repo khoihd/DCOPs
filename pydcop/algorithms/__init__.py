@@ -86,7 +86,8 @@ import inspect
 import pkgutil
 from functools import lru_cache
 from importlib import import_module
-from typing import Dict, Any, List, Iterable, NamedTuple, Optional, Union
+from typing import Any, NamedTuple
+from collections.abc import Iterable
 
 from pydcop.computations_graph.objects import ComputationNode
 from pydcop.utils.simple_repr import SimpleRepr, simple_repr, from_repr
@@ -125,14 +126,14 @@ class AlgoParameterDef(NamedTuple):
     This must be either ``int``, ``float`` or ``str`` 
     """
 
-    values: Optional[List[str]] = None
+    values: list[str] | None = None
     """
     List of valid values for this parameter.
     
     Can be ``None`` if non-applicable (for a ``float`` paramater, for example).
     """
 
-    default_value: Union[str, int, float] = None
+    default_value: str | int | float = None
     """
     Default value of the parameter.
     """
@@ -171,7 +172,7 @@ class AlgorithmDef(SimpleRepr):
         ``'min'`` of ``'max'``, defaults to ``'min'``
 
     """
-    def __init__(self, algo: str, params: Dict[str, Any], mode: str='min') \
+    def __init__(self, algo: str, params: dict[str, Any], mode: str='min') \
             -> None:
         self._algo = algo
         self._mode = mode
@@ -179,9 +180,9 @@ class AlgorithmDef(SimpleRepr):
 
     @staticmethod
     def build_with_default_param(
-            algo: str, params: Dict[str, Any]= None,
+            algo: str, params: dict[str, Any]= None,
             mode: str = 'min',
-            parameters_definitions: List[AlgoParameterDef]= None):
+            parameters_definitions: list[AlgoParameterDef]= None):
         """
         Creates an :class:`AlgoDef` instance with defaults parameter values.
 
@@ -290,7 +291,7 @@ class AlgorithmDef(SimpleRepr):
         return self._params[param]
 
     @property
-    def params(self)-> Dict:
+    def params(self)-> dict:
         """
         A dictionary of parameters values.
 
@@ -318,10 +319,10 @@ class AlgorithmDef(SimpleRepr):
         return algo
 
     def __str__(self):
-        return 'AlgorithmDef({})'.format(self.algo)
+        return f'AlgorithmDef({self.algo})'
 
     def __repr__(self):
-        return 'AlgorithmDef({}, {}, {})'.format(self.algo, self.mode, self._params)
+        return f'AlgorithmDef({self.algo}, {self.mode}, {self._params})'
 
     def __eq__(self, other):
         if type(other) is not AlgorithmDef:
@@ -367,10 +368,10 @@ class ComputationDef(SimpleRepr):
         return self.node.name
 
     def __str__(self):
-        return 'ComputationDef({}, {})'.format(self.node.name, self.algo.algo)
+        return f'ComputationDef({self.node.name}, {self.algo.algo})'
 
     def __repr__(self):
-        return 'ComputationDef({}, {})'.format(self.node, self.algo)
+        return f'ComputationDef({self.node}, {self.algo})'
 
     def __eq__(self, other):
         if type(other) is not ComputationDef:
@@ -431,20 +432,19 @@ def check_param_value(param_val: Any, param_def: AlgoParameterDef) -> Any:
         else:
 
             raise ValueError(
-                'Invalid type for value {} of parameter {}, must be {}'.format(
-                    param_val, param_def.name, param_def.type))
+                f'Invalid type for value {param_val} of parameter {param_def.name}, must be {param_def.type}')
 
     if param_def.values:
         if param_val in param_def.values:
             return param_val
         else:
-            raise ValueError('Invalid value for parameter {}, must be one of '
-                             '{}'.format(param_def.name, param_def.values))
+            raise ValueError(f'Invalid value for parameter {param_def.name}, must be one of '
+                             f'{param_def.values}')
     return param_val
 
 
-def prepare_algo_params(params: Dict[str, Any],
-                        parameters_definitions: List[AlgoParameterDef]):
+def prepare_algo_params(params: dict[str, Any],
+                        parameters_definitions: list[AlgoParameterDef]):
     """
     Ensure algorithm's parameters are valid.
 
@@ -495,8 +495,8 @@ def prepare_algo_params(params: Dict[str, Any],
             selected_params[param_name] = param_val
 
         else:
-            raise ValueError('Unknown parameter for algorithm : {}'
-                             .format(param_name))
+            raise ValueError(f'Unknown parameter for algorithm : {param_name}'
+                             )
 
     missing_params = set(all_algo_params) - set(params)
     for param_name in missing_params:
@@ -505,7 +505,7 @@ def prepare_algo_params(params: Dict[str, Any],
     return selected_params
 
 
-def list_available_algorithms() -> List[str]:
+def list_available_algorithms() -> list[str]:
     """
     The list of available DCOP algorithms.
 

@@ -207,15 +207,15 @@ def generate_small_world(args):
 
 
 def agt_name(i: int):
-    return "a{:02d}".format(i)
+    return f"a{i:02d}"
 
 
 def var_name(i: int):
-    return "v{:03d}".format(i)
+    return f"v{i:03d}"
 
 
 def c_name(i: int, j: int):
-    return "c{:03d}_{:03d}".format(i, j)
+    return f"c{i:03d}_{j:03d}"
 
 
 def write_in_file(filename: str, dcop_str: str):

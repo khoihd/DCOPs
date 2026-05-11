@@ -30,9 +30,8 @@
 import threading
 from queue import Queue
 from time import perf_counter
-from typing import Dict, Tuple, Callable
-from typing import List
-from typing import Optional, Any
+from collections.abc import Callable
+from typing import Any
 
 from collections import defaultdict
 
@@ -59,7 +58,7 @@ ORCHESTRATOR = 'orchestrator'
 ORCHESTRATOR_MGT = '_mgt_orchestrator'
 
 
-class Orchestrator(object):
+class Orchestrator:
     """
     Centralized organisation of the set of agents used to solve a dcop.
 
@@ -243,7 +242,7 @@ class Orchestrator(object):
         self._mgt_method('_orchestrator_start_replication', k_target)
 
     def run(self, scenario: Scenario=None,
-            timeout: Optional[float]=None, repair_only=False):
+            timeout: float | None=None, repair_only=False):
         """Run the DCOP, with a scenario if given.
 
         When `run()` is called, the orchestrator asks all orchestrated agents to
@@ -465,20 +464,20 @@ class SetupRepairMessage(Message):
     """
 
     def __init__(self,
-                 repair_info: Dict[str, Tuple[List[str],
-                                              Dict[str, str],
-                                              Dict[str, List[str]]]]):
+                 repair_info: dict[str, tuple[list[str],
+                                              dict[str, str],
+                                              dict[str, list[str]]]]):
         super().__init__('setup_repair', None)
         self._repair_info = repair_info
 
     @property
-    def repair_info(self) -> Dict[str, Tuple[List[str],
-                                             Dict[str, str],
-                                             Dict[str, List[str]]]]:
+    def repair_info(self) -> dict[str, tuple[list[str],
+                                             dict[str, str],
+                                             dict[str, list[str]]]]:
         return self._repair_info
 
     def __str__(self):
-        return 'SetupRepairMessage({})'.format(self._repair_info)
+        return f'SetupRepairMessage({self._repair_info})'
 
 
 class RepairReadyMessage(Message):
@@ -497,7 +496,7 @@ class RepairReadyMessage(Message):
 
     """
 
-    def __init__(self, agent: str, computations: List[str]):
+    def __init__(self, agent: str, computations: list[str]):
         super().__init__('repair_ready', None)
         self._agent = agent
         self._computations = computations
@@ -507,16 +506,14 @@ class RepairReadyMessage(Message):
         return self._agent
 
     @property
-    def computations(self) -> List[str]:
+    def computations(self) -> list[str]:
         return self._computations
 
     def __str__(self):
-        return 'RepairReadyMessage({}, {})'.format(self._agent,
-                                                   self._computations)
+        return f'RepairReadyMessage({self._agent}, {self._computations})'
 
     def __repr__(self):
-        return 'RepairReadyMessage({}, {})'.format(self._agent,
-                                                   self._computations)
+        return f'RepairReadyMessage({self._agent}, {self._computations})'
 
     def __eq__(self, other):
         if not isinstance(other, RepairReadyMessage):
@@ -665,8 +662,7 @@ class AgentsMgt(MessagePassingComputation):
                 try:
                     handler = getattr(self, msg.type)
                 except AttributeError:
-                    raise AgentException('No handler for {} on orchestrator '
-                                         ''.format(msg.type))
+                    raise AgentException(f'No handler for {msg.type} on orchestrator ')
                 handler(msg, t)
         except Exception:
             # In case we have an exception while handling message in
@@ -976,7 +972,7 @@ class AgentsMgt(MessagePassingComputation):
 
         self._agents_removal(leaving_agents)
 
-    def _agents_removal(self, leaving_agents: List[str]):
+    def _agents_removal(self, leaving_agents: list[str]):
         # Now inform other agents of the list of agents that left the system
         # This replace a proper discovery mechanism
         candidates_agents = _removal_candidate_agents(
@@ -1026,7 +1022,7 @@ class AgentsMgt(MessagePassingComputation):
             self._send_mgt_msg(candidate, msg)
             self._agts_state[candidate] = 'repair_setup'
 
-    def _agents_arrival(self, arrived_agents: List[str]):
+    def _agents_arrival(self, arrived_agents: list[str]):
         # TODO
         # For arrival,
         #  * agents that are 'near' the newly arrived agent(s)
@@ -1152,7 +1148,7 @@ class AgentsMgt(MessagePassingComputation):
             result["hosting_cost"] = None
             result["cost_error"] = str(e)
 
-        f_name = 'evtdist_{}.yaml'.format(self.dist_count)
+        f_name = f'evtdist_{self.dist_count}.yaml'
         with open(f_name, mode='w', encoding='utf-8') as f:
             f.write(yaml.dump(result))
 

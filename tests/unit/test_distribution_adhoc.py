@@ -128,7 +128,7 @@ class TestDistributionAdHocFactorGraph(unittest.TestCase):
 
         hints = DistributionHints(None, {'v1': ['f1']})
 
-        agents = [AgentDef('a{}'.format(i), capacity=100)
+        agents = [AgentDef(f'a{i}', capacity=100)
                   for i in range(1, 11)]
         agent_mapping = distribute(cg, agents, hints,
                                    memory_footprint_estimate=lambda x: 10)
@@ -155,7 +155,7 @@ class TestDistributionAdHocFactorGraph(unittest.TestCase):
         hints = DistributionHints(must_host={'a1': ['v1'], 'a2': ['v2', 'v3']})
 
         # we must set the capacity to make sure that a2 cannot take f1
-        agents = [AgentDef('a{}'.format(i), capacity=41)
+        agents = [AgentDef(f'a{i}', capacity=41)
                   for i in range(1, 11)]
 
         agent_mapping = distribute(cg, agents, hints,
@@ -194,7 +194,7 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
         hints = DistributionHints(must_host={'a1': ['v1'], 'a2': ['v2']},
                                   host_with={'m1': ['mf1']})
 
-        agents = [AgentDef('a{}'.format(i), capacity=100) for i in range(1, 11)]
+        agents = [AgentDef(f'a{i}', capacity=100) for i in range(1, 11)]
         agent_mapping = distribute(self.cg, agents, hints,
                                    memory_footprint_estimate=lambda x: 10)
 
@@ -209,7 +209,7 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
         hints = DistributionHints(must_host={'a1': ['v1'], 'a2': ['v2']},
                                   host_with={'m1': ['mf1']})
 
-        agents = [AgentDef('a{}'.format(i), capacity=100) for i in range(1, 11)]
+        agents = [AgentDef(f'a{i}', capacity=100) for i in range(1, 11)]
         agent_mapping = distribute(self.cg, agents, hints,
                                    memory_footprint_estimate=lambda x: 10)
 
@@ -224,7 +224,7 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
         hints = DistributionHints(must_host={'a1': ['v1'], 'a3': ['v2']},
                                   host_with={'m1': ['mf1']})
 
-        agents = [AgentDef('a{}'.format(i), capacity=100) for i in range(1, 11)]
+        agents = [AgentDef(f'a{i}', capacity=100) for i in range(1, 11)]
         agent_mapping = distribute(self.cg, agents, hints,
                                    memory_footprint_estimate=lambda x: 10)
 
@@ -244,7 +244,7 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
         hints = DistributionHints(must_host={'a1': ['v1'], 'a3': ['v2']},
                                   host_with={'m1': ['mf1']})
 
-        agents = [AgentDef('a{}'.format(i), capacity=100) for i in range(1, 11)]
+        agents = [AgentDef(f'a{i}', capacity=100) for i in range(1, 11)]
         agent_mapping = distribute(self.cg, agents, hints,
                                    memory_footprint_estimate=lambda x: 10)
 

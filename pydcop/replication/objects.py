@@ -29,16 +29,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from typing import Dict, List
 
 
-class ReplicaDistribution(object):
+class ReplicaDistribution:
     """
     Simply a convenient representation of the distribution of replica on agents
 
     """
 
-    def __init__(self, mapping: Dict[str, List[str]]):
+    def __init__(self, mapping: dict[str, list[str]]):
         """
         Basic
         :param mapping: map computation -> list of agents hosting a replica
@@ -53,8 +52,8 @@ class ReplicaDistribution(object):
             for agent in agents:
                 replicas = self._agent_replicas.setdefault(agent, [])
                 if computation in replicas:
-                    raise ValueError('Agent {} is hosting several replica '
-                                     'for {}'.format(agent, computation))
+                    raise ValueError(f'Agent {agent} is hosting several replica '
+                                     f'for {computation}')
                 replicas.append(computation)
 
     def replicas_on(self, agt: str, raise_on_unknown=False):

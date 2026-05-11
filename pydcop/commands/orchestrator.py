@@ -331,7 +331,7 @@ def add_csvline(file, mode, metrics):
     data = [metrics[c] for c in columns[mode]]
     line = ",".join([str(d) for d in data])
 
-    with open(file, mode="at", encoding="utf-8") as f:
+    with open(file, mode="a", encoding="utf-8") as f:
         f.write(line)
         f.write("\n")
 
@@ -390,7 +390,7 @@ def prepare_metrics_files(run, end, mode):
 
 
 def run_cmd(args, timer=None, timeout=None):
-    logger.debug('dcop command "orchestrator" with arguments {} '.format(args))
+    logger.debug(f'dcop command "orchestrator" with arguments {args} ')
 
     global collect_on, output_file
     output_file = args.output
@@ -417,18 +417,18 @@ def run_cmd(args, timer=None, timeout=None):
     else:
         dist_module, algo_module, graph_module = _load_modules(None, args.algo)
 
-    logger.info("loading dcop from {}".format(dcop_yaml_files))
+    logger.info(f"loading dcop from {dcop_yaml_files}")
     dcop = load_dcop_from_file(dcop_yaml_files)
 
     if args.scenario:
-        logger.info("loading scenario from {}".format(args.scenario))
+        logger.info(f"loading scenario from {args.scenario}")
         scenario = load_scenario_from_file(args.scenario)
     else:
         logger.debug("No scenario")
         scenario = None
 
     # Build factor-graph computation graph
-    logger.info("Building computation graph for dcop {}".format(dcop_yaml_files))
+    logger.info(f"Building computation graph for dcop {dcop_yaml_files}")
     cg = graph_module.build_computation_graph(dcop)
 
     logger.info("Distributing computation graph ")
@@ -449,7 +449,7 @@ def run_cmd(args, timer=None, timeout=None):
     else:
         distribution = load_dist_from_file(args.distribution)
 
-    logger.info("Dcop distribution : {}".format(distribution))
+    logger.info(f"Dcop distribution : {distribution}")
 
     algo = build_algo_def(algo_module, args.algo, dcop.objective, args.algo_params)
 
@@ -557,28 +557,28 @@ def _load_modules(dist, algo):
     dist_module, algo_module, graph_module = None, None, None
     if dist:
         try:
-            dist_module = import_module("pydcop.distribution.{}".format(dist))
+            dist_module = import_module(f"pydcop.distribution.{dist}")
             # TODO check the imported module has the right methods ?
         except ImportError:
-            _error("Could not find distribution method {}".format(dist))
+            _error(f"Could not find distribution method {dist}")
 
     try:
         algo_module = load_algorithm_module(algo)
         # TODO check the imported module has the right methods ?
 
         graph_module = import_module(
-            "pydcop.computations_graph.{}".format(algo_module.GRAPH_TYPE)
+            f"pydcop.computations_graph.{algo_module.GRAPH_TYPE}"
         )
     except ImportError:
         _error(
-            "Could not find computation graph type: {}".format(algo_module.GRAPH_TYPE)
+            f"Could not find computation graph type: {algo_module.GRAPH_TYPE}"
         )
 
     return dist_module, algo_module, graph_module
 
 
 def _error(msg):
-    print("Error: {}".format(msg))
+    print(f"Error: {msg}")
     sys.exit(2)
 
 class NumpyEncoder(json.JSONEncoder):

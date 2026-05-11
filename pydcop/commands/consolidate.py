@@ -67,7 +67,6 @@ import logging
 import json
 import os
 
-from typing import List
 
 from pydcop.commands.distribute import (
     load_algo_module,
@@ -161,7 +160,7 @@ def run_cmd(args):
 
 
 def distribution_cost(
-    dcop_files: List[str], distribution_file, algo, target
+    dcop_files: list[str], distribution_file, algo, target
 ):
     logger.debug(f"analyse file {dcop_files}")
 
@@ -205,10 +204,10 @@ def single_distrib_costs(dcop, distribution_file, algo):
     return cost, comm, hosting
 
 
-def extract(files: List[str], target):
+def extract(files: list[str], target):
     for file in files:
         logger.debug(f"analyse file {file}")
-        with open(file, mode="r") as f:
+        with open(file) as f:
 
             data_json = json.load(f)
             data = [

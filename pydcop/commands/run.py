@@ -309,7 +309,7 @@ output_file = None
 DISTRIBUTION_METHODS = ["oneagent", "adhoc", "ilp_fgdp", "heur_comhost", "oilp_secp_fgdp", "gh_secp_fgdp", "gh_secp_cgdp", "oilp_cgdp", "gh_cgdp"]
 
 def run_cmd(args, timer=None, timeout=None):
-    logger.debug('dcop command "run" with arguments {}'.format(args))
+    logger.debug(f'dcop command "run" with arguments {args}')
 
     global INFINITY, collect_on, output_file
     INFINITY = args.infinity
@@ -328,7 +328,7 @@ def run_cmd(args, timer=None, timeout=None):
     _, algo_module, graph_module = _load_modules(None, args.algo)
 
     global dcop
-    logger.info("loading dcop from {}".format(args.dcop_files))
+    logger.info(f"loading dcop from {args.dcop_files}")
     dcop = load_dcop_from_file(args.dcop_files)
 
     dcop = filter_dcop(dcop)
@@ -340,7 +340,7 @@ def run_cmd(args, timer=None, timeout=None):
     else:
         dist_module, algo_module, graph_module = _load_modules(None, args.algo)
 
-    logger.info("loading scenario from {}".format(args.scenario))
+    logger.info(f"loading scenario from {args.scenario}")
     scenario = load_scenario_from_file(args.scenario)
 
     logger.info("Building computation graph ")

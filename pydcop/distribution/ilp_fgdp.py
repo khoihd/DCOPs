@@ -32,7 +32,7 @@
 import logging
 from collections import defaultdict
 from itertools import combinations
-from typing import List, Iterable, Dict, Callable
+from collections.abc import Iterable, Callable
 
 from pulp import LpMinimize, LpVariable, LpProblem, LpBinary, lpSum, \
     GLPK_CMD, value, LpStatusOptimal
@@ -156,8 +156,8 @@ def distribute_add(secp, new_device, current_distribution,
 
 
 def factor_graph_lp_model(cg: ComputationsFactorGraph,
-                          agents: List[AgentDef],
-                          must_host: Dict[str, List],
+                          agents: list[AgentDef],
+                          must_host: dict[str, list],
                           memory_footprint_estimate=None,
                           communication_load=None):
     """
@@ -203,12 +203,12 @@ def factor_graph_lp_model(cg: ComputationsFactorGraph,
     # All variable computations must be hosted:
     for i in vars_to_host:
         pb += lpSum([xs[(i, k)] for k in agents_names]) == 1, \
-              'var {} is hosted'.format(i)
+              f'var {i} is hosted'
 
     # All factor computations must be hosted:
     for j in facs_to_host:
         pb += lpSum([fs[(j, k)] for k in agents_names]) == 1, \
-              'factor {} is hosted'.format(j)
+              f'factor {j} is hosted'
 
     # Each agent must host at least one computation:
     # We only need this constraints for agents that do not already host a
@@ -217,7 +217,7 @@ def factor_graph_lp_model(cg: ComputationsFactorGraph,
     for k in empty_agents:
         pb += lpSum([xs[(i, k)] for i in vars_to_host]) + \
               lpSum([fs[(j, k)] for j in facs_to_host]) >= 1, \
-              'atleastone {}'.format(k)
+              f'atleastone {k}'
 
     # Memory capacity constraint for agents
     for a in agents:
@@ -230,7 +230,7 @@ def factor_graph_lp_model(cg: ComputationsFactorGraph,
                      xs[(i, a.name)] for i in vars_to_host]) \
             + lpSum([_memory_footprint_estimate_in_cg(j, cg, memory_footprint_estimate) *
                      fs[(j, a.name)] for j in facs_to_host]) <= capacity, \
-            'memory {}'.format(a.name)
+            f'memory {a.name}'
 
     # Linearization constraints for alpha_ijk.
     for link in cg.links:
@@ -239,11 +239,11 @@ def factor_graph_lp_model(cg: ComputationsFactorGraph,
 
             if i in vars_to_host and j in facs_to_host:
                 pb += alphas[((i, j), k)] <= xs[(i, k)], \
-                    'lin1 {}{}{}'.format(i, j, k)
+                    f'lin1 {i}{j}{k}'
                 pb += alphas[((i, j), k)] <= fs[(j, k)], \
-                    'lin2 {}{}{}'.format(i, j, k)
+                    f'lin2 {i}{j}{k}'
                 pb += alphas[((i, j), k)] >= xs[(i, k)] + fs[(j, k)] - 1, \
-                    'lin3 {}{}{}'.format(i, j, k)
+                    f'lin3 {i}{j}{k}'
 
             elif i in vars_to_host and j not in facs_to_host:
                 # Var is free, factor is already hosted

@@ -98,7 +98,6 @@ Subtree search:
 
 """
 from random import choice
-from typing import Optional, List
 
 from pydcop.algorithms import ComputationDef
 from pydcop.computations_graph.pseudotree import get_dfs_relations
@@ -231,7 +230,7 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
         for child in self._descendants:
             self.post_msg(child, ValueMessage(self.current_value))
 
-    def on_new_cycle(self, messages, cycle_id) -> Optional[List]:
+    def on_new_cycle(self, messages, cycle_id) -> list | None:
         if not messages:
             return
 

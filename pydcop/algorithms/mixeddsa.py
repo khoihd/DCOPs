@@ -31,7 +31,6 @@
 
 import random
 
-from typing import List, Tuple
 
 from pydcop.dcop.relations import RelationProtocol, generate_assignment_as_dict
 
@@ -83,8 +82,8 @@ def memory_footprint_estimate(computation: VariableComputationNode) -> float :
         the memory footprint of the computation.
 
     """
-    neighbors = set((n for link in computation.links for n in link.nodes
-                     if n != computation.name))
+    neighbors = set(n for link in computation.links for n in link.nodes
+                     if n != computation.name)
     return len(neighbors) * UNIT_SIZE
 
 
@@ -142,10 +141,10 @@ class MixedDsaMessage(Message):
         return 1
 
     def __str__(self):
-        return 'MixedDsaMessage({})'.format(self.value)
+        return f'MixedDsaMessage({self.value})'
 
     def __repr__(self):
-        return 'MixedDsaMessage({})'.format(self.value)
+        return f'MixedDsaMessage({self.value})'
 
     def __eq__(self, other):
         if type(other) is not MixedDsaMessage:
@@ -416,7 +415,7 @@ class MixedDsaComputation(VariableComputation):
             self.post_msg(n, msg)
 
     def _compute_dcop_cost(self, assignment, soft_cons=None, hard_cons=None) \
-            -> Tuple[float, List[RelationProtocol]]:
+            -> tuple[float, list[RelationProtocol]]:
         """
         Compute the cost for the given assignment, and the list of violated
         hard constraints. The cost computed does not include the infinite

@@ -223,10 +223,10 @@ def set_parser(subparsers):
 
 
 def run_cmd(args, timer=None, timeout=None):
-    logger.debug('dcop command "distribute" with arguments {} '.format(args))
+    logger.debug(f'dcop command "distribute" with arguments {args} ')
 
     dcop_yaml_files = args.dcop_files
-    logger.info("loading dcop from {}".format(dcop_yaml_files))
+    logger.info(f"loading dcop from {dcop_yaml_files}")
     dcop = load_dcop_from_file(dcop_yaml_files)
 
     dist_module = load_distribution_module(args.distribution)
@@ -257,10 +257,10 @@ def run_cmd(args, timer=None, timeout=None):
     output_file = args.output
 
     # Build factor-graph computation graph
-    logger.info("Building computation graph for dcop {}".format(dcop_yaml_files))
+    logger.info(f"Building computation graph for dcop {dcop_yaml_files}")
     cg = graph_module.build_computation_graph(dcop)
 
-    logger.info("Distributing computation graph for dcop {}".format(dcop_yaml_files))
+    logger.info(f"Distributing computation graph for dcop {dcop_yaml_files}")
 
     if algo_module is None:
         memory_footprint_estimate = None
@@ -387,18 +387,18 @@ def on_timeout():
 def load_distribution_module(dist):
     dist_module = None
     try:
-        dist_module = import_module("pydcop.distribution.{}".format(dist))
+        dist_module = import_module(f"pydcop.distribution.{dist}")
     except ImportError as e:
-        _error("Could not find distribution method {}".format(dist), e)
+        _error(f"Could not find distribution method {dist}", e)
     return dist_module
 
 
 def load_graph_module(graph):
     graph_module = None
     try:
-        graph_module = import_module("pydcop.computations_graph.{}".format(graph))
+        graph_module = import_module(f"pydcop.computations_graph.{graph}")
     except ImportError as e:
-        _error("Could not find computation graph type: {}".format(graph), e)
+        _error(f"Could not find computation graph type: {graph}", e)
     return graph_module
 
 
@@ -407,5 +407,5 @@ def load_algo_module(algo):
     try:
         algo_module = load_algorithm_module(algo)
     except ImportError as e:
-        _error("Could not find dcop algorithm: {}".format(algo), e)
+        _error(f"Could not find dcop algorithm: {algo}", e)
     return algo_module

@@ -34,10 +34,10 @@ very simple event-bux mecanism.
 
 """
 from collections import defaultdict
-from typing import Callable
+from collections.abc import Callable
 
 
-class EventDispatcher(object):
+class EventDispatcher:
     """
     A very simple event dispatcher.
 

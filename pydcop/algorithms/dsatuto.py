@@ -44,7 +44,6 @@ and avoided some details you would generally care about:
 """
 
 
-from typing import List, Optional
 
 from numpy import random
 
@@ -101,7 +100,7 @@ class DsaTutoComputation(SynchronousComputationMixin, VariableComputation):
         # by this computation
         pass
 
-    def on_new_cycle(self, messages, cycle_id) -> Optional[List]:
+    def on_new_cycle(self, messages, cycle_id) -> list | None:
         assignment = {self.variable.name: self.current_value}
         for sender, (message, t) in messages.items():
             assignment[sender] = message.value

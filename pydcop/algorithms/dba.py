@@ -98,7 +98,7 @@ Computation
 """
 import random
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef
 from pydcop.infrastructure.computations import Message, VariableComputation, \
@@ -145,8 +145,8 @@ def memory_footprint_estimate(computation: VariableComputationNode) -> float:
         the memory footprint of the computation.
 
     """
-    neighbors = set((n for link in computation.links for n in link.nodes
-                     if n != computation.name))
+    neighbors = set(n for link in computation.links for n in link.nodes
+                     if n != computation.name)
     return len(neighbors) * UNIT_SIZE
 
 
@@ -190,10 +190,10 @@ class DbaOkMessage(Message):
         return 1
 
     def __str__(self):
-        return 'DbaOkMessage({})'.format(self.value)
+        return f'DbaOkMessage({self.value})'
 
     def __repr__(self):
-        return 'DbaOkMessage({})'.format(self.value)
+        return f'DbaOkMessage({self.value})'
 
     def __eq__(self, other):
         if type(other) is not DbaOkMessage:
@@ -227,12 +227,10 @@ class DbaImproveMessage(Message):
         return 1
 
     def __str__(self):
-        return 'DbaImproveMessage(improve:{}, eval: {})'.format(
-            self.improve, self.current_eval)
+        return f'DbaImproveMessage(improve:{self.improve}, eval: {self.current_eval})'
 
     def __repr__(self):
-        return 'DbaImproveMessage({}, {})'.format(self.improve,
-                                                  self.current_eval)
+        return f'DbaImproveMessage({self.improve}, {self.current_eval})'
 
     def __eq__(self, other):
         if type(other) is not DbaImproveMessage:

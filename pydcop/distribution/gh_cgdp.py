@@ -49,7 +49,7 @@ evaluate their communication cost.
 import logging
 import random
 from collections import defaultdict
-from typing import Iterable, Callable, Tuple, List, Dict
+from collections.abc import Iterable, Callable
 
 from pydcop.computations_graph.objects import ComputationNode, ComputationGraph
 from pydcop.dcop.objects import AgentDef
@@ -202,11 +202,11 @@ def distribution_cost(
 def candidate_hosts(
     computation: ComputationNode,
     footprint: float,
-    computations: List[Tuple],
+    computations: list[tuple],
     agents: Iterable[AgentDef],
     communication_load: Callable[[ComputationNode, str], float],
-    mapping: Dict[str, str],
-    fixed_mapping: Dict[str, Tuple[str, float]],
+    mapping: dict[str, str],
+    fixed_mapping: dict[str, tuple[str, float]],
 ):
     """
     Build a list of candidate agents for a computation.

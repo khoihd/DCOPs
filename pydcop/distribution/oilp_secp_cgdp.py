@@ -49,7 +49,7 @@ the DCOP (which are always satisfied if the SECP has been generated using
 import logging
 import time
 from itertools import combinations
-from typing import Iterable, Callable, List
+from collections.abc import Iterable, Callable
 from collections import defaultdict
 
 from pulp import (
@@ -167,7 +167,7 @@ def distribution_cost(
 
 def cg_secp_ilp(
     cg: ComputationConstraintsHyperGraph,
-    agents: List[AgentDef],
+    agents: list[AgentDef],
     already_assigned: Distribution,
     memory_footprint_estimate: Callable[[ComputationNode], float],
     communication_load: Callable[[ComputationNode, str], float],
@@ -201,7 +201,7 @@ def cg_secp_ilp(
     for i in comps_to_host:
         pb += (
             lpSum([xs[(i, k)] for k in agents_names]) == 1,
-            "var {} is hosted".format(i),
+            f"var {i} is hosted",
         )
     # Each agent must host at least one computation:
     # We only need this constraints for agents that do not already host a
@@ -212,7 +212,7 @@ def cg_secp_ilp(
     for k in empty_agents:
         pb += (
             lpSum([xs[(i, k)] for i in comps_to_host]) >= 1,
-            "atleastone {}".format(k),
+            f"atleastone {k}",
         )
 
     # Memory capacity constraint for agents
@@ -234,18 +234,18 @@ def cg_secp_ilp(
                 ]
             )
             <= capacity,
-            "memory {}".format(a.name),
+            f"memory {a.name}",
         )
 
     # Linearization constraints for alpha_ijk.
     for (i, j), k in alphas:
 
         if i in comps_to_host and j in comps_to_host:
-            pb += alphas[((i, j), k)] <= xs[(i, k)], "lin1 {}{}{}".format(i, j, k)
-            pb += alphas[((i, j), k)] <= xs[(j, k)], "lin2 {}{}{}".format(i, j, k)
+            pb += alphas[((i, j), k)] <= xs[(i, k)], f"lin1 {i}{j}{k}"
+            pb += alphas[((i, j), k)] <= xs[(j, k)], f"lin2 {i}{j}{k}"
             pb += (
                 alphas[((i, j), k)] >= xs[(i, k)] + xs[(j, k)] - 1,
-                "lin3 {}{}{}".format(i, j, k),
+                f"lin3 {i}{j}{k}",
             )
 
         elif i in comps_to_host and j not in comps_to_host:

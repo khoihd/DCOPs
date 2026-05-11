@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # pydcop documentation build configuration file, created by
 # sphinx-quickstart on Thu Jun 22 12:21:25 2017.

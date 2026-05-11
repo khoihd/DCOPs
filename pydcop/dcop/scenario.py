@@ -29,7 +29,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from typing import List
 
 from pydcop.utils.simple_repr import SimpleRepr
 
@@ -48,7 +47,7 @@ class EventAction(SimpleRepr):
         return self._args
 
     def __repr__(self):
-        return 'EventAction({}, {})'.format(self.type, self._args)
+        return f'EventAction({self.type}, {self._args})'
 
 
 class DcopEvent(SimpleRepr):
@@ -63,7 +62,7 @@ class DcopEvent(SimpleRepr):
     type = None
 
     def __init__(self, id: str, delay: float =None,
-                 actions: List[EventAction] =None):
+                 actions: list[EventAction] =None):
         """
         :param actions: a list of EventAction objects
         """
@@ -88,7 +87,7 @@ class DcopEvent(SimpleRepr):
         return self.delay is not None
 
     def __repr__(self):
-        return 'Event({}, {})'.format(self.id, self.actions)
+        return f'Event({self.id}, {self.actions})'
 
 
 class Scenario(SimpleRepr):
@@ -96,7 +95,7 @@ class Scenario(SimpleRepr):
     A scenario is a list of events that happens in the system.
 
     """
-    def __init__(self, events: List[DcopEvent]= None):
+    def __init__(self, events: list[DcopEvent]= None):
         self._events = events if events else []
 
     def __iter__(self):

@@ -50,7 +50,7 @@ from functools import partial
 from importlib import import_module
 from threading import Thread
 from time import perf_counter, sleep
-from typing import Dict, List, Optional, Union, Callable
+from collections.abc import Callable
 
 from collections import defaultdict
 
@@ -74,7 +74,7 @@ class AgentException(Exception):
     pass
 
 
-class Agent(object):
+class Agent:
     """
     Object representing an agent.
 
@@ -254,7 +254,7 @@ class Agent(object):
                        (self.name, computation))
 
     def computations(self, include_technical=False)-> \
-            List[MessagePassingComputation]:
+            list[MessagePassingComputation]:
         """
         Computations hosted on this agent.
 
@@ -342,15 +342,15 @@ class Agent(object):
 
         """
         if self.is_running:
-            raise AgentException('Cannot start agent {}, already running '
-                                 .format(self.name))
+            raise AgentException(f'Cannot start agent {self.name}, already running '
+                                 )
         self.logger.info('Starting agent %s ', self.name)
         self._running = True
         self.run_computations = run_computations
         self._start_t = perf_counter()
         self.t.start()
 
-    def run(self, computations: Optional[Union[str, List[str]]]=None):
+    def run(self, computations: str | list[str] | None=None):
         """
         Run computations hosted on this agent.
 
@@ -452,7 +452,7 @@ class Agent(object):
         self.logger.debug('Stop requested on %s', self.name)
         self._stopping.set()
 
-    def pause_computations(self, computations: Union[str, Optional[List[str]]]):
+    def pause_computations(self, computations: str | list[str] | None):
         """
         Pauses computations.
 
@@ -506,7 +506,7 @@ class Agent(object):
                                      computations)
 
     def unpause_computations(self,
-                             computations: Union[str, Optional[List[str]]]):
+                             computations: str | list[str] | None):
         """
         Un-pause (i.e. resume) computations
 
@@ -607,7 +607,7 @@ class Agent(object):
         status: boolean
             True if all went well, False otherwise
         """
-        self.logger.debug('on_start for {}'.format(self.name))
+        self.logger.debug(f'on_start for {self.name}')
 
         if self._ui_port:
             event_bus.enabled = True
@@ -873,7 +873,7 @@ def notify_wrap(f, cb):
     return wrapped
 
 
-class AgentMetrics(object):
+class AgentMetrics:
     """
     AgentMetrics listen to events from the event_bus to consolidate metrics.
 
@@ -911,7 +911,7 @@ class AgentMetrics(object):
 repair_algo = load_algorithm_module('mgm2')
 
 
-class RepairComputationRegistration(object):
+class RepairComputationRegistration:
     def __init__(self, computation: MessagePassingComputation,
                  status: str, candidate: str):
         self.computation = computation
@@ -955,8 +955,8 @@ class ResilientAgent(Agent):
                               replication)
             # DCOP computations will be added to the replication computation
             # as they are deployed.
-            algo_module = import_module('pydcop.replication.{}'
-                                        .format(replication))
+            algo_module = import_module(f'pydcop.replication.{replication}'
+                                        )
             self.replication_comp = algo_module.build_replication_computation(
                 self, self.discovery)
 
@@ -1259,7 +1259,7 @@ class ResilientAgent(Agent):
             c.computation.start()
             c.status = 'started'
 
-    def _on_replication_done(self, replica_hosts: Dict[str, List[str]]):
+    def _on_replication_done(self, replica_hosts: dict[str, list[str]]):
         """
         Called when all computations have been replicated.
 
@@ -1366,7 +1366,7 @@ class ResilientAgent(Agent):
                 self.remove_computation(repair_comp.computation.name)
             self._repair_computations.clear()
 
-    def _on_repair_done(self, selected_computations: List[str]):
+    def _on_repair_done(self, selected_computations: list[str]):
         """
         Called when all repair computations have finished.
 
@@ -1401,7 +1401,7 @@ class RepairComputation(MessagePassingComputation):
     def footprint(self):
         return 0
 
-    def replication_done(self, replica_hosts: Dict[str, List[str]]):
+    def replication_done(self, replica_hosts: dict[str, list[str]]):
         """
         Called when all computations have been replicated.
 

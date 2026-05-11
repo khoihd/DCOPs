@@ -57,7 +57,7 @@ the DCOP:
 
 """
 import logging
-from typing import Iterable, Callable, Dict
+from collections.abc import Iterable, Callable
 from collections import defaultdict
 
 from pydcop.computations_graph.objects import ComputationGraph, ComputationNode
@@ -139,7 +139,7 @@ def distribution_cost(
         communication_load,
     )
 
-def find_candidates(agents_capa: Dict[str,int], comp: str, footprint: float, mapping: Dict, neighbors: Iterable[str]):
+def find_candidates(agents_capa: dict[str,int], comp: str, footprint: float, mapping: dict, neighbors: Iterable[str]):
     # Candidate : agents with enough capacity, that host at least
     # one neighbor computation
     candidates = []

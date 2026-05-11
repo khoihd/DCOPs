@@ -132,8 +132,8 @@ def main():
                 cli_timer.start()
                 args.func(args, cli_timer, timeout)
             else:
-                print('Command {}, does not support the global timeout '
-                      'parameter'.format(args))
+                print(f'Command {args}, does not support the global timeout '
+                      'parameter')
                 sys.exit(2)
         else:
             args.func(args)

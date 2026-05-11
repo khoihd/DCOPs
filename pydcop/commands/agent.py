@@ -136,7 +136,6 @@ Running 5 agents, listening on port 9011 - 9016 (without ui-server)::
 
 import logging
 from time import sleep
-from typing import List
 
 from pydcop.dcop.objects import AgentDef
 from pydcop.infrastructure.orchestratedagents import OrchestratedAgent
@@ -273,7 +272,7 @@ def on_force_exit(_, __):
 
 
 def start_agents(
-    names: List[str],
+    names: list[str],
     o_addr,
     o_port,
     u_port,
@@ -315,13 +314,11 @@ def start_agents(
     for a in names:
         if u_port:
             logger.info(
-                "Starting agent {} on port {} with ui-server on {}".format(
-                    a, a_port, u_port
-                )
+                f"Starting agent {a} on port {a_port} with ui-server on {u_port}"
             )
         else:
             logger.info(
-                "Starting agent {} on port {} without ui-server ".format(a, a_port)
+                f"Starting agent {a} on port {a_port} without ui-server "
             )
 
         comm = HttpCommunicationLayer((a_addr, a_port))

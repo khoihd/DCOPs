@@ -150,7 +150,7 @@ import logging
 import random
 from collections import defaultdict
 from os.path import splitext
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import networkx as nx
 import yaml
@@ -297,7 +297,7 @@ def generate_ising(
     fg_dist: bool,
     var_dist: bool,
     random_generator=None,
-) -> Tuple[DCOP, Dict, Dict]:
+) -> tuple[DCOP, dict, dict]:
     if random_generator is None:
         random_generator = random
 
@@ -368,11 +368,11 @@ def generate_binary_constraints(
     bin_range: float,
     extensive: bool,
     random_generator=None,
-) -> Dict[str, Constraint]:
+) -> dict[str, Constraint]:
     if random_generator is None:
         random_generator = random
 
-    constraints: Dict[str, Constraint] = {}
+    constraints: dict[str, Constraint] = {}
     for nodes in grid_graph.edges:
         (r1, c1), (r2, c2) = sorted(nodes)
         name1 = f"v_{r1}_{c1}"
@@ -441,15 +441,15 @@ def generate_binary_intentional_constraint(
 
 
 def generate_unary_constraints(
-    variables: Dict[Any, Variable],
+    variables: dict[Any, Variable],
     un_range: float,
     extensive: bool,
     random_generator=None,
-) -> Dict[str, Constraint]:
+) -> dict[str, Constraint]:
     if random_generator is None:
         random_generator = random
 
-    constraints: Dict[str, Constraint] = {}
+    constraints: dict[str, Constraint] = {}
     for variable in variables.values():
         if extensive:
             constraint = generate_unary_extensive_constraint(

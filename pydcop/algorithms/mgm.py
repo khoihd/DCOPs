@@ -51,7 +51,8 @@ import functools
 import logging
 import operator
 import random
-from typing import Any, Iterable, Set
+from typing import Any
+from collections.abc import Iterable
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef
 from pydcop.computations_graph.constraints_hypergraph import VariableComputationNode
@@ -71,7 +72,7 @@ BREAK_MODES = ["lexic", "random"]
 
 
 """
-MGM supports two paramaters: 
+MGM supports two paramaters:
 * break_mode
 * stop_cycle
 """
@@ -109,12 +110,12 @@ def memory_footprint_estimate(computation: VariableComputationNode) -> float:
 
     """
     neighbors = set(
-        (
+
             n
             for link in computation.links
             for n in link.nodes
             if n != computation.name
-        )
+
     )
     return len(neighbors) * UNIT_SIZE
 
@@ -163,10 +164,10 @@ class MgmValueMessage(Message):
         return 1
 
     def __str__(self):
-        return "MgmValueMessage({})".format(self.value)
+        return f"MgmValueMessage({self.value})"
 
     def __repr__(self):
-        return "MgmValueMessage({})".format(self.value)
+        return f"MgmValueMessage({self.value})"
 
     def __eq__(self, other):
         if type(other) is not MgmValueMessage:
@@ -203,10 +204,10 @@ class MgmGainMessage(Message):
         return 1
 
     def __str__(self):
-        return "MgmGainMessage({})".format(self.value)
+        return f"MgmGainMessage({self.value})"
 
     def __repr__(self):
-        return "MgmGainMessage({})".format(self.value)
+        return f"MgmGainMessage({self.value})"
 
     def __eq__(self, other):
         if type(other) is not MgmGainMessage:
@@ -278,7 +279,7 @@ class MgmComputation(VariableComputation):
         return self.__utilities__
 
     @property
-    def neighbors(self) -> Set[str]:
+    def neighbors(self) -> set[str]:
         return self._neighbors
 
     def on_start(self):

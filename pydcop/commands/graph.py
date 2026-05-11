@@ -140,10 +140,10 @@ def set_parser(subparsers):
 
 
 def run_cmd(args):
-    logger.debug('dcop command "graph" with arguments {} '.format(args))
+    logger.debug(f'dcop command "graph" with arguments {args} ')
 
     dcop_yaml_file = args.dcop_file
-    logger.info("loading dcop from {}".format(dcop_yaml_file))
+    logger.info(f"loading dcop from {dcop_yaml_file}")
     dcop = load_dcop_from_file(dcop_yaml_file)
 
     if args.display:
@@ -153,16 +153,16 @@ def run_cmd(args):
             display_graph(dcop.variables.values(), dcop.constraints.values())
 
     try:
-        graph_module = import_module("pydcop.computations_graph.{}".format(args.graph))
-        logger.info("Building computation graph for dcop {}".format(dcop.name))
+        graph_module = import_module(f"pydcop.computations_graph.{args.graph}")
+        logger.info(f"Building computation graph for dcop {dcop.name}")
         graph_stats(dcop, graph_module)
     except ImportError:
-        _error("Could not find computation graph type: {}".format(args.graph))
+        _error(f"Could not find computation graph type: {args.graph}")
 
 
 def graph_stats(dcop, graph_module):
     # Build factor-graph computation graph
-    logger.info("Building computation graph for dcop {}".format(dcop.name))
+    logger.info(f"Building computation graph for dcop {dcop.name}")
     cg = graph_module.build_computation_graph(dcop)
 
     edges_count = len(list(cg.links))
@@ -191,5 +191,5 @@ def graph_stats(dcop, graph_module):
 
 
 def _error(msg):
-    print("Error: {}".format(msg))
+    print(f"Error: {msg}")
     sys.exit(2)

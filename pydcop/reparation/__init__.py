@@ -28,8 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-from typing import Callable, Tuple, Dict, List
+from collections.abc import Callable
 
 from pydcop.dcop.objects import BinaryVariable
 from pydcop.dcop.relations import NAryFunctionRelation, RelationProtocol as RelationProtocol, \
@@ -37,7 +36,7 @@ from pydcop.dcop.relations import NAryFunctionRelation, RelationProtocol as Rela
 
 
 def create_computation_hosted_constraint(computation_name: str,
-                                         bin_vars: Dict[Tuple, BinaryVariable])\
+                                         bin_vars: dict[tuple, BinaryVariable])\
         -> Constraint:
     """
     Create a constraints that the computation names `computation_name` is
@@ -62,14 +61,14 @@ def create_computation_hosted_constraint(computation_name: str,
 
     constraint = NAryFunctionRelation(
         hosted, list(bin_vars.values()),
-        name='{}_hosted'.format(computation_name))
+        name=f'{computation_name}_hosted')
 
     return constraint
 
 
 def create_agent_capacity_constraint(agt_name: str, remaining_capacity,
                                      footprint_func: Callable[[str], float],
-                                     bin_vars: Dict[Tuple, BinaryVariable]) \
+                                     bin_vars: dict[tuple, BinaryVariable]) \
         -> Constraint:
     """
     Create a constraints that ensure that an agent a_m does not exceeds its
@@ -116,7 +115,7 @@ def create_agent_capacity_constraint(agt_name: str, remaining_capacity,
 
 def create_agent_hosting_constraint(agt_name: str,
                                     hosting_func: Callable[[str], float],
-                                    bin_vars: Dict[Tuple, BinaryVariable]) \
+                                    bin_vars: dict[tuple, BinaryVariable]) \
         -> Constraint:
     """
     Create a constraints that returns the hosting costs for agent a_m
@@ -157,11 +156,11 @@ def create_agent_hosting_constraint(agt_name: str,
 
 def create_agent_comp_comm_constraint(
         agt_name: str, candidate_name: str,
-        candidate_info: Tuple[List[str],
-                              Dict[str, str],
-                              Dict[str, List[str]]],
+        candidate_info: tuple[list[str],
+                              dict[str, str],
+                              dict[str, list[str]]],
         comm: Callable[[str, str, str], float],
-        bin_vars: Dict[Tuple, BinaryVariable]) \
+        bin_vars: dict[tuple, BinaryVariable]) \
         -> Constraint:
     """
     Create a constraints that returns the communication costs for agent a_m

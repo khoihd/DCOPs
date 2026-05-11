@@ -80,7 +80,7 @@ implementation of DSA.
 """
 import logging
 import random
-from typing import Tuple, Any, List, Dict
+from typing import Any
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef
 from pydcop.computations_graph.constraints_hypergraph import VariableComputationNode
@@ -125,12 +125,12 @@ def build_computation(comp_def: ComputationDef) -> DcopComputation:
 def memory_footprint_estimate(computation: VariableComputationNode) -> float:
     """Return the memory footprint of an ADSA computation."""
     neighbors = set(
-        (
+
             n
             for link in computation.links
             for n in link.nodes
             if n != computation.name
-        )
+
     )
     return len(neighbors) * UNIT_SIZE
 
@@ -357,7 +357,7 @@ class ADsaComputation(VariableComputation):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.info("No probabilistic value change")
 
-    def find_best_values(self, assignment: Dict[Any, float]) -> Tuple[List[Any], float]:
+    def find_best_values(self, assignment: dict[Any, float]) -> tuple[list[Any], float]:
         """
         Find the best values for our variable, given the current assignment.
 

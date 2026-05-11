@@ -32,7 +32,7 @@ import ast
 import importlib.util
 import sys
 
-from typing import List, Tuple, Any, Set
+from typing import Any
 from collections.abc import Callable
 from pydcop.utils.simple_repr import SimpleRepr, simple_repr, from_repr
 
@@ -105,9 +105,9 @@ class ExpressionFunction(Callable, SimpleRepr):
 
         for v in fixed_vars:
             if v not in self.exp_vars:
-                raise ValueError('Cannot fix variable "{}" which is not '
+                raise ValueError(f'Cannot fix variable "{v}" which is not '
                                  'present in the expression ""'
-                                 .format(v, ))
+                                 )
 
     @property
     def expression(self):
@@ -118,7 +118,7 @@ class ExpressionFunction(Callable, SimpleRepr):
         return self._expression
 
     @property
-    def variable_names(self) -> List[str]:
+    def variable_names(self) -> list[str]:
         """
         :return: a set of variable names that must be set when calling f
         """
@@ -155,11 +155,10 @@ class ExpressionFunction(Callable, SimpleRepr):
         return False
 
     def __str__(self):
-        return 'ExpressionFunction({})'.format(self._expression)
+        return f'ExpressionFunction({self._expression})'
 
     def __repr__(self):
-        return 'ExpressionFunction({}, {})'.format(self._expression,
-                                                   self.exp_vars)
+        return f'ExpressionFunction({self._expression}, {self.exp_vars})'
 
     def __hash__(self):
         return hash((self._expression, tuple(self._fixed_vars.items())))
@@ -215,7 +214,7 @@ class VarCounterVisitor(ast.NodeVisitor):
         return { n for n in names if not n.startswith("source") and n not in builtins}
 
 
-def _analyse_ast(str_code: str) -> Tuple[bool, Set[str]]:
+def _analyse_ast(str_code: str) -> tuple[bool, set[str]]:
     """
     Analyse the AST built from `str_definition`.
 

@@ -30,7 +30,7 @@
 
 
 from itertools import chain
-from typing import Iterable, Union
+from collections.abc import Iterable
 
 from pydcop.computations_graph.objects import ComputationNode, Link,\
     ComputationGraph
@@ -78,11 +78,10 @@ class FactorComputationNode(ComputationNode):
         return self._factor
 
     def __str__(self):
-        return 'FactorComputationNode({})'.format(self._factor)
+        return f'FactorComputationNode({self._factor})'
 
     def __repr__(self):
-        return 'FactorComputationNode({}, {})'.format(self._factor.name,
-                                                      self._variables)
+        return f'FactorComputationNode({self._factor.name}, {self._variables})'
 
     def __eq__(self, other):
         if type(other) is not FactorComputationNode:
@@ -118,7 +117,7 @@ class VariableComputationNode(ComputationNode):
     """
     def __init__(self, variable: Variable,
                  constraints_names: Iterable[str],
-                 name: Union[str, None]=None)-> None:
+                 name: str | None=None)-> None:
         name = name if name is not None else variable.name
         self._constraints_names = constraints_names  # type: Iterable[str]
         links = []
@@ -136,10 +135,10 @@ class VariableComputationNode(ComputationNode):
         return self._constraints_names
 
     def __str__(self):
-        return 'VariableComputationNode({})'.format(self._variable)
+        return f'VariableComputationNode({self._variable})'
 
     def __repr__(self):
-        return 'VariableComputationNode({})'.format(self._variable)
+        return f'VariableComputationNode({self._variable})'
 
     def __eq__(self, other):
         if type(other) is not VariableComputationNode:
@@ -185,10 +184,10 @@ class FactorGraphLink(Link):
         return self._variable_node
 
     def __str__(self):
-        return 'FactorGraphLink({}, {} )'.format(self.type, self.nodes)
+        return f'FactorGraphLink({self.type}, {self.nodes} )'
 
     def __repr__(self):
-        return 'FactorGraphLink({}, {} )'.format(self.type, self.nodes)
+        return f'FactorGraphLink({self.type}, {self.nodes} )'
 
     def _simple_repr(self):
         r = {'__module__': self.__module__,
@@ -226,8 +225,7 @@ class ComputationsFactorGraph(ComputationGraph):
         c_names = set()  # type: Set[str]
         for vn in nodes:
             if vn.name in c_names:
-                raise KeyError('duplicate computation names: {}'.format(
-                    vn.name))
+                raise KeyError(f'duplicate computation names: {vn.name}')
             c_names.add(vn.name)
         super().__init__('FactorGraph', nodes=nodes)
 

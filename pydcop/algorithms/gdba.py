@@ -39,7 +39,8 @@ import logging
 import random
 from collections import defaultdict
 
-from typing import Iterable, Dict, Any, Tuple
+from typing import Any
+from collections.abc import Iterable
 
 from pydcop.algorithms import AlgoParameterDef, ComputationDef
 from pydcop.infrastructure.computations import Message, VariableComputation, register
@@ -89,12 +90,12 @@ def memory_footprint_estimate(computation: VariableComputationNode) -> float:
 
     """
     neighbors = set(
-        (
+
             n
             for link in computation.links
             for n in link.nodes
             if n != computation.name
-        )
+
     )
     return len(neighbors) * UNIT_SIZE
 
@@ -140,10 +141,10 @@ class GdbaOkMessage(Message):
         return 1
 
     def __str__(self):
-        return "GdbaOkMessage({})".format(self.value)
+        return f"GdbaOkMessage({self.value})"
 
     def __repr__(self):
-        return "GdbaOkMessage({})".format(self.value)
+        return f"GdbaOkMessage({self.value})"
 
     def __eq__(self, other):
         if type(other) is not GdbaOkMessage:
@@ -167,10 +168,10 @@ class GdbaImproveMessage(Message):
         return 1
 
     def __str__(self):
-        return "GdbaImproveMessage({})".format(self.improve)
+        return f"GdbaImproveMessage({self.improve})"
 
     def __repr__(self):
-        return "GdbaImproveMessage({})".format(self.improve)
+        return f"GdbaImproveMessage({self.improve})"
 
     def __eq__(self, other):
         if type(other) is not GdbaImproveMessage:
@@ -548,7 +549,7 @@ class GdbaComputation(VariableComputation):
 
         self.__postponed_ok_messages__.clear()
 
-    def _is_violated(self, rel: Tuple[NAryMatrixRelation, float, float], val) -> bool:
+    def _is_violated(self, rel: tuple[NAryMatrixRelation, float, float], val) -> bool:
         """
         Determine if a constraint is violated according to the chosen violation
         mode.
@@ -563,7 +564,7 @@ class GdbaComputation(VariableComputation):
         return self._is_value_violated(rel, rel_value)
 
     def _is_value_violated(
-        self, rel: Tuple[NAryMatrixRelation, float, float], rel_value
+        self, rel: tuple[NAryMatrixRelation, float, float], rel_value
     ) -> bool:
         _, min_val, max_val = rel
         if self._violation_mode == "NZ":
@@ -573,7 +574,7 @@ class GdbaComputation(VariableComputation):
         else:  # self._violation_mode == 'MX'
             return rel_value == max_val
 
-    def _assignment_for_relation(self, rel: NAryMatrixRelation, val) -> Dict[str, Any]:
+    def _assignment_for_relation(self, rel: NAryMatrixRelation, val) -> dict[str, Any]:
         assignment = {}
         for v in rel.dimensions:
             if v.name == self.name:
@@ -598,7 +599,7 @@ class GdbaComputation(VariableComputation):
         return self._eff_cost_for_assignment(rel, rel_value, assignment)
 
     def _eff_cost_for_assignment(
-        self, rel: NAryMatrixRelation, rel_value, assignment: Dict[str, Any]
+        self, rel: NAryMatrixRelation, rel_value, assignment: dict[str, Any]
     ) -> float:
         c = rel_value
         modifier = self._get_modifier_for_assignment(rel, assignment)
@@ -610,7 +611,7 @@ class GdbaComputation(VariableComputation):
         return c
 
     def _get_modifier_for_assignment(
-        self, constraint: NAryMatrixRelation, asgt: Dict[str, Any]
+        self, constraint: NAryMatrixRelation, asgt: dict[str, Any]
     ):
         """
         Search in the modifiers dictionary, the modifier corresponding to the
@@ -626,7 +627,7 @@ class GdbaComputation(VariableComputation):
 
         return modifier[key]
 
-    def _increase_modifier(self, constraint: NAryMatrixRelation, asgt: Dict[str, Any]):
+    def _increase_modifier(self, constraint: NAryMatrixRelation, asgt: dict[str, Any]):
         """
         Increase the modifier corresponding to the arguments
         :param constraint: a constraint as NAryMatrixRelation

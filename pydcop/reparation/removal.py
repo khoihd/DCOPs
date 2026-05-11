@@ -29,14 +29,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from typing import List, Dict, Tuple
 
 from pydcop.computations_graph.objects import ComputationGraph
 from pydcop.infrastructure.discovery import Discovery
 
 
 def _removal_orphaned_computations(
-        departed: List[str], discovery: Discovery) -> List[str]:
+        departed: list[str], discovery: Discovery) -> list[str]:
     """
     Build the list of computation orphaned when removing some agents.
 
@@ -58,9 +57,9 @@ def _removal_orphaned_computations(
     return orphaned
 
 
-def _removal_candidate_agents(departed: List[str],
+def _removal_candidate_agents(departed: list[str],
                               discovery: Discovery) \
-        -> List[str]:
+        -> list[str]:
     """
 
     :param departed: a list of agents
@@ -99,9 +98,9 @@ def _removal_candidate_computations_for_agt(agt, orphaned_computations,
 
 
 def _removal_candidate_computation_info(
-        orphan: str, departed: List[str], cg: ComputationGraph,
+        orphan: str, departed: list[str], cg: ComputationGraph,
         discovery: Discovery) \
-        -> Tuple[List[str], Dict[str, str], Dict[str, List[str]]]:
+        -> tuple[list[str], dict[str, str], dict[str, list[str]]]:
     """
     All info needed by an agent to participate in negotiation about hosting
     the computation `comp`
@@ -142,10 +141,10 @@ def _removal_candidate_computation_info(
     return candidate_agents, fixed_neighbors, candidates_neighbors
 
 
-def _removal_candidate_agt_info(agt: str, departed: List[str],
+def _removal_candidate_agt_info(agt: str, departed: list[str],
                                 cg: ComputationGraph,
                                 discovery: Discovery) \
-        -> Dict[str, Tuple[List[str], Dict[str, str], Dict[str, List[str]]]]:
+        -> dict[str, tuple[list[str], dict[str, str], dict[str, list[str]]]]:
     """
     :return: for a candidate agent, the full information needed to
     instantiate the decision dcop about hosting each of the orphaned

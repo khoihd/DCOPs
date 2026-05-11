@@ -29,7 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from pydcop.utils.simple_repr import SimpleRepr
 
@@ -120,9 +120,9 @@ class ComputationNode(SimpleRepr):
 
     def __repr__(self):
         if self.type is not None:
-            return 'ComputationNode({}, {})'.format(self._name, self.type)
+            return f'ComputationNode({self._name}, {self.type})'
         else:
-            return 'ComputationNode({})'.format(self._name)
+            return f'ComputationNode({self._name})'
 
     def _simple_repr(self):
         # neighbors and links are two representation of the same thing,
@@ -173,15 +173,15 @@ class Link(SimpleRepr):
 
     def __str__(self):
         if self.type is not None:
-            return 'Link({}, {})'.format(self.type, self.nodes)
+            return f'Link({self.type}, {self.nodes})'
         else:
-            return 'Link({})'.format(self.nodes)
+            return f'Link({self.nodes})'
 
     def __repr__(self):
         if self.type is not None:
-            return 'Link({}, {})'.format(self.type, self.nodes)
+            return f'Link({self.type}, {self.nodes})'
         else:
-            return 'Link({})'.format(self.nodes)
+            return f'Link({self.nodes})'
 
     def __eq__(self, other):
         if type(other) is not type(self):
@@ -194,7 +194,7 @@ class Link(SimpleRepr):
         return hash((self.type, self.nodes))
 
 
-class ComputationGraph(object):
+class ComputationGraph:
     """
     A ComputationGraph represents a graph of computation for a dcop.
     Many different graph can be defined from the same dcop, depending on the 
@@ -269,7 +269,7 @@ class ComputationGraph(object):
         for n in self.nodes:
             if node_name == n.name:
                 return n
-        raise KeyError('no computation named {} found'.format(node_name))
+        raise KeyError(f'no computation named {node_name} found')
 
     def links_for_node(self, node_name: str) -> Iterable[Link]:
         """Return the links involving a given computation.

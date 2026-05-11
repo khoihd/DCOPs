@@ -36,11 +36,10 @@ your own DCOP algorithm.
 
 """
 
-
 import logging
 from functools import wraps
 from importlib import import_module
-from typing import List, Tuple, Callable, Dict, Optional
+from collections.abc import Callable
 
 from numpy import random
 
@@ -119,7 +118,7 @@ class Message(SimpleRepr):
         return self.type == other.type and self.content == other.content
 
 
-def message_type(msg_type: str, fields: List[str]):
+def message_type(msg_type: str, fields: list[str]):
     """
     Class factory method for Messages
 
@@ -160,7 +159,7 @@ def message_type(msg_type: str, fields: List[str]):
 
     def __init__(self, *args, **kwargs):
         if args and kwargs:
-            raise ValueError("Use positional or keyword arguments, but not " "both")
+            raise ValueError("Use positional or keyword arguments, but not both")
         if args:
             if len(args) != len(fields):
                 raise ValueError("Wrong number of positional arguments")
@@ -200,7 +199,7 @@ def message_type(msg_type: str, fields: List[str]):
 
                 else:
                     raise SimpleReprException(
-                        "Could not build repr for {self}, " "no attribute for {arg}"
+                        "Could not build repr for {self}, no attribute for {arg}"
                     )
         return r
 
@@ -257,7 +256,7 @@ class ComputationMetaClass(type):
         return cls
 
 
-class MessagePassingComputation(object, metaclass=ComputationMetaClass):
+class MessagePassingComputation(metaclass=ComputationMetaClass):
     """
     `MessagePassingComputation` is the base class for all computations.
     It defines the computation lifecycle (`start`, `pause`, `stop`) and can
@@ -419,7 +418,6 @@ class MessagePassingComputation(object, metaclass=ComputationMetaClass):
             self.on_pause(is_paused)
 
         if not is_paused:
-
             waiting_msg_count = 0
             while self._paused_messages_post:
                 waiting_msg_count += 1
@@ -440,7 +438,7 @@ class MessagePassingComputation(object, metaclass=ComputationMetaClass):
                 # priority so that we handle them before new messages.
                 self._msg_sender(src, self.name, msg, 19)
             self.logger.debug(
-                "On resume, re-injecting %s received pending " "messages ",
+                "On resume, re-injecting %s received pending messages ",
                 waiting_msg_count,
             )
 
@@ -568,11 +566,11 @@ class MessagePassingComputation(object, metaclass=ComputationMetaClass):
         self.periodic_action_handler.remove_periodic_action(handle)
 
     def __repr__(self):
-        return "MessagePassingComputation({})".format(self.name)
+        return f"MessagePassingComputation({self.name})"
 
 
 # noinspection PyPep8Naming
-class register(object):
+class register:
     """
     Decorator for registering message handles in computations.
 
@@ -693,7 +691,6 @@ class SynchronousComputationMixin:
         # we simply store these messages for the next cycle.
         # If the difference is more that one cycle, there's a bug !
         if msg.cycle_id == self._current_cycle:
-
             if sender in self._cycle_messages:
                 # We could allow several messages from a single neighbor
                 # in a cycle, but that's more complicated
@@ -712,7 +709,9 @@ class SynchronousComputationMixin:
             if len(self._cycle_messages) == len(self.neighbors):
                 self._switch_cycle()
             else:
-                self.logger.debug(f"on message from {sender}, cycle {self._current_cycle} not finished {self._cycle_messages} != {self.neighbors}")
+                self.logger.debug(
+                    f"on message from {sender}, cycle {self._current_cycle} not finished {self._cycle_messages} != {self.neighbors}"
+                )
         elif msg.cycle_id == self._current_cycle + 1:
             self._next_cycle_messages[sender] = (msg, t)
         else:
@@ -734,11 +733,11 @@ class SynchronousComputationMixin:
             f"Sending msg for cycle {self._current_cycle} {self.name} -> {target} : {msg}"
         )
         msg.cycle_id = self._current_cycle
-        super(SynchronousComputationMixin, self).post_msg(target, msg, prio, on_error)
+        super().post_msg(target, msg, prio, on_error)
         self.cycle_message_sent.append(target)
 
     def start(self):
-        super(SynchronousComputationMixin, self).start()
+        super().start()
 
         # Startup (on_start handler) is considered to be the cycle 0.
         # After this cycle 0, send a synchronization message to all neighbors
@@ -771,7 +770,9 @@ class SynchronousComputationMixin:
                 # message.cycle_id = self._current_cycle
                 self.post_msg(target, message)
                 remaining_neighbors.remove(target)
-        self.logger.debug(f"After cycle {self.current_cycle-1}, need to send sync msg to {remaining_neighbors}")
+        self.logger.debug(
+            f"After cycle {self.current_cycle - 1}, need to send sync msg to {remaining_neighbors}"
+        )
 
         # Now send a cycle synchronization message to all neighbors to which we did not
         # already send a algo-level message.
@@ -779,7 +780,8 @@ class SynchronousComputationMixin:
             # Some messages might also have been sent using post_msg
             if neighbor not in self.cycle_message_sent:
                 self.logger.debug(
-                    f"After cycle {self.current_cycle - 1}, sync msg to {neighbor}")
+                    f"After cycle {self.current_cycle - 1}, sync msg to {neighbor}"
+                )
 
                 self.post_msg(neighbor, SynchronizationMsg())
 
@@ -790,7 +792,7 @@ class SynchronousComputationMixin:
     def cycle_count(self):
         return self._current_cycle
 
-    def on_new_cycle(self, messages: Dict[str, Tuple], cycle_id) -> Optional[List]:
+    def on_new_cycle(self, messages: dict[str, tuple], cycle_id) -> list | None:
         """
         Called when switching to a new cycle.
 
@@ -861,7 +863,7 @@ class DcopComputation(MessagePassingComputation):
     def __init__(self, name, comp_def: ComputationDef):
         if comp_def is None or name is None:
             raise ValueError(
-                "ComputationDef and name are mandatory for a DCOP " "computation"
+                "ComputationDef and name are mandatory for a DCOP computation"
             )
         super().__init__(name)
 
@@ -872,7 +874,7 @@ class DcopComputation(MessagePassingComputation):
         self.__cycle_count__ = 0
 
     @property
-    def neighbors(self) -> List[str]:
+    def neighbors(self) -> list[str]:
         """
         The neighbors of this computation.
 
@@ -960,7 +962,7 @@ class DcopComputation(MessagePassingComputation):
             self.post_msg(neighbor, msg, prio, on_error)
 
     def __repr__(self):
-        return "{}.{}({})".format(self.algo_name, self.__class__.__name__, self.name)
+        return f"{self.algo_name}.{self.__class__.__name__}({self.name})"
 
 
 class VariableComputation(DcopComputation):
@@ -977,12 +979,10 @@ class VariableComputation(DcopComputation):
 
     def __init__(self, variable: Variable, comp_def: ComputationDef):
         if variable is None:
-            raise ValueError(
-                "Variable object is mandatory for a " "VariableComputation"
-            )
+            raise ValueError("Variable object is mandatory for a VariableComputation")
         if comp_def is None:
             raise ValueError(
-                "ComputationDef object is mandatory for a " "VariableComputation"
+                "ComputationDef object is mandatory for a VariableComputation"
             )
         super().__init__(variable.name, comp_def)
         self._variable = variable
