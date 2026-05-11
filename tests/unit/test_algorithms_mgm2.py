@@ -120,6 +120,7 @@ def test_no_neighbors():
 
     computation.value_selection = MagicMock()
     computation.finished = MagicMock()
+    computation.stop = MagicMock()
     vals, cost = computation._compute_best_value()
     assert cost == 18
     assert set(vals) == {9}
@@ -127,6 +128,85 @@ def test_no_neighbors():
     computation.on_start()
     computation.value_selection.assert_called_once_with(9, 18)
     computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+
+
+def test_send_value_sends_initial_value_before_stop_cycle():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+    c1 = constraint_from_str("c1", "abs(x1 - x2)", [x1, x2])
+    computation = Mgm2Computation(
+        ComputationDef(
+            VariableComputationNode(x1, [c1]),
+            AlgorithmDef.build_with_default_param("mgm2", params={"stop_cycle": 1}),
+        )
+    )
+    computation.value_selection(0, 0)
+    computation.finished = MagicMock()
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    sent = computation._send_value()
+
+    assert sent is True
+    assert computation.cycle_count == 1
+    computation.finished.assert_not_called()
+    message_sender.assert_called_once_with(
+        "x1", "x2", Mgm2ValueMessage(0), None, None
+    )
+
+
+def test_send_value_stops_at_stop_cycle_without_posting():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+    c1 = constraint_from_str("c1", "abs(x1 - x2)", [x1, x2])
+    computation = Mgm2Computation(
+        ComputationDef(
+            VariableComputationNode(x1, [c1]),
+            AlgorithmDef.build_with_default_param("mgm2", params={"stop_cycle": 1}),
+        )
+    )
+    computation.value_selection(0, 0)
+    computation.new_cycle()
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    sent = computation._send_value()
+
+    assert sent is False
+    assert computation.cycle_count == 1
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+    message_sender.assert_not_called()
+
+
+def test_handle_gain_messages_does_not_enter_value_state_after_stop_cycle():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+    c1 = constraint_from_str("c1", "abs(x1 - x2)", [x1, x2])
+    computation = Mgm2Computation(
+        ComputationDef(
+            VariableComputationNode(x1, [c1]),
+            AlgorithmDef.build_with_default_param("mgm2", params={"stop_cycle": 1}),
+        )
+    )
+    computation.value_selection(0, 0)
+    computation.new_cycle()
+    computation._potential_gain = 0
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+    computation._enter_state = MagicMock()
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation._handle_gain_messages()
+
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+    computation._enter_state.assert_not_called()
+    message_sender.assert_not_called()
 
 
 def test_no_neighbors_uses_integrated_variable_cost():

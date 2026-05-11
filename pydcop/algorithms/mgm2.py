@@ -474,6 +474,7 @@ class Mgm2Computation(VariableComputation):
                     f"No neighbors: stop immediately with value {value} - {cost}"
                 )
             self.finished()
+            self.stop()
 
         else:
             # At start, we don't have any information to compute the cost,
@@ -490,8 +491,8 @@ class Mgm2Computation(VariableComputation):
                 if self.logger.isEnabledFor(logging.INFO):
                     self.logger.info(f"Select initial value {self.current_value}")
 
-            self._send_value()
-            self._enter_state("value")
+            if self._send_value():
+                self._enter_state("value")
 
     def _compute_best_value(self):
         """
@@ -615,7 +616,6 @@ class Mgm2Computation(VariableComputation):
         At the same time, check if the computation should be stopped.
 
         """
-        self.new_cycle()
         if self.stop_cycle and self.cycle_count >= self.stop_cycle:
             # The computation has run for the requested number of cycles :
             # stop it.
@@ -625,8 +625,10 @@ class Mgm2Computation(VariableComputation):
                     f"requested cycles ({self.stop_cycle}) : stopping "
                 )
             self.finished()
-            return
-        else:
+            self.stop()
+            return False
+        self.new_cycle()
+        if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("new cycle %s", self.cycle_count)
 
         msg = Mgm2ValueMessage(self.current_value)
@@ -637,6 +639,7 @@ class Mgm2Computation(VariableComputation):
             )
         for n in self.neighbors_vars:
             self.post_msg(n.name, msg)
+        return True
 
     def on_stop(self):
         super().on_stop()
@@ -901,8 +904,8 @@ class Mgm2Computation(VariableComputation):
                     "Potential gain is 0: no reason to change local value"
                 )
             self._clear_agent()
-            self._send_value()
-            self._enter_state("value")
+            if self._send_value():
+                self._enter_state("value")
             return
         if self.logger.isEnabledFor(logging.INFO):
             self.logger.info(
@@ -994,8 +997,8 @@ class Mgm2Computation(VariableComputation):
                         f"Lower local gain on {self.name}: do NOT change " "value"
                     )
             self._clear_agent()
-            self._send_value()
-            self._enter_state("value")
+            if self._send_value():
+                self._enter_state("value")
 
     def _handle_go_message(self, variable: str, msg: Mgm2GoMessage):
         if self.logger.isEnabledFor(logging.INFO):
@@ -1023,8 +1026,8 @@ class Mgm2Computation(VariableComputation):
         # End of the cycle. Resetting view & computation attributes before
         # going to next cycle
         self._clear_agent()
-        self._send_value()
-        self._enter_state("value")
+        if self._send_value():
+            self._enter_state("value")
 
     def _enter_state(self, state):
         if self.logger.isEnabledFor(logging.INFO):
