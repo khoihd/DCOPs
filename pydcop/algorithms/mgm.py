@@ -374,12 +374,13 @@ class MgmComputation(VariableComputation):
 
                 self.value_selection(self.current_value, cost)
 
-            new_values, val_cost = self._compute_best_value()
-            self._gain = self.current_cost - val_cost
+            best_values, best_cost = self._compute_best_value()
+            self._gain = self.current_cost - best_cost
             if ((self._mode == "min") & (self._gain > 0)) or (
                 (self._mode == "max") & (self._gain < 0)
             ):
-                self._new_value = random.choice(new_values)
+                # Break ties between equally good local best-response values.
+                self._new_value = random.choice(best_values)
             else:
                 self._new_value = self.current_value
 
