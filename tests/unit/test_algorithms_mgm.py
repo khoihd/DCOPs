@@ -369,7 +369,7 @@ def test_gain_message_applies_better_max_gain_and_sends_next_value():
     )
 
 
-def test_send_value_stops_at_stop_cycle_without_posting():
+def test_send_value_sends_initial_value_before_stop_cycle():
     v1 = Variable('v1', [0, 1])
     v2 = Variable('v2', [0, 1])
     c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
@@ -379,10 +379,56 @@ def test_send_value_stops_at_stop_cycle_without_posting():
     message_sender = MagicMock()
     computation.message_sender = message_sender
 
-    computation._send_value()
+    sent = computation._send_value()
 
+    assert sent is True
+    assert computation.cycle_count == 1
+    computation.finished.assert_not_called()
+    message_sender.assert_called_once_with(
+        'v1', 'v2', MgmValueMessage(0), None, None
+    )
+
+
+def test_send_value_stops_at_stop_cycle_without_posting():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1], params={'stop_cycle': 1}))
+    computation.value_selection(0, 0)
+    computation.new_cycle()
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    sent = computation._send_value()
+
+    assert sent is False
     assert computation.cycle_count == 1
     computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+    message_sender.assert_not_called()
+
+
+def test_wait_for_values_does_not_process_postponed_messages_after_stop_cycle():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = MgmComputation(_comp_def(v1, [c1], params={'stop_cycle': 1}))
+    computation.value_selection(0, 0)
+    computation.new_cycle()
+    computation.__postponed_value_messages__.append(('v2', MgmValueMessage(1)))
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+    computation._handle_value_message = MagicMock()
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    computation._wait_for_values()
+
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+    computation._handle_value_message.assert_not_called()
     message_sender.assert_not_called()
 
 

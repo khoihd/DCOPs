@@ -424,15 +424,17 @@ class MgmComputation(VariableComputation):
         the variable.
 
         """
-        self.new_cycle()
         if self.stop_cycle and self.cycle_count >= self.stop_cycle:
             self.finished()
-            return
+            self.stop()
+            return False
+        self.new_cycle()
         msg = MgmValueMessage(self.current_value)
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"Sends value message {msg} to {self.neighbors}")
         for n in self._neighbors:
             self.post_msg(n, msg)
+        return True
 
     def _wait_for_gains(self):
         """
@@ -614,7 +616,8 @@ class MgmComputation(VariableComputation):
         # End of a cycle: clear agent view
 
         self._state = "values"
-        self._send_value()
+        if not self._send_value():
+            return
         for msg in self.__postponed_value_messages__:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("Processing postponed message {msg}")
