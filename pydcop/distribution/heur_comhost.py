@@ -96,7 +96,7 @@ def distribute(
     computations = [t[:-1] for t in computations]
     logger.info("placing computations %s", [(f, c.name) for f, c, _ in computations])
 
-    current_mapping = {}  # Type: Dict[str, str]
+    current_mapping: dict[str, str] = {}
     i = 0
     while len(current_mapping) != len(computations):
         footprint, computation, candidates = computations[i]

@@ -181,8 +181,8 @@ def generate_iot(args):
 
     # Generate an agent for each variable computation and assign the
     # computation to that agent.
-    agents = {}  # type: Dict[str, AgentDef]
-    mapping = defaultdict(lambda: [])  # type: Dict[str, List[str]]
+    agents: dict[str, AgentDef] = {}
+    mapping: defaultdict[str, list[str]] = defaultdict(list)
     for comp in cg.nodes:
         if isinstance(comp, VariableComputationNode):
             a_name = agt_name(comp.name)
@@ -413,7 +413,7 @@ def distribute_factors(
     pb = LpProblem("ilp_factors", LpMinimize)
 
     # build the inverse mapping var -> agt
-    inverse_mapping = {}  # type: Dict[str, str]
+    inverse_mapping: dict[str, str] = {}
     for a in mapping:
         inverse_mapping[mapping[a][0]] = a
 
@@ -456,7 +456,7 @@ def distribute_factors(
             "No possible optimal distribution for factors"
         )
     logger.debug("GLPK cost : %s", value(pb.objective))
-    mapping = {}  # type: Dict[str, List[str]]
+    mapping: dict[str, list[str]] = {}
     for k in agents:
         agt_computations = [i for i, ka in xs if ka == k and value(xs[(i, ka)]) == 1]
         # print(k, ' -> ', agt_computations)

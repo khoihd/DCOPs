@@ -139,7 +139,7 @@ class Orchestrator:
 
         # For scenario execution
         self._events_iterator = None
-        self._event_timer = None  # type: threading.Timer
+        self._event_timer: threading.Timer | None = None
         self._timeout_timer = None
 
         self._stopping = threading.Event()
@@ -612,8 +612,8 @@ class AgentsMgt(MessagePassingComputation):
 
         # Used to store stae of agent: replication | repair_setup |
         # repair_ready | repair_done
-        self._agts_state = {}  # type: Dict[str, str]
-        self._comps_state = {}  # type: Dict[str, str]
+        self._agts_state: dict[str, str] = {}
+        self._comps_state: dict[str, str] = {}
 
         self.all_registered = threading.Event()
         self.ready_to_run = threading.Event()

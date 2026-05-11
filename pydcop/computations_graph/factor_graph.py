@@ -119,7 +119,7 @@ class VariableComputationNode(ComputationNode):
                  constraints_names: Iterable[str],
                  name: str | None=None)-> None:
         name = name if name is not None else variable.name
-        self._constraints_names = constraints_names  # type: Iterable[str]
+        self._constraints_names: Iterable[str] = constraints_names
         links = []
         for c in self._constraints_names:
             links.append(FactorGraphLink(c, name))
@@ -219,10 +219,9 @@ class ComputationsFactorGraph(ComputationGraph):
     def __init__(self, var_nodes: Iterable[VariableComputationNode],
                  factor_nodes: Iterable[FactorComputationNode])-> None:
         # Avoid copy-paste error : ensure we do not have two computations
-        nodes = list(chain(var_nodes,
-                           factor_nodes))  # type: List[ComputationNode]
+        nodes: list[ComputationNode] = list(chain(var_nodes, factor_nodes))
         # with the same name
-        c_names = set()  # type: Set[str]
+        c_names: set[str] = set()
         for vn in nodes:
             if vn.name in c_names:
                 raise KeyError(f'duplicate computation names: {vn.name}')

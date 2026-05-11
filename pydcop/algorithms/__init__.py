@@ -231,8 +231,7 @@ class AlgorithmDef(SimpleRepr):
             parameters_definitions = algo_module.algo_params
 
         params = {} if params is None else params
-        params = prepare_algo_params(
-            params, parameters_definitions)  # type: Dict[str, Any]
+        params: dict[str, Any] = prepare_algo_params(params, parameters_definitions)
 
         return AlgorithmDef(algo, params, mode)
 

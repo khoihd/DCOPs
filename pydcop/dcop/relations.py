@@ -191,7 +191,7 @@ class AbstractBaseRelation(RelationProtocol):
 
     def __init__(self, name: str) -> None:
         self._name = name
-        self._variables = []  # type: List[Variable]
+        self._variables: list[Variable] = []
 
     @property
     def name(self) -> str:
@@ -512,7 +512,7 @@ class NAryFunctionRelation(AbstractBaseRelation, SimpleRepr):
         self._f_kwargs = f_kwargs
 
         # rel var name => function arg name
-        self._var_mapping = {}  # type: Dict[str, str]
+        self._var_mapping: dict[str, str] = {}
         if not f_kwargs:
             # build a mapping from the function arguments to the name of the
             # variables of the relation

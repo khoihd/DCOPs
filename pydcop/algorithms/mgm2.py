@@ -425,7 +425,7 @@ class Mgm2Computation(VariableComputation):
         self._favor = computation_def.algo.param_value("favor")
 
         # Handling messages arriving during wrong mode
-        self._postponed_msg = defaultdict(lambda: [])  # type: Dict[str, List]
+        self._postponed_msg: defaultdict[str, list] = defaultdict(list)
 
         self._partner = None
         self._committed = False

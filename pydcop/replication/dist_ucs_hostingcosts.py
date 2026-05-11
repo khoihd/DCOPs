@@ -279,32 +279,27 @@ class UCSReplication(MessagePassingComputation):
         self.agent = agent
         self.agt_name = agent.name
         self.agent_def = agent.agent_def
-        self.computations = (
-            {}
-        )  # type: Dict[ComputationName, Tuple[ComputationDef, float]]
+        self.computations: dict[ComputationName, tuple[ComputationDef, float]] = {}
         self.discovery = discovery
         self.k_target = k_target
 
         # Replicas hosted by this agent (with their footprint):
-        self._hosted_replicas = (
-            {}
-        )  # type: Dict[ComputationName, Tuple[AgentName, float]]
+        self._hosted_replicas: dict[ComputationName, tuple[AgentName, float]] = {}
 
         # Computation definitions for the replica hosted by this agent
-        self.replicas = {}  # type: Dict[ComputationName, ComputationDef]
+        self.replicas: dict[ComputationName, ComputationDef] = {}
 
         # Hosts for the replicas of the computations this agent is
-        self._replica_hosts = defaultdict(lambda: set())
-        # type: Dict[ComputationName, Set[AgentName]]
+        self._replica_hosts: defaultdict[ComputationName, set[AgentName]] = (
+            defaultdict(set)
+        )
 
         # Computation that are currently being replicated.
         self._replication_in_progress = ReplicationTracker()
 
         # Cache for the replication computations from other agents. These are
         # the computations we will communicate with to distribute our replicas.
-        self._replication_computations_cache = (
-            set()
-        )  # type: Set[Tuple[AgentName, float]]
+        self._replication_computations_cache: set[tuple[AgentName, float]] = set()
 
         self._pending_requests = {}
         self._removed_agents = set()

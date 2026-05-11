@@ -43,10 +43,10 @@ class ReplicaDistribution:
         :param mapping: map computation -> list of agents hosting a replica
         for this computation.
         """
-        self._mapping = {
+        self._mapping: dict[str, list[str]] = {
             computation: list(agents) for computation, agents in mapping.items()
-        }  # type: Dict[str, List[str]]
-        self._agent_replicas = {}  # type: Dict[str, List[str]]
+        }
+        self._agent_replicas: dict[str, list[str]] = {}
 
         for computation, agents in self._mapping.items():
             for agent in agents:

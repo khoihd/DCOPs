@@ -310,7 +310,7 @@ def create_variables(
     >>> assert 'R' in vrs[('x2', 'a3')].domain
 
     """
-    variables = {}  # type: Dict[Union[str, Tuple[str, ...]], Variable]
+    variables: dict[str | tuple[str, ...], Variable] = {}
 
     if isinstance(indexes, tuple):
         for combi in itertools.product(*indexes):
@@ -390,7 +390,7 @@ def create_binary_variables(
     >>> assert vrs[('x2', 'a3')].name == 'm_x2Ba3'
 
     """
-    variables = {}  # type: Dict[Union[str, Tuple[str, ...]], BinaryVariable]
+    variables: dict[str | tuple[str, ...], BinaryVariable] = {}
 
     if isinstance(indexes, tuple):
         for combi in itertools.product(*indexes):
@@ -555,7 +555,7 @@ class VariableNoisyCostFunc(VariableWithCostFunc):
         super().__init__(name, domain, cost_func, initial_value)
 
         self._noise_level = noise_level
-        self._costs = {}  # type: Dict[Any, float]
+        self._costs: dict[Any, float] = {}
         for d in domain:
             self._costs[d] = super().cost_for_val(d) + random.uniform(0, noise_level)
 
@@ -920,7 +920,7 @@ def create_agents(
     >>> assert isinstance(agts['a08'], AgentDef)
 
     """
-    agents = {}  # type: Dict[Union[str, Tuple[str, ...]], AgentDef]
+    agents: dict[str | tuple[str, ...], AgentDef] = {}
 
     if isinstance(indexes, tuple):
         for combi in itertools.product(*indexes):

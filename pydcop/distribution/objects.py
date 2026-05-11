@@ -48,9 +48,9 @@ class Distribution:
     """
     def __init__(self, mapping: dict[str, list[str]]):
         # { agent_name : {list of comp_name]}
-        self._mapping = mapping  # type: Dict[str, List[str]]
+        self._mapping: dict[str, list[str]] = mapping
         # {comp_name : agent_name }
-        self._computation_agent = {}  # type: Dict[str, str]
+        self._computation_agent: dict[str, str] = {}
         for a in self._mapping:
             for v in self._mapping[a]:
                 if v in self._computation_agent:

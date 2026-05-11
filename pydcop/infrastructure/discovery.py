@@ -331,25 +331,28 @@ class Directory:
         self.logger = logging.getLogger('pydcop.discovery.directory')
         self.directory_computation = DirectoryComputation(self)
 
-        self._agents_data = {}  # type: Dict[AgentName, Address]
-        self._computations_data = {}  # type: Dict[str,str]
+        self._agents_data: dict[AgentName, Address] = {}
+        self._computations_data: dict[str, str] = {}
         self.discovery = discovery
 
         # Subscription : message will be sent to interested agents
-        self._subscription_agents = defaultdict(lambda: set()) \
-            # type: Dict[AgentName, Set[DiscoveryName]]
-        self._subscription_computations = defaultdict(lambda: set()) \
-            # type: Dict[ComputationName, Set[DiscoveryName]]
-        self._subscription_replicas = defaultdict(lambda: set()) \
-            # type: Dict[ComputationName, Set[DiscoveryName]]
+        self._subscription_agents: defaultdict[AgentName, set[DiscoveryName]] = (
+            defaultdict(set)
+        )
+        self._subscription_computations: defaultdict[
+            ComputationName, set[DiscoveryName]
+        ] = defaultdict(set)
+        self._subscription_replicas: defaultdict[
+            ComputationName, set[DiscoveryName]
+        ] = defaultdict(set)
         # set of discovery_comp subscribed to all agents events.
-        self._subscription_all_agents = set()  # type: Set[DiscoveryName]
+        self._subscription_all_agents: set[DiscoveryName] = set()
 
         # local callback : these are directly called (no messages)
-        self.on_register_agent = None  # type: Optional[Callable]
-        self.on_unregister_agent = None  # type: Optional[Callable]
-        self.on_register_computation = None  # type: Optional[Callable]
-        self.on_unregister_computation = None  # type: Optional[Callable]
+        self.on_register_agent: Callable | None = None
+        self.on_unregister_agent: Callable | None = None
+        self.on_register_computation: Callable | None = None
+        self.on_unregister_computation: Callable | None = None
 
     def agent_address(self, agent: AgentName)-> Address:
         """
@@ -682,19 +685,23 @@ class Discovery:
         self.logger = logging.getLogger('pydcop.discovery.'+agent_name)
 
         # agent_name -> agent_address
-        self._agents_data = {}  # type: Dict[AgentName, Address]
+        self._agents_data: dict[AgentName, Address] = {}
         # computation_name -> agent_name
-        self._computations_data = {}  # type: Dict[ComputationName, AgentName]
-        self._replicas_data = defaultdict(lambda: set()) \
-            # type: Dict[ComputationName, Set[AgentName]]
+        self._computations_data: dict[ComputationName, AgentName] = {}
+        self._replicas_data: defaultdict[ComputationName, set[AgentName]] = (
+            defaultdict(set)
+        )
 
-        self._computation_cbs = defaultdict(lambda: []) \
-            # type: Dict[ComputationName, List[CbRegistration]]
-        self._agent_cbs = defaultdict(lambda: []) \
-            # type: Dict[AgentName, List[CbRegistration]]
-        self._replicas_cbs = defaultdict(lambda: []) \
-            # type: Dict[ComputationName, List[CbRegistration]]
-        self._all_agents_cbs = []  # type List[DiscoveryName]
+        self._computation_cbs: defaultdict[
+            ComputationName, list[CbRegistration]
+        ] = defaultdict(list)
+        self._agent_cbs: defaultdict[AgentName, list[CbRegistration]] = defaultdict(
+            list
+        )
+        self._replicas_cbs: defaultdict[
+            ComputationName, list[CbRegistration]
+        ] = defaultdict(list)
+        self._all_agents_cbs: list[DiscoveryName] = []
 
         self.directory_ref = None, None, None
         self.discovery_computation = DiscoveryComputation(agent_name, self)
