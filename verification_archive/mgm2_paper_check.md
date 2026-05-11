@@ -70,7 +70,7 @@
 - `_handle_go_message()` changes value only when the partner sent go and this
   computation also determined it can move.
 
-## Preliminary Verdict
+## Verdict
 
 The core MGM-2 message flow matches Algorithm 2: value, offer, accept or reject,
 gain, then go or no-go. The implementation also captures the paper's key
@@ -96,19 +96,24 @@ The implementation intentionally generalizes or extends the paper in these ways:
 - The paper does not specify fake offer synchronization, message postponement,
   stop cycles, or tie handling.
 
+## Implementation Fixes
+
+- `_find_best_offer()` was corrected to subtract the current shared
+  partner-relation cost before adding the offerer's local gain. Previously, the
+  receiver excluded the new shared relation from its candidate-side cost but
+  kept the old shared relation in `current_cost`, which over-counted
+  coordinated gain by the old partner-link value.
+
 ## Existing Coverage
 
 - `tests/unit/test_algorithms_mgm2.py` covers message properties, memory and
   communication estimates, startup behavior, local cost and best-value
   computation, offer creation, receiver-side best-offer selection in min and
-  max modes, state transitions, response handling, go/no-go handling, gain
-  comparisons, and clearing per-round state.
+  max modes, the paper's meeting-scheduling coordinated-move example,
+  state transitions, response handling, go/no-go handling, gain comparisons,
+  and clearing per-round state.
 - API tests exercise MGM2 in solve-level graph-coloring scenarios.
 
 ## Follow-Up
 
-- Review existing tests against the paper's five-cycle round contract and add a
-  compact end-to-end state-machine test if the full sequence is not covered in
-  one place.
-- Add or identify a small meeting-scheduling-style case where MGM cannot move
-  from a 1-equilibrium but MGM2 can make a coordinated improving move.
+- None currently required for MGM-2 paper correctness.

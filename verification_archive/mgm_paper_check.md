@@ -55,7 +55,7 @@
 - `_break_ties()` implements the paper's open tie-breaking choice using either
   lexicographic variable names or random numbers.
 
-## Preliminary Verdict
+## Verdict
 
 The core MGM message flow matches Algorithm 1: value broadcast, local unilateral
 gain computation, gain broadcast, and a move only when the local gain wins
@@ -75,8 +75,8 @@ The implementation intentionally generalizes the paper in these ways:
   and maximization gains as negative cost deltas. This is consistent internally,
   but differs from the paper's utility-increase wording.
 - The paper's monotonicity proof assumes only positive gain moves. The code
-  avoids changing to a worse local value, but tie-breaking can still select a
-  no-op candidate if all gains tie at zero.
+  avoids changing to a worse local value; if all gains tie at zero, tie-breaking
+  can select the current value, which is a no-op rather than a real move.
 - The paper does not specify runtime message postponement, stopping hooks, or
   initial value selection.
 
@@ -84,21 +84,19 @@ The implementation intentionally generalizes the paper in these ways:
 
 - `tests/unit/test_algorithms_mgm.py` covers message properties, memory and
   communication estimates, startup behavior, postponed messages, value to gain
-  computation, min and max gain handling, stop cycles, and random tie-breaking.
+  computation, min and max gain handling, equal-gain lexicographic tie
+  separation, stop cycles, and random tie-breaking.
 - API and CLI tests exercise MGM in solve-level graph-coloring scenarios.
 
-## Current Focus
+## Verification Notes
 
-- Verify MGM min and max behavior with small deterministic experiment runs.
-- Confirm that minimization treats `current_cost - candidate_cost > 0` as an
-  improving gain, while maximization treats `current_cost - candidate_cost < 0`
-  as an improving gain.
-- Confirm that gain comparison follows the same sign convention: largest gain
-  wins in `min` mode and smallest gain wins in `max` mode.
+- Minimization treats `current_cost - candidate_cost > 0` as an improving gain.
+- Maximization treats `current_cost - candidate_cost < 0` as an improving gain.
+- Gain comparison follows the same sign convention: largest gain wins in `min`
+  mode and smallest gain wins in `max` mode.
+- Equal adjacent gains are separated by tie-breaking, so neighboring variables
+  with equal gain do not both change in the same MGM round.
 
 ## Follow-Up
 
-- Review whether existing unit tests explicitly cover the paper monotonicity
-  condition that adjacent agents with equal gain do not both move.
-- Add a small hand-checkable two-variable or three-variable monotonicity case if
-  that behavior is not already covered directly.
+- None currently required for MGM paper correctness.

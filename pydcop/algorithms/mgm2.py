@@ -584,12 +584,15 @@ class Mgm2Computation(VariableComputation):
 
         for partner, offers in all_offers:
             partial_asgt = self._neighbors_values.copy()
+            current_asgt = partial_asgt.copy()
+            current_asgt[self.variable.name] = self.current_value
             current_partner = self._neighbor_var(partner)
 
             # Filter out the constraints linking those two variables to avoid
             # counting their cost twice.
             shared = find_dependent_relations(current_partner, self._constraints)
             concerned = [rel for rel in self._constraints if rel not in shared]
+            shared_current_cost = assignment_cost(current_asgt, shared)
 
             for (val_p, my_offer_val), partner_local_gain in offers.items():
                 partial_asgt.update({partner: val_p, self.variable.name: my_offer_val})
@@ -597,7 +600,12 @@ class Mgm2Computation(VariableComputation):
                 # Then we evaluate the agent constraint's for the offer
                 # and add the partner's local gain.
                 cost = assignment_cost(partial_asgt, concerned)
-                global_gain = self.current_cost - cost + partner_local_gain
+                global_gain = (
+                    self.current_cost
+                    - shared_current_cost
+                    - cost
+                    + partner_local_gain
+                )
 
                 if (global_gain > best_gain and self._mode == "min") or (
                     global_gain < best_gain and self._mode == "max"

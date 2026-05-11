@@ -61,18 +61,18 @@ For each algorithm:
   - Implementation: `pydcop/algorithms/mgm.py`
   - Paper / Source: `verification_archive/papers/mgm.pdf`
   - Check File: `verification_archive/mgm_paper_check.md`
-  - Status: In progress
-  - Notes: Current focus is verifying MGM min/max gain behavior with small
-    deterministic experiment runs.
+  - Status: Verified
+  - Notes: Core value/gain flow matches Algorithm 1; min/max gain sign handling
+    and equal-gain tie separation are covered by focused tests.
 
 - MGM2
   - Priority: 3
   - Implementation: `pydcop/algorithms/mgm2.py`
   - Paper / Source: `verification_archive/papers/mgm.pdf`
   - Check File: `verification_archive/mgm2_paper_check.md`
-  - Status: In progress
-  - Notes: Paper contract and implementation mapping drafted; focused test
-    review still pending.
+  - Status: Verified
+  - Notes: Core five-phase flow matches Algorithm 2; coordinated-gain
+    double-counting was fixed and covered by focused tests.
 
 - DSA
   - Priority: 4

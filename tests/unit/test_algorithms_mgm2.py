@@ -710,9 +710,9 @@ class TestsOffersComputations(unittest.TestCase):
         )
 
         self.assertEqual(bests, [(0, 1, "x2")])
-        self.assertEqual(best_gain, 8)
+        self.assertEqual(best_gain, 6)
         self.assertEqual(set(bests2), {(0, 1, "x2"), (1, 0, "x2")})
-        self.assertEqual(best_gain2, 8)
+        self.assertEqual(best_gain2, 6)
 
     def test_find_best_offer_max_mode_one_offerer(self):
         x1 = Variable("x1", list(range(2)))
@@ -756,9 +756,39 @@ class TestsOffersComputations(unittest.TestCase):
         # global gain: -1 -5 -5
 
         self.assertEqual(bests, [(0, 1, "x2")])
-        self.assertEqual(best_gain, -5)
+        self.assertEqual(best_gain, -6)
         self.assertEqual(set(bests2), {(0, 1, "x2"), (1, 0, "x2")})
-        self.assertEqual(best_gain2, -5)
+        self.assertEqual(best_gain2, -6)
+
+    def test_find_best_offer_max_mode_subtracts_shared_link_gain(self):
+        early = Variable("early", ["7", "1"])
+        late = Variable("late", ["7", "1"])
+
+        @AsNAryFunctionRelation(early, late)
+        def meeting(early_, late_):
+            if early_ == late_ == "7":
+                return 1
+            if early_ == late_ == "1":
+                return 10
+            return -100
+
+        computation = Mgm2Computation(
+            ComputationDef(
+                VariableComputationNode(early, [meeting]),
+                AlgorithmDef.build_with_default_param("mgm2", mode="max"),
+            )
+        )
+
+        computation._neighbors_values = {"late": "7"}
+        computation.__value__ = "7"
+        computation.__cost__ = 1
+
+        bests, best_gain = computation._find_best_offer(
+            [("late", {("1", "1"): -9})]
+        )
+
+        self.assertEqual(bests, [("1", "1", "late")])
+        self.assertEqual(best_gain, -9)
 
     def test_find_best_offer_min_mode_2_offerers(self):
         x1 = Variable("x1", list(range(2)))
@@ -798,8 +828,8 @@ class TestsOffersComputations(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(set(bests), {(0, 1, "x2"), (1, 0, "x4")})
-        self.assertEqual(best_gain, 8)
+        self.assertEqual(bests, [(1, 0, "x4")])
+        self.assertEqual(best_gain, 7)
 
     def test_find_best_offer_max_mode_2_offerers(self):
         x1 = Variable("x1", list(range(2)))
@@ -840,8 +870,8 @@ class TestsOffersComputations(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(set(bests), {(0, 1, "x2"), (0, 1, "x4"), (1, 0, "x4")})
-        self.assertEqual(best_gain, -5)
+        self.assertEqual(bests, [(0, 1, "x2")])
+        self.assertEqual(best_gain, -6)
 
 
 class TestsHandleMessage(unittest.TestCase):
@@ -984,7 +1014,7 @@ class TestsHandleMessage(unittest.TestCase):
         self.assertTrue(offer.is_offering)
         self.assertEqual(offer.offers, {(1, 1): 8})
         self.assertEqual(computation4._state, "gain")
-        self.assertEqual(computation4._potential_gain, 9)
+        self.assertEqual(computation4._potential_gain, 8)
         self.assertEqual(computation4._potential_value, 1)
 
     def test_offer_already_has_partner(self):

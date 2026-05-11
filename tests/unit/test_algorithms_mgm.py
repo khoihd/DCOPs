@@ -348,6 +348,34 @@ def test_gain_message_keeps_value_when_neighbor_has_better_min_gain():
     )
 
 
+def test_lexicographic_tie_break_allows_only_first_equal_gain_neighbor():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+
+    first = MgmComputation(_comp_def(v1, [c1]))
+    first.value_selection(0, 5)
+    first._gain = 3
+    first._new_value = 1
+    first._state = 'gain'
+    first.message_sender = MagicMock()
+
+    second = MgmComputation(_comp_def(v2, [c1]))
+    second.value_selection(0, 5)
+    second._gain = 3
+    second._new_value = 1
+    second._state = 'gain'
+    second.message_sender = MagicMock()
+
+    first._handle_gain_message('v2', MgmGainMessage(3))
+    second._handle_gain_message('v1', MgmGainMessage(3))
+
+    assert first.current_value == 1
+    assert first.current_cost == 2
+    assert second.current_value == 0
+    assert second.current_cost == 5
+
+
 def test_gain_message_applies_better_max_gain_and_sends_next_value():
     v1 = Variable('v1', [0, 1])
     v2 = Variable('v2', [0, 1])
