@@ -2,7 +2,7 @@
   - pydcop -v 3 # debugging mode
 
 - (WIP) Verify the correctness of the implementation with the provided paper
-  - DPOP
+  - (DONE) DPOP
   - (DONE) MGM / MGM2
   - DBA / DSA / ADSA
   - Maxsum / AMaxsum
