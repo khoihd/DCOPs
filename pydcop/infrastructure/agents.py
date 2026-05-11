@@ -56,7 +56,8 @@ from collections import defaultdict
 
 from pydcop.algorithms import AlgorithmDef, ComputationDef, load_algorithm_module
 from pydcop.computations_graph import constraints_hypergraph as chg
-from pydcop.dcop.objects import AgentDef, create_binary_variables
+from pydcop.dcop.objects import AgentDef, BinaryVariable, create_binary_variables
+from pydcop.dcop.relations import Constraint
 from pydcop.infrastructure.Events import event_bus
 from pydcop.infrastructure.communication import Messaging, \
     CommunicationLayer, UnreachableAgent
@@ -144,7 +145,7 @@ class Agent:
         # _idle means that we have finished to handle all incoming messages
         self._idle = False
 
-        self._computations = {}  # type: Dict[str, MessagePassingComputation]
+        self._computations: dict[str, MessagePassingComputation] = {}
 
         self.t_active = 0
         # time when run the first non-technical computation is run
@@ -153,7 +154,7 @@ class Agent:
         self._start_t = None
 
         # Tasks that must run periodically as {callable: (period, last_run)}
-        self._periodic_cb = {}  # type: Dict[Callable, Tuple[float, float]]
+        self._periodic_cb: dict[Callable, tuple[float, float]] = {}
 
         # List of paused computations, any computation whose name is in this
         # list will not receive any message.
@@ -266,7 +267,7 @@ class Agent:
 
         Returns
         -------
-        List[MessagePassingComputation]
+        list[MessagePassingComputation]
             A list of computations hosted on this agents. This list is a copy
             and can be safely modified.
 
@@ -363,7 +364,7 @@ class Agent:
 
         Parameters
         ----------
-        computations: Optional[Union[str, List[str]]]
+        computations: str | list[str] | None
             An optional computation name or list of computation names. If None,
             all computations hosted on this agent are started.
 
@@ -458,7 +459,7 @@ class Agent:
 
         Parameters
         ----------
-        computations:  Union[str, Optional[List[str]]]
+        computations: str | list[str] | None
             The name of the computation to pause, or a list of computations
             names. If None, all hosted computation will be paused.
 
@@ -512,7 +513,7 @@ class Agent:
 
         Parameters
         ----------
-        computations: Optional[List[str]]
+        computations: list[str] | None
             TThe name of the computation to resume, or a list of computations
             names. If None, all hosted computations will be resumed.
 
@@ -963,8 +964,7 @@ class ResilientAgent(Agent):
             # self.add_computation(self.replication_comp)
             # Do not start the computation yet, the agent is not event started
 
-            self._repair_computations =\
-                {}  # type: Dict[str, RepairComputationRegistration]
+            self._repair_computations: dict[str, RepairComputationRegistration] = {}
             # the replication level will be set by the when requested to
             # replicate, by the ReplicateComputationsMessage
             self._replication_level = None
@@ -1076,20 +1076,20 @@ class ResilientAgent(Agent):
         # There is one binary variable x_i^m for each pair (x_i, a_m),
         # where x_i is an orphaned computation and a_m is an agent that could
         #  host x_i (i.e. has a replica of x_i).
-        orphaned_binvars = {}  # type: Dict[Tuple, BinaryVariable]
+        orphaned_binvars: dict[tuple, BinaryVariable] = {}
 
         # One binary variable x_i^m for each candidate computation x_i that
         # could be hosted on this agent a_m. Computation for these variables
         # will be hosted in this agent. This is a subset of orphaned_binvars.
-        candidate_binvars = {}  # type: Dict[Tuple, BinaryVariable]
+        candidate_binvars: dict[tuple, BinaryVariable] = {}
 
         # Agent  that will host the computation for each binary var.
         # it is a dict { bin var name : agent_name }
-        # agt_hosting_binvar = {}  # type: Dict[str, str]
+        # agt_hosting_binvar: dict[str, str] = {}
 
         # `hosted_cs` contains hard constraints ensuring that all candidate
         # computations are hosted:
-        hosted_cs = {}  # type: Dict[str, Constraint]
+        hosted_cs: dict[str, Constraint] = {}
         for candidate_comp, candidate_info in repair_info.items():
 
             try:
