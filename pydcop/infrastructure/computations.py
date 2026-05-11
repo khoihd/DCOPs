@@ -1056,11 +1056,17 @@ class VariableComputation(DcopComputation):
 
     def value_selection(self, val, cost=0):
         """
-        When the computation selects a value, it MUST be done by calling
-        this method. This is necessary to be able to automatically monitor
-        value changes.
-        :param val:
-        :param cost:
+        Record the value and cost currently selected by the computation.
+
+        Algorithms must use this method when they select or confirm a value so
+        value changes can be monitored consistently. When ``val`` differs from
+        the previous selected value, this method logs the change, calls the
+        value-selection hook, updates the current value, and emits a value
+        event. The current cost is updated even when the selected value stays
+        unchanged.
+
+        :param val: selected value for this computation's variable.
+        :param cost: local cost or utility associated with ``val``.
         """
         if val != self._previous_val:
             self.logger.info(
