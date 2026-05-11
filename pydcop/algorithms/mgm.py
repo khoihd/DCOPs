@@ -47,9 +47,7 @@ TODO
 
 """
 
-import functools
 import logging
-import operator
 import random
 from typing import Any
 from collections.abc import Iterable
@@ -359,18 +357,16 @@ class MgmComputation(VariableComputation):
             # the algorithm
             if self.current_cost is None:
                 reduced_cs = []
-                concerned_vars = set()
+                constraint_variables = set()
                 cost = 0
                 for c in self.utilities:
                     asgt = filter_assignment_dict(self._neighbors_values, c.dimensions)
                     reduced_cs.append(c.slice(asgt))
-                    cost = functools.reduce(
-                        operator.add, [f(self.current_value) for f in reduced_cs]
-                    )
+                    cost = sum(f(self.current_value) for f in reduced_cs)
                     # Cost for variable, if any:
-                    concerned_vars.update(c.dimensions)
+                    constraint_variables.update(c.dimensions)
 
-                for v in concerned_vars:
+                for v in constraint_variables:
                     if v.name == self.name:
                         cost += v.cost_for_val(self.current_value)
                     else:
@@ -461,21 +457,20 @@ class MgmComputation(VariableComputation):
 
         """
         reduced_cs = []
-        concerned_vars = set()
+        constraint_variables = set()
 
         for c in self.utilities:
             asgt = filter_assignment_dict(self._neighbors_values, c.dimensions)
             reduced_cs.append(c.slice(asgt))
-            concerned_vars.update(c.dimensions)
+            constraint_variables.update(c.dimensions)
         neighbor_cost = 0
-        for var in concerned_vars:
+        for var in constraint_variables:
             if var.name != self.name:
                 neighbor_cost += var.cost_for_val(self._neighbors_values[var.name])
 
         var_val, rel_val = find_arg_optimal(
             self.variable,
-            lambda x: functools.reduce(operator.add, [f(x) for f in reduced_cs])
-            + self.variable.cost_for_val(x),
+            lambda x: sum(f(x) for f in reduced_cs) + self.variable.cost_for_val(x),
             self._mode,
         )
 
