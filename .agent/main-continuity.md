@@ -27,7 +27,11 @@
 
 ## Current Focus
 
-- `todo.md` currently emphasizes generator cleanup:
+- `todo.md` currently emphasizes paper verification first:
+  - DPOP is done
+  - MGM / MGM2 is done
+  - next planned verification focus is DBA and DSA
+- Generator cleanup remains open:
   - seed support is done for the active generators recently touched
   - random graph support is done
   - generated instance naming
@@ -58,8 +62,9 @@
   `--collect_on value_change|cycle_change|period`; for per-iteration quality
   use `--collect_on cycle_change`.
 - Generated scratch files currently untracked and intentionally not committed:
-  `dsa_metrics.csv`, `dsa_min_metrics.csv`, `mgm_metrics.csv`,
-  `mgm_min_metrics.csv`, and `random.yaml`.
+  `dsa_max_metrics.csv`, `dsa_min_metrics.csv`, `mgm_max_metrics.csv`,
+  `mgm_min_metrics.csv`, `mgm2_max_metrics.csv`, `mgm2_min_metrics.csv`, and
+  `random.yaml`.
 
 ## Generator Notes
 
@@ -148,17 +153,26 @@
 - Paper verification tracking lives in
   `verification_archive/algorithm_paper_check_tracker.md`.
 - Source PDFs should live in `verification_archive/papers/`.
-- DPOP has been checked against `verification_archive/papers/dpop.pdf` and
-  documented in `verification_archive/dpop_paper_check.md`.
-- MGM and MGM2 use `verification_archive/papers/mgm.pdf`.
-- Current paper-check order starts with DPOP, MGM, MGM2, then DSA; DPOP is
+- DPOP has been checked against `verification_archive/papers/dpop.pdf`,
+  documented in `verification_archive/dpop_paper_check.md`, and marked
   verified.
-- MGM verification focus: finish min/max experiment notes, check direct
-  monotonicity/tie behavior coverage, then update `mgm_paper_check.md` and
-  the tracker.
+- MGM and MGM2 use `verification_archive/papers/mgm.pdf`; both are marked
+  verified in `verification_archive/algorithm_paper_check_tracker.md`.
+- Current planned paper-check focus for the next session is DBA and DSA.
 - MGM minimization treats `current_cost - candidate_cost > 0` as improvement;
   MGM maximization treats `current_cost - candidate_cost < 0` as improvement.
   Largest gain wins in `min`; smallest gain wins in `max`.
+- MGM notes include a non-blocking terminology cleanup idea: consider switching
+  MGM implementation wording from `cost` to `utility` where that would better
+  match the paper's maximization framing and reduce gain-sign confusion.
+- MGM2 coordinated-gain evaluation was fixed in
+  `pydcop/algorithms/mgm2.py`: `_find_best_offer()` now subtracts the current
+  shared partner-relation cost before adding the offerer's local gain, avoiding
+  double-counting of the old partner-link value.
+- Recent focused MGM/MGM2 verification checks used:
+  - `pytest tests/unit/test_algorithms_mgm.py tests/unit/test_algorithms_mgm2.py`
+  - `pytest tests/api/test_api_graph.py`
+  - `ruff check pydcop/algorithms/mgm2.py tests/unit/test_algorithms_mgm.py tests/unit/test_algorithms_mgm2.py`
 - MGM and DSA do not currently implement a global convergence stop such as
   "all computations kept the same value this cycle"; they rely on
   `stop_cycle`, timeout, or external stop.
