@@ -4,7 +4,8 @@
   - Add support to generate multiple instances
     - Check how we should name instances
   
-- Add print out when agent sends and receive messages for debugging
+- (DONE) Add print out when agent sends and receive messages for debugging
+  - pydcop -v 3 # debugging mode
 
 - Check how the algorithm supports multi-threading
 
