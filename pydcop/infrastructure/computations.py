@@ -299,8 +299,8 @@ class MessagePassingComputation(metaclass=ComputationMetaClass):
         self._running = False
 
         self._is_paused = False
-        self._paused_messages_post = []  # type: List[Tuple[str, Any, int, Any]]
-        self._paused_messages_recv = []  # type: List[Tuple[str, Any, float]]
+        self._paused_messages_post = [] 
+        self._paused_messages_recv = []
 
     @property
     def name(self) -> str:
