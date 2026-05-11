@@ -22,6 +22,8 @@
 - Documentation builds with Sphinx in the active environment. For local builds
   use `SPHINXOPTS="-D autosummary_generate=0" make html` to avoid rewriting
   committed autosummary files.
+- Ruff is now configured in `pyproject.toml` with `target-version = "py311"`
+  and `extend-select = ["UP"]` for pyupgrade/modernization checks.
 
 ## Current Focus
 
@@ -35,6 +37,29 @@
 - `generator_summary.txt` is the short generator overview; the older
   `generator_arguments.txt` is being retired.
 - Generator docs were updated and Sphinx verified after docs config cleanup.
+- Recent runtime/algorithm cleanup focused on logging/debugging notes, Ruff
+  modernization warnings in VS Code, and MGM/MGM2 termination behavior.
+
+## Recent Maintenance Notes
+
+- A repo-wide Ruff modernization pass was committed. It converted typing
+  aliases, f-strings, `super()`, explicit `object` inheritance, and similar
+  pyupgrade findings. Verification used `ruff check .` and full `pytest`.
+- Remaining active `# type:` / `# Type:` comments in tracked Python files were
+  replaced with modern annotations so VS Code/Pylance no longer warns on old
+  `Dict`, `List`, `Tuple`, `Set`, `Optional`, or `Union` comments. A final
+  scan with `rg -n "# type:|# Type:" -g "*.py"` found no matches.
+- `pydcop/infrastructure/agents.py` had legacy type comments converted to
+  annotations. Focused check: `pytest tests/unit/test_infra_agents.py`.
+- Top-level CLI verbosity controls logging: use
+  `python -m pydcop.dcop_cli -v 3 ...` for `logging.DEBUG`. Put `-v 3`
+  before the subcommand.
+- `--run_metrics <file>` writes CSV metrics when paired with
+  `--collect_on value_change|cycle_change|period`; for per-iteration quality
+  use `--collect_on cycle_change`.
+- Generated scratch files currently untracked and intentionally not committed:
+  `dsa_metrics.csv`, `dsa_min_metrics.csv`, `mgm_metrics.csv`,
+  `mgm_min_metrics.csv`, and `random.yaml`.
 
 ## Generator Notes
 
@@ -134,6 +159,22 @@
 - MGM minimization treats `current_cost - candidate_cost > 0` as improvement;
   MGM maximization treats `current_cost - candidate_cost < 0` as improvement.
   Largest gain wins in `min`; smallest gain wins in `max`.
+- MGM and DSA do not currently implement a global convergence stop such as
+  "all computations kept the same value this cycle"; they rely on
+  `stop_cycle`, timeout, or external stop.
+- MGM stop-cycle handling was fixed in `pydcop/algorithms/mgm.py`: when the
+  stop boundary is reached it now calls both `finished()` and `stop()`, and
+  `_wait_for_values()` does not process postponed value messages after stop.
+  `stop_cycle=1` now allows the initial value send before stopping on the
+  next send attempt. Focused check: `pytest tests/unit/test_algorithms_mgm.py`.
+- MGM2 stop-cycle handling was fixed in `pydcop/algorithms/mgm2.py` with the
+  same pattern: `_send_value()` returns whether it continued, callers only
+  enter `"value"` state after a real send, and no-neighbor computations call
+  `stop()` after `finished()`. Focused check:
+  `pytest tests/unit/test_algorithms_mgm2.py`.
+- DSA already calls both `finished()` and `stop()` at `stop_cycle`; its
+  indefinite-run cases are by design (`stop_cycle=0`) or due to missing
+  neighbor messages in the synchronous protocol.
 
 ## Durable Caveats
 
