@@ -94,8 +94,10 @@ The implementation intentionally generalizes the paper in these ways:
 - Maximization treats `current_cost - candidate_cost < 0` as an improving gain.
 - Gain comparison follows the same sign convention: largest gain wins in `min`
   mode and smallest gain wins in `max` mode.
-- Equal adjacent gains are separated by tie-breaking, so neighboring variables
-  with equal gain do not both change in the same MGM round.
+- Equal adjacent gains are separated by tie-breaking, so neighboring variables with equal gain do not both change in the same MGM round.
+- Non-blocking terminology cleanup: consider switching MGM implementation
+  wording from `cost` to `utility` where it would better match the paper's
+  maximization framing and reduce confusion around gain signs.
 
 ## Follow-Up
 
