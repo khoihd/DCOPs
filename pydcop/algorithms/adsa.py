@@ -33,14 +33,14 @@
 A-DSA : Asynchronous Distributed Stochastic Algorithm
 -----------------------------------------------------
 
-ADSA :cite:`weiss_distributed_2003`
+ADSA :cite:`fitzpatrick_distributed_2003`
 is an asynchronous stochastic local-search DCOP algorithm. Each variable
 periodically wakes up, uses its latest known neighbor values to choose a local
 best value, and applies that change with a configured probability.
 
 This implementation keeps the DSA A/B/C value-change variants from
 :cite:`zhang_distributed_2005` while using the asynchronous periodic wake-up
-model from :cite:`weiss_distributed_2003`.
+model from :cite:`fitzpatrick_distributed_2003`.
 
 Compared with the paper's fixed-probability presentation, this implementation
 computes the locally best values before applying the probability threshold for
