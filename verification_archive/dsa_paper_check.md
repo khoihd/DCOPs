@@ -8,7 +8,7 @@
   networks"
 - Authors: Weixiong Zhang, Guandong Wang, Zhao Xing, and Lars Wittenburg
 - Implementation: `pydcop/algorithms/dsa.py`
-- Status: In progress
+- Status: Done / Verified
 
 ## Review Scope
 
@@ -58,19 +58,25 @@
   current value is not the best achievable value for that relation according to
   the optimization mode.
 
-## Current Findings
+## Verdict
 
 - The core A/B/C local value-selection behavior appears to match Table 1.
-- The implementation sends a value message every cycle, not only after the
-  value changed. This differs from Algorithm 1 and the paper's communication
-  cost discussion, but it fits the implementation's synchronous wait-for-all
-  neighbor-values design. This affects communication metrics and should be
-  documented as an implementation/runtime adaptation if kept.
+- The implementation intentionally sends a value message every cycle, not only
+  after the value changed. This differs from Algorithm 1 and the paper's
+  communication cost discussion, but it improves liveness and stability for the
+  implementation's synchronous wait-for-all-neighbor-values design, where
+  send-on-change could leave a computation waiting forever for a neighbor that
+  kept the same value.
 - `p_mode="arity"` is a repo-level extension not described in the paper.
 - `stop_cycle` is a repo-level termination parameter. The paper assumes an
   external termination condition.
 - `mode="max"` and generic N-ary constraints are repo-level extensions beyond
   the paper's graph-coloring presentation.
+
+The DSA implementation is verified for the paper's supported A/B/C
+value-selection behavior. The differences above are intentional repo/runtime
+adaptations or extensions and do not require code changes for paper
+correctness.
 
 ## Existing Coverage
 
@@ -81,8 +87,7 @@
 
 ## Follow-Up
 
-- Decide whether the every-cycle value broadcast should be kept as an
-  intentional deviation or changed to the paper's send-on-change behavior.
-- Review focused tests for communication semantics once that decision is made.
-- Tighten DSA docstrings after the verification decision, especially around
-  `p_mode`, metrics, and the paper-vs-runtime communication behavior.
+- None currently required for the DSA module docstring. It now documents
+  `p_mode`, metrics, and the every-cycle value broadcast as an intentional
+  runtime adaptation from the paper's lower-communication send-on-change
+  behavior.

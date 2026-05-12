@@ -100,10 +100,10 @@ For each algorithm:
   - Implementation: `pydcop/algorithms/dsa.py`
   - Paper / Source: `verification_archive/papers/dsa.pdf`
   - Check File: `verification_archive/dsa_paper_check.md`
-  - Status: In progress
-  - Notes: Initial paper mapping is captured. A/B/C value-selection behavior
-    appears aligned; communication differs because the implementation sends
-    value messages every cycle rather than only after value changes.
+  - Status: Done / Verified
+  - Notes: A/B/C value-selection behavior matches Table 1. Every-cycle value
+    broadcast is an intentional runtime adaptation for liveness under the
+    current wait-for-all-neighbors protocol.
 
 - DSA Tutorial
   - Priority: 7

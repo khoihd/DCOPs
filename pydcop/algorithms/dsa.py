@@ -38,8 +38,13 @@ synchronous, stochastic, local search DCOP algorithm.
 
 This is the classical synchronous version of DSA ; at each cycle each variable
 waits for the value of all its neighbors before computing the potential gain
-and making a decision. This means that this implementation is not robust to
-message loss.
+and making a decision.
+
+The paper's Algorithm 1 sends a value message only after the value changed.
+This implementation intentionally broadcasts the current value every cycle. That
+uses more messages than the paper's lower-communication presentation, but it
+keeps the synchronous wait-for-all-neighbors protocol live when a neighbor keeps
+the same value or when startup/message timing is uneven.
 
 
 Algorithm Parameters
@@ -52,20 +57,35 @@ Algorithm Parameters
 **probability**
   probability of changing a value. Defaults to 0.7
 
+**p_mode**
+  probability mode, either ``fixed`` or ``arity``. ``fixed`` uses the
+  configured ``probability`` value. ``arity`` derives the probability from the
+  number of neighbor occurrences in local constraints. Defaults to ``fixed``.
+
 **stop_cycle**
   The number of cycle after which the algorithm stops, defaults to `0`
   If not defined (of equals to `0`), the computation never stops.
+
+Metrics
+^^^^^^^
+
+DSA supports ``--run_metrics`` through the standard runtime metrics hooks. With
+the default ``--collect_on value_change``, metrics are recorded only when the
+selected variable value changes. For per-cycle quality tracking, use
+``--collect_on cycle_change``.
 
 Example
 ^^^^^^^
 
 ::
 
-    pydcop -t 3 solve -algo dsa  \\
-      --algo_param stop_cycle:30 \\
-      --algo_param variant:C \\
-      --algo_param probability:0.5 \\
-     -d adhoc graph_coloring_csp.yaml
+    pydcop solve -a dsa \\
+      -p stop_cycle:30 \\
+      -p variant:C \\
+      -p probability:0.5 \\
+      --collect_on cycle_change \\
+      --run_metrics dsa_metrics.csv \\
+      graph_coloring_csp.yaml
 
     {
       "assignment": {
