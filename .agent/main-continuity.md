@@ -32,7 +32,8 @@
   - MGM / MGM2 is done
   - DBA is done
   - GDBA is done
-  - next planned verification focus is DSA
+  - DSA is done
+  - next planned verification focus is ADSA
 - Generator cleanup remains open:
   - seed support is done for the active generators recently touched
   - random graph support is done
@@ -44,7 +45,9 @@
   `generator_arguments.txt` is being retired.
 - Generator docs were updated and Sphinx verified after docs config cleanup.
 - Recent runtime/algorithm cleanup focused on logging/debugging notes, Ruff
-  modernization warnings in VS Code, and MGM/MGM2 termination behavior.
+  modernization warnings in VS Code, MGM/MGM2 termination behavior, GDBA
+  fixed-cycle support, DSA paper verification, and removing the obsolete
+  DSA tutorial algorithm.
 
 ## Recent Maintenance Notes
 
@@ -132,6 +135,8 @@
 - `Makefile` supports `SPHINXOPTS` and `make html` as an alias for `make doc`.
 - Recent docs check: `SPHINXOPTS="-D autosummary_generate=0" make html`
   completed without warnings.
+- The old algorithm-implementation tutorial and downloadable `dsa-tuto.py`
+  sample were removed when `pydcop/algorithms/dsatuto.py` was retired.
 
 ## Solve/LP Notes
 
@@ -166,7 +171,10 @@
 - GDBA has been checked against `verification_archive/papers/gdba.pdf`,
   documented in `verification_archive/gdba_paper_check.md`, and marked
   done / verified.
-- Current planned paper-check focus for the next session is DSA.
+- DSA has been checked against `verification_archive/papers/dsa.pdf`,
+  documented in `verification_archive/dsa_paper_check.md`, and marked
+  done / verified.
+- Current planned paper-check focus for the next session is ADSA.
 - DBA verification fixes in `pydcop/algorithms/dba.py`:
   - normal termination now preserves `finished` mode and calls `stop()`
   - breakout weights now apply per exact violated assignment tuple instead
@@ -185,9 +193,42 @@
   `pydcop/algorithms/gdba.py` to follow the paper's row/column convention:
   `C` increases all local values with neighbor context fixed, and `R`
   increases the current local value across possible neighbor contexts.
+- GDBA now supports `stop_cycle` for fixed-cycle runs and per-cycle metrics.
+  `_send_current_value()` follows the MGM-style stop boundary: send the
+  initial value before `stop_cycle=1`, then call both `finished()` and
+  `stop()` before posting the next value. The module docstring documents CLI
+  metrics usage.
 - Recent focused GDBA checks used:
   - `pytest tests/unit/test_algorithms_gdba.py`
   - `ruff check pydcop/algorithms/gdba.py tests/unit/test_algorithms_gdba.py`
+- DSA verification notes:
+  - implementation supports paper variants A, B, and C; variants D/E from the
+    paper are intentionally not exposed
+  - default repo behavior is `variant="B"` and `probability=0.7`; the paper
+    sweeps probability experimentally rather than mandating a default
+  - every-cycle value broadcast is an intentional runtime adaptation from the
+    paper's lower-communication send-on-change behavior, preserving liveness
+    under the current wait-for-all-neighbors protocol
+  - `p_mode="arity"`, `stop_cycle`, `mode="max"`, and generic N-ary relations
+    are repo-level extensions beyond the paper's graph-coloring presentation
+  - DSA variants by paper experiment: B is the best practical default, C is
+    strong but more active/sensitive to probability, A is conservative and more
+    prone to local minima; D/E are not recommended by the paper and are not
+    implemented here
+- Recent focused DSA checks used:
+  - `pytest tests/unit/test_algorithms_dsa.py`
+  - `pytest tests/unit/test_algorithms_dsa.py tests/unit/test_algorithms_adsa.py`
+  - `ruff check pydcop/algorithms/dsa.py tests/unit/test_algorithms_dsa.py`
+- `pydcop/algorithms/dsatuto.py` was removed after DSA verification. Related
+  unit/API tests, docs/reference pages, the algorithm-implementation tutorial,
+  downloadable tutorial sample, optimization notes, and tracker entry were
+  removed or updated. `dsatuto` no longer appears in
+  `list_available_algorithms()`.
+- Focused checks for the `dsatuto` removal used:
+  - `pytest tests/unit/test_algorithms_objects.py tests/unit/test_infra_computations.py tests/api/test_api_solve.py`
+  - `pytest tests/unit/test_algorithms_dsa.py tests/unit/test_algorithms_adsa.py`
+  - `ruff check pydcop/algorithms/__init__.py pydcop/algorithms/dsa.py pydcop/algorithms/adsa.py pydcop/infrastructure/computations.py tests/api/test_api_solve.py tests/unit/test_algorithms_objects.py tests/unit/test_infra_computations.py`
+  - `SPHINXOPTS="-D autosummary_generate=0" make html`
 - MGM minimization treats `current_cost - candidate_cost > 0` as improvement;
   MGM maximization treats `current_cost - candidate_cost < 0` as improvement.
   Largest gain wins in `min`; smallest gain wins in `max`.
