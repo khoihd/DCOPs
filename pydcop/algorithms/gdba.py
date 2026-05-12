@@ -32,6 +32,43 @@
 GDBA Algorithm
 --------------
 
+GDBA is the Generalized Distributed Breakout Algorithm described in
+"Distributed Breakout: Beyond Satisfaction" by Okamoto, Zivan, and Nahon. It
+extends breakout-style local search from satisfaction problems to general-valued
+DCOP minimization. This implementation also supports the repository's ``max``
+mode, but the paper presents the algorithm as a minimization method.
+
+Algorithm Parameters
+^^^^^^^^^^^^^^^^^^^^
+
+GDBA supports four parameters:
+
+* ``modifier``: effective-cost modifier mode, either ``A`` for additive or
+  ``M`` for multiplicative. Defaults to ``A``.
+* ``violation``: violated-entry definition, one of ``NZ`` for non-zero, ``NM``
+  for non-minimum, or ``MX`` for maximum. Defaults to ``NZ``.
+* ``increase_mode``: scope of modifier increases, one of ``E`` for the current
+  entry, ``C`` for all local values with the neighbor context fixed, ``R`` for
+  the current local value across possible neighbor contexts, or ``T`` for the
+  whole table. Defaults to ``E``.
+* ``stop_cycle``: number of cycles after which the computation stops. ``0``
+  means no algorithm-level cycle limit. Defaults to ``0``.
+
+Example
+^^^^^^^
+::
+
+    pydcop solve -a gdba -p stop_cycle:50 \
+           --collect_on cycle_change --run_metrics gdba_metrics.csv \
+           graph_coloring1.yaml
+
+Metrics
+^^^^^^^
+
+GDBA supports ``--run_metrics`` through the standard runtime metrics hooks.
+With the default ``--collect_on value_change``, metrics are recorded only when
+selected variable values change. For per-cycle quality tracking, use
+``--collect_on cycle_change``.
 
 """
 
@@ -71,12 +108,11 @@ def build_computation(comp_def: ComputationDef):
 
 
 def memory_footprint_estimate(computation: VariableComputationNode) -> float:
-    """Return the memory footprint of a DBA computation.
+    """Return the memory footprint of a GDBA computation.
 
     Notes
     -----
-    With DBA, a computation must only remember the current value for each
-    of it's neighbors.
+    With GDBA, a computation must remember the current value for each neighbor.
 
     Parameters
     ----------
@@ -105,7 +141,7 @@ def communication_load(src: VariableComputationNode, target: str) -> float:
 
     Notes
     -----
-    The main messages in DBA are the 'ok?' and 'improve' messages, which at
+    The main messages in GDBA are the 'ok?' and 'improve' messages, which at
     most contains a value and a possible improvement. The size of the message
     does not depends on the source nor target variable, nor on their
     respective domains.
@@ -185,6 +221,7 @@ algo_params = [
     AlgoParameterDef("modifier", "str", ["A", "M"], "A"),
     AlgoParameterDef("violation", "str", ["NZ", "NM", "MX"], "NZ"),
     AlgoParameterDef("increase_mode", "str", ["E", "R", "C", "T"], "E"),
+    AlgoParameterDef("stop_cycle", "int", None, 0),
 ]
 
 
@@ -218,6 +255,7 @@ class GdbaComputation(VariableComputation):
         modifier="A",
         violation="NZ",
         increase_mode="E",
+        stop_cycle=0,
         msg_sender=None,
         comp_def=None,
     ):
@@ -247,6 +285,7 @@ class GdbaComputation(VariableComputation):
         self._modifier_mode = modifier
         self._violation_mode = violation
         self._increase_mode = increase_mode
+        self.stop_cycle = stop_cycle
         base_modifier = 0 if self._modifier_mode == "A" else 1
         self.__constraints__ = list()
         self.__constraints_modifiers__ = dict()
@@ -332,8 +371,8 @@ class GdbaComputation(VariableComputation):
                     self.variable.name,
                     self.current_value,
                 )
-            self._send_current_value()
-            self._go_to_wait_ok_mode()
+            if self._send_current_value():
+                self._go_to_wait_ok_mode()
 
     @register("gdba_ok")
     def _on_ok_msg(self, variable_name, recv_msg, t):
@@ -418,13 +457,16 @@ class GdbaComputation(VariableComputation):
         return best_vals, best_eval
 
     def _send_current_value(self):
+        if self.stop_cycle and self.cycle_count >= self.stop_cycle:
+            self.finished()
+            self.stop()
+            return False
         self.new_cycle()
-        #       #########TO DO#########
-        # This is where to put an eventual stop condition
         for n in self.neighbors:
             msg = GdbaOkMessage(self.current_value)
             self.post_msg(n.name, msg)
             self.logger.debug("%s has sent %s to %s", self.name, msg, n.name)
+        return True
 
     def compute_eval_value(self, val, collect_violated=True):
         """
@@ -530,8 +572,8 @@ class GdbaComputation(VariableComputation):
             self._neighbors_values.clear()
             self._violated_constraints.clear()
 
-            self._send_current_value()
-            self._go_to_wait_ok_mode()
+            if self._send_current_value():
+                self._go_to_wait_ok_mode()
         else:
             # Still waiting for other neighbors
             self.logger.debug(

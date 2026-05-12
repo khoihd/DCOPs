@@ -45,7 +45,9 @@
 ## Implementation Mapping
 
 - `algo_params` exposes the paper's three variant dimensions:
-  `modifier`, `violation`, and `increase_mode`.
+  `modifier`, `violation`, and `increase_mode`. It also exposes the
+  repo-level `stop_cycle` parameter for fixed-cycle runs and metrics
+  collection.
 - Initialization converts constraints to `NAryMatrixRelation`, records per-table
   minimum and maximum base costs, and initializes modifier tables.
 - `on_start()` selects an initial value and sends `GdbaOkMessage` to neighbors.
@@ -85,8 +87,9 @@ across possible neighbor contexts.
   `mode="max"` as a repo-level extension; that extension is not verified
   against the paper.
 - The paper assumes a fixed iteration limit or an anytime framework. The
-  implementation relies on the surrounding runtime timeout/termination
-  behavior rather than a GDBA-specific stop parameter.
+  implementation now provides a `stop_cycle` parameter for fixed-cycle runs,
+  while still also supporting the surrounding runtime timeout/termination
+  behavior.
 - For no-neighbor computations, the implementation selects a local value and
   finishes immediately. This is outside the paper's neighbor-exchange focus.
 
@@ -95,7 +98,7 @@ across possible neighbor contexts.
 - `tests/unit/test_algorithms_gdba.py` covers construction, message classes,
   effective cost calculation for `A` and `M`, violation definitions, all
   increase scopes, startup behavior, postponed messages, improvement handling,
-  quasi-local modifier increase, and tie-breaking.
+  quasi-local modifier increase, tie-breaking, and `stop_cycle` behavior.
 
 ## Follow-Up
 

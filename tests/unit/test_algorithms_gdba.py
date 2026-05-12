@@ -525,6 +525,7 @@ def test_build_computation_default_params():
     assert computation._modifier_mode == 'A'
     assert computation._violation_mode == 'NZ'
     assert computation._increase_mode == 'E'
+    assert computation.stop_cycle == 0
     assert {v.name for v in computation.neighbors} == {'v2'}
 
 
@@ -532,7 +533,12 @@ def test_build_computation_with_params():
     v1 = Variable('v1', [0, 1])
     computation = _gdba_computation(
         v1,
-        params={'modifier': 'M', 'violation': 'MX', 'increase_mode': 'T'},
+        params={
+            'modifier': 'M',
+            'violation': 'MX',
+            'increase_mode': 'T',
+            'stop_cycle': 5,
+        },
         mode='max',
     )
 
@@ -540,6 +546,7 @@ def test_build_computation_with_params():
     assert computation._modifier_mode == 'M'
     assert computation._violation_mode == 'MX'
     assert computation._increase_mode == 'T'
+    assert computation.stop_cycle == 5
 
 
 def test_gdba_ok_message_properties():
@@ -602,6 +609,70 @@ def test_on_start_uses_initial_value_and_sends_to_neighbors():
         any_order=True,
     )
     assert computation.message_sender.call_count == 2
+
+
+def test_send_current_value_sends_initial_value_before_stop_cycle():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = _gdba_computation(v1, [c1], params={'stop_cycle': 1})
+    computation.value_selection(0, 0)
+    computation.finished = MagicMock()
+    computation.message_sender = MagicMock()
+
+    sent = computation._send_current_value()
+
+    assert sent is True
+    assert computation.cycle_count == 1
+    computation.finished.assert_not_called()
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', GdbaOkMessage(0), None, None
+    )
+
+
+def test_send_current_value_stops_at_stop_cycle_without_posting():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = _gdba_computation(v1, [c1], params={'stop_cycle': 1})
+    computation.value_selection(0, 0)
+    computation.new_cycle()
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+    computation.message_sender = MagicMock()
+
+    sent = computation._send_current_value()
+
+    assert sent is False
+    assert computation.cycle_count == 1
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+    computation.message_sender.assert_not_called()
+
+
+def test_improve_handling_does_not_process_postponed_ok_after_stop_cycle():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', 'abs(v1 - v2)', [v1, v2])
+    computation = _gdba_computation(v1, [c1], params={'stop_cycle': 1})
+    computation.value_selection(0, 1)
+    computation.new_cycle()
+    computation._waiting_mode = 'improve'
+    computation._neighbors_values = {'v2': 1}
+    computation._my_improve = 0
+    computation.__postponed_ok_messages__.append(('v2', GdbaOkMessage(1)))
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+    computation._handle_ok_message = MagicMock()
+    computation.message_sender = MagicMock()
+
+    computation._handle_improve_message('v2', GdbaImproveMessage(0))
+
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+    computation._handle_ok_message.assert_not_called()
+    computation.message_sender.assert_not_called()
+    assert computation.__postponed_ok_messages__ == [('v2', GdbaOkMessage(1))]
 
 
 def test_ok_message_received_outside_ok_mode_is_postponed():

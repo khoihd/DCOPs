@@ -92,7 +92,8 @@ For each algorithm:
   - Status: Done / Verified
   - Notes: Core minimization flow matches the paper. During verification,
     `R` and `C` increase scopes were corrected to follow the paper's
-    row/column convention.
+    row/column convention. Fixed-cycle `stop_cycle` support was added for
+    reproducible runs and per-cycle metrics.
 
 - DSA
   - Priority: 6
