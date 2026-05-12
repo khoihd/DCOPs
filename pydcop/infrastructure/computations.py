@@ -601,7 +601,7 @@ class register:
     >    def handler_c(self, s, m, t):
     >        print("received messages", m, "from", s)
 
-    See DsaTuto sample implementation for a complete example.
+    See existing algorithm implementations for complete examples.
 
     """
 

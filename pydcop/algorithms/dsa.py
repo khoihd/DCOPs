@@ -101,9 +101,6 @@ Example
 See Also
 ^^^^^^^^
 
-:ref:`DSA-tuto<implementation_reference_algorithms_dsatuto>`: for a very simple
-implementation of DSA, made for tutorials.
-
 :ref:`A-DSA<implementation_reference_algorithms_adsa>`: for an asynchronous
 implementation of DSA.
 

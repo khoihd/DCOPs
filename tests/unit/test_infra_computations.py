@@ -43,6 +43,7 @@ from pydcop.infrastructure.computations import (
     Message,
     message_type,
     MessagePassingComputation,
+    VariableComputation,
     register,
 )
 from pydcop.utils.simple_repr import simple_repr
@@ -376,43 +377,15 @@ def test_memory_footprint_from_classic_import():
 
 
 def test_fallback_memory_footprint():
-    # use dsatuto as is has no memory_footprint_estimate function defined
-    dsa_module = load_algorithm_module("dsatuto")
+    class NoFootprintComputation(VariableComputation):
+        pass
 
     v1 = Variable("v1", [1, 2])
     comp_def = ComputationDef(
         VariableComputationNode(v1, []),
-        AlgorithmDef.build_with_default_param("dsatuto"),
+        AlgorithmDef("no_footprint", {}),
     )
-    comp = dsa_module.DsaTutoComputation(comp_def)
-
-    assert comp.footprint() == 1
-
-
-def test_fallback_memory_footprint_from_import_module():
-    # use dsatuto as is has no memory_footprint_estimate function defined
-    dsa_module = import_module("pydcop.algorithms.dsatuto")
-
-    v1 = Variable("v1", [1, 2])
-    comp_def = ComputationDef(
-        VariableComputationNode(v1, []),
-        AlgorithmDef.build_with_default_param("dsatuto"),
-    )
-    comp = dsa_module.DsaTutoComputation(comp_def)
-
-    assert comp.footprint() == 1
-
-
-def test_fallback_memory_footprint_from_classic_import():
-    # use dsatuto as is has no memory_footprint_estimate function defined
-    import pydcop.algorithms.dsatuto as dsa_module
-
-    v1 = Variable("v1", [1, 2])
-    comp_def = ComputationDef(
-        VariableComputationNode(v1, []),
-        AlgorithmDef.build_with_default_param("dsatuto"),
-    )
-    comp = dsa_module.DsaTutoComputation(comp_def)
+    comp = NoFootprintComputation(v1, comp_def)
 
     assert comp.footprint() == 1
 
@@ -493,4 +466,3 @@ def test_fix_delayed_message_on_start():
 
     # Check that c2 really received the message
     assert c2.received
-

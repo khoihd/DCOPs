@@ -5,11 +5,6 @@
 DCOP algorithm Implementation
 =============================
 
-**Note:** This document build upon the tutorial
-:ref:`tutorials_algorithm_implementation`,
-you should follow it before reading this.
-
-
 By providing all the infrastructure, pyDCOP makes it easier to implement a
 new DCOP algorithm ; you only have one python module to implement,
 with only one mandatory class.

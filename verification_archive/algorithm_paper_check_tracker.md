@@ -105,17 +105,8 @@ For each algorithm:
     broadcast is an intentional runtime adaptation for liveness under the
     current wait-for-all-neighbors protocol.
 
-- DSA Tutorial
-  - Priority: 7
-  - Implementation: `pydcop/algorithms/dsatuto.py`
-  - Paper / Source: TBD
-  - Check File: `verification_archive/dsatuto_paper_check.md`
-  - Status: Not started
-  - Notes: Tutorial implementation; verify if it should be checked against DSA
-    paper or docs only.
-
 - ADSA
-  - Priority: 8
+  - Priority: 7
   - Implementation: `pydcop/algorithms/adsa.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/adsa_paper_check.md`
@@ -123,7 +114,7 @@ For each algorithm:
   - Notes:
 
 - MixedDSA
-  - Priority: 9
+  - Priority: 8
   - Implementation: `pydcop/algorithms/mixeddsa.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/mixeddsa_paper_check.md`
@@ -131,7 +122,7 @@ For each algorithm:
   - Notes:
 
 - MaxSum
-  - Priority: 10
+  - Priority: 9
   - Implementation: `pydcop/algorithms/maxsum.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/maxsum_paper_check.md`
@@ -139,7 +130,7 @@ For each algorithm:
   - Notes:
 
 - AMaxSum
-  - Priority: 11
+  - Priority: 10
   - Implementation: `pydcop/algorithms/amaxsum.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/amaxsum_paper_check.md`
@@ -147,7 +138,7 @@ For each algorithm:
   - Notes:
 
 - Dynamic MaxSum
-  - Priority: 12
+  - Priority: 11
   - Implementation: `pydcop/algorithms/maxsum_dynamic.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/maxsum_dynamic_paper_check.md`
@@ -155,7 +146,7 @@ For each algorithm:
   - Notes:
 
 - NCBB
-  - Priority: 13
+  - Priority: 12
   - Implementation: `pydcop/algorithms/ncbb.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/ncbb_paper_check.md`
@@ -163,7 +154,7 @@ For each algorithm:
   - Notes: Search phase is known incomplete from continuity notes.
 
 - SyncBB
-  - Priority: 14
+  - Priority: 13
   - Implementation: `pydcop/algorithms/syncbb.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/syncbb_paper_check.md`

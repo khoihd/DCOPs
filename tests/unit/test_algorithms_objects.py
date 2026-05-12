@@ -90,11 +90,3 @@ def test_load_algorithm():
         assert hasattr(algo, "communication_load")
         assert hasattr(algo, "memory_footprint_estimate")
 
-
-def test_load_algorithm_with_default_footprint():
-    # dsatuto has no load method defined : check that we get instead default
-    # implementations
-    algo = load_algorithm_module("dsatuto")
-    assert algo.algorithm_name == "dsatuto"
-    assert algo.communication_load(None, None) == 1
-    assert algo.memory_footprint_estimate(None) == 1

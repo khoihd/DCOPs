@@ -52,15 +52,6 @@ def test_api_solve_dsa():
     check_suboptimal_result(assignment)
 
 
-def test_api_solve_dsatuto():
-    dcop = dcop_graphcoloring_3()
-    dcop.add_agents(create_agents('a', [1, 2, 3], capacity=50))
-
-    assignment = solve(dcop, 'dsatuto','oneagent', timeout=3)
-
-    check_suboptimal_result(assignment)
-
-
 def test_api_solve_mgm():
     dcop = dcop_graphcoloring_3()
     dcop.add_agents(create_agents('a', [1, 2, 3], capacity=50))

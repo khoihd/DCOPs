@@ -38,7 +38,6 @@ algorithm supported by pyDCOP.
   algorithms/dba
   algorithms/dsa
   algorithms/adsa
-  algorithms/dsatuto
   algorithms/mgm
   algorithms/mgm2
   algorithms/gdba
@@ -48,10 +47,7 @@ algorithm supported by pyDCOP.
   algorithms/syncbb
 
 
-For documentation on how to develop new algorithms,
-look at the this
-:ref:`tutorial<tutorials_algorithm_implementation>`
-and this
+For documentation on how to develop new algorithms, see
 :ref:`documentation<implementation_algorithms>`.
 
 
