@@ -138,7 +138,9 @@ GRAPH_TYPE = "constraints_hypergraph"
 #         The probability threshold for changing value. Used differently
 #         depending on the variant of DSA. See (Zhang, 2005) for details
 #     p_mode: str
-#         TODO
+#         Probability mode, either "fixed" or "arity". "fixed" uses the
+#         configured probability value. "arity" derives the probability from
+#         the number of neighbor occurrences in local constraints.
 #     stop_cycle: int
 #         The number of cycle after which the computation must stop. If not
 #         given, the computation does not stop automatically.
