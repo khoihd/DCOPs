@@ -447,11 +447,41 @@ def test_send_ok_finishes_when_consistent_for_max_distance():
     computation.finished = MagicMock()
     computation.value_selection(0)
     computation._consistent = True
+    computation._running = True
 
     computation._send_ok()
 
     assert computation._mode == 'finished'
+    assert not computation.is_running
     assert computation._termination_counter == 1
+    computation.finished.assert_called_once_with()
+    computation.message_sender.assert_called_once_with(
+        'v1', 'v2', DbaEndMessage(), None, None
+    )
+
+
+def test_improve_message_finish_keeps_finished_mode_and_stops():
+    v1 = Variable('v1', [0, 1])
+    v2 = Variable('v2', [0, 1])
+    c1 = constraint_from_str('c1', '0 if v1 == v2 else 10000', [v1, v2])
+    computation = _dba_computation(v1, [c1], params={'max_distance': 1})
+    computation.message_sender = MagicMock()
+    computation.finished = MagicMock()
+    computation.value_selection(0)
+    computation.__cost__ = 0
+    computation._mode = 'improve'
+    computation._running = True
+    computation._consistent = True
+    computation._my_improve = 0
+    computation._quasi_local_minimum = False
+    computation._can_move = False
+
+    computation._on_improve_msg('v2', DbaImproveMessage(0, 0, 0), None)
+
+    assert computation._mode == 'finished'
+    assert not computation.is_running
+    assert computation._neighbors_improvements == {}
+    assert computation._neighbors_values == {}
     computation.finished.assert_called_once_with()
     computation.message_sender.assert_called_once_with(
         'v1', 'v2', DbaEndMessage(), None, None
@@ -465,10 +495,12 @@ def test_end_message_is_propagated_once():
     computation = _dba_computation(v1, [c1])
     computation.message_sender = MagicMock()
     computation.finished = MagicMock()
+    computation._running = True
 
     computation._on_end_msg('v2', DbaEndMessage(), None)
 
     assert computation._mode == 'finished'
+    assert not computation.is_running
     computation.finished.assert_called_once_with()
     computation.message_sender.assert_called_once_with(
         'v1', 'v2', DbaEndMessage(), None, None

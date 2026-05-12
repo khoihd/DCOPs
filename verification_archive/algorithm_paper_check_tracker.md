@@ -101,10 +101,13 @@ For each algorithm:
 - DBA
   - Priority: 7
   - Implementation: `pydcop/algorithms/dba.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/dba.pdf`
   - Check File: `verification_archive/dba_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: Needs fix
+  - Notes: Core ok/improve flow matches the paper and termination state handling
+    was fixed during the check. Remaining mismatch: DBA uses one breakout
+    weight per constraint, while the paper defines weights per violating
+    variable-value tuple.
 
 - DSA Tutorial
   - Priority: 8

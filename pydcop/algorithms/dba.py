@@ -524,13 +524,14 @@ class DbaComputation(VariableComputation):
         # if messages received from all neighbors
         if len(self._neighbors_improvements) == len(self._neighbors):
             # determine if can change value and send ok message to neighbors
-            self._send_ok()
+            continue_computation = self._send_ok()
             # End of a cycle: clear agent view
             self._neighbors_improvements.clear()
             self._neighbors_values.clear()
             self._violated_constraints.clear()
 
-            self._go_to_wait_ok_mode()
+            if continue_computation:
+                self._go_to_wait_ok_mode()
         else:
             # Still waiting for other neighbors
             self.logger.info(
@@ -551,6 +552,8 @@ class DbaComputation(VariableComputation):
             self.logger.debug('%s has finished its computation for DBA',
                               self.name)
             self.finished()
+            self.stop()
+            return False
         else:
             if self._quasi_local_minimum:
                 self._increase_weights(self._violated_constraints)
@@ -564,6 +567,7 @@ class DbaComputation(VariableComputation):
             msg = DbaOkMessage(self.current_value)
             for n in self._neighbors:
                 self.post_msg(n, msg)
+            return True
 
     def _increase_weights(self, constraints):
         self.logger.info('Increasing the weights of the constraints %s',
@@ -585,6 +589,7 @@ class DbaComputation(VariableComputation):
             self._send_end_msg()
             self._mode = 'finished'
             self.finished()
+            self.stop()
 
     def _send_end_msg(self):
         msg = DbaEndMessage()
