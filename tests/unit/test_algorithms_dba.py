@@ -146,20 +146,34 @@ def test_build_computation_default_params():
     assert computation._mode == 'starting'
 
 
-def test_build_computation_with_params(monkeypatch):
-    monkeypatch.setattr(dba, 'INFINITY', dba.INFINITY)
+def test_build_computation_with_params():
     v1 = Variable('v1', [0, 1])
 
     computation = _dba_computation(
         v1, params={'infinity': 42, 'max_distance': 3}
     )
 
-    assert dba.INFINITY == 42
+    assert dba.INFINITY == 10000
+    assert computation._infinity == 42
     assert computation._max_distance == 3
     computation._termination_counter = 2
     assert not computation.stop_condition()
     computation._termination_counter = 3
     assert computation.stop_condition()
+
+
+def test_infinity_threshold_is_per_computation():
+    v1 = Variable('v1', [0])
+    c1 = UnaryFunctionRelation('c1', v1, lambda x: 50)
+    low_threshold = _dba_computation(
+        v1, [c1], params={'infinity': 40}
+    )
+    high_threshold = _dba_computation(
+        v1, [c1], params={'infinity': 60}
+    )
+
+    assert low_threshold.compute_eval_value(0, [c1]) == (1, [(0, (0,))])
+    assert high_threshold.compute_eval_value(0, [c1]) == (0, [])
 
 
 def test_build_computation_rejects_max_mode():

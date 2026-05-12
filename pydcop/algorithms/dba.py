@@ -296,8 +296,7 @@ class DbaComputation(VariableComputation):
 
         self._msg_sender = msg_sender
 
-        global INFINITY
-        INFINITY = infinity
+        self._infinity = infinity
         self._max_distance = max_distance
 
         # Handling messages arriving during wrong mode
@@ -439,7 +438,7 @@ class DbaComputation(VariableComputation):
         :return: (list of values achieving best improvement, best improvement)
         """
         best_vals = []
-        best_eval = INFINITY
+        best_eval = float('inf')
         for v in self.variable.domain:
             curr_eval, _ = self.compute_eval_value(
                 v, relations, collect_violated=False, context=context)
@@ -482,7 +481,7 @@ class DbaComputation(VariableComputation):
         new_eval_value = 0
         violated_constraints = [] if collect_violated else None
         for i, rel in enumerate(relations):
-            if rel(val) >= INFINITY:
+            if rel(val) >= self._infinity:
                 violation_key = self._violation_key(i, val, context)
                 if collect_violated:
                     violated_constraints.append(violation_key)

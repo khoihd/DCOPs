@@ -79,15 +79,23 @@ increase the weight for `(x1=G, x2=G)` on the same constraint.
 
 - The implementation extends the paper's binary-CSP presentation to generic
   relations by slicing local constraints with the current neighbor context.
+- DBA remains a satisfaction algorithm. It uses finite relation values only to
+  decide whether a constraint is violated by comparing them to `infinity`; it
+  does not optimize ordinary finite DCOP costs.
+- Like the paper algorithm, DBA is incomplete. It can fail to terminate on
+  unsatisfiable problems or on satisfiable problems where the local search does
+  not find a solution before the runtime timeout.
 - Satisfied agents can temporarily have `quasi_local_minimum = True` when their
   own improvement is zero, but the violated-constraint list is empty in that
   case, so no weights are changed.
-- The module-level `INFINITY` value is mutated from the algorithm parameter.
-  This works for normal runs with one DBA parameterization, but it is not a
-  per-computation setting.
+- Each computation stores its configured `infinity` threshold independently.
 - Isolated or purely unary computations are outside the paper's connected
   graph-coloring focus and do not naturally receive messages to drive the
   wait-ok/wait-improve loop.
+- Initial value selection is random and DBA has no dedicated seed parameter.
+- Tie-breaking uses lexicographic computation names as the fixed ordering. This
+  satisfies the paper's need for a deterministic order, but names such as
+  `v10` and `v2` compare lexicographically rather than numerically.
 
 ## Existing Coverage
 
@@ -101,4 +109,6 @@ increase the weight for `(x1=G, x2=G)` on the same constraint.
 
 ## Follow-Up
 
-- None currently required for DBA paper correctness.
+- None currently required for core DBA paper correctness.
+- Consider explicit handling for isolated or unary-only computations so they
+  evaluate and terminate without waiting for neighbor messages.
