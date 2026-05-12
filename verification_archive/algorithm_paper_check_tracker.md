@@ -74,8 +74,26 @@ For each algorithm:
   - Notes: Core five-phase flow matches Algorithm 2; coordinated-gain
     double-counting was fixed and covered by focused tests.
 
-- DSA
+- DBA
   - Priority: 4
+  - Implementation: `pydcop/algorithms/dba.py`
+  - Paper / Source: `verification_archive/papers/dba.pdf`
+  - Check File: `verification_archive/dba_paper_check.md`
+  - Status: Done / Verified
+  - Notes: Core ok/improve flow matches the paper. Termination state handling
+    was fixed, and breakout weights now use exact violated assignment tuples
+    instead of one weight per constraint.
+
+- GDBA
+  - Priority: 5
+  - Implementation: `pydcop/algorithms/gdba.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/gdba_paper_check.md`
+  - Status: Not started
+  - Notes: Next planned verification focus.
+
+- DSA
+  - Priority: 6
   - Implementation: `pydcop/algorithms/dsa.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/dsa_paper_check.md`
@@ -83,7 +101,7 @@ For each algorithm:
   - Notes:
 
 - ADSA
-  - Priority: 5
+  - Priority: 7
   - Implementation: `pydcop/algorithms/adsa.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/adsa_paper_check.md`
@@ -91,39 +109,21 @@ For each algorithm:
   - Notes:
 
 - AMaxSum
-  - Priority: 6
+  - Priority: 8
   - Implementation: `pydcop/algorithms/amaxsum.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/amaxsum_paper_check.md`
   - Status: Not started
   - Notes:
 
-- DBA
-  - Priority: 7
-  - Implementation: `pydcop/algorithms/dba.py`
-  - Paper / Source: `verification_archive/papers/dba.pdf`
-  - Check File: `verification_archive/dba_paper_check.md`
-  - Status: Verified
-  - Notes: Core ok/improve flow matches the paper. Termination state handling
-    was fixed, and breakout weights now use exact violated assignment tuples
-    instead of one weight per constraint.
-
 - DSA Tutorial
-  - Priority: 8
+  - Priority: 9
   - Implementation: `pydcop/algorithms/dsatuto.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/dsatuto_paper_check.md`
   - Status: Not started
   - Notes: Tutorial implementation; verify if it should be checked against DSA
     paper or docs only.
-
-- GDBA
-  - Priority: 9
-  - Implementation: `pydcop/algorithms/gdba.py`
-  - Paper / Source: TBD
-  - Check File: `verification_archive/gdba_paper_check.md`
-  - Status: Not started
-  - Notes:
 
 - MaxSum
   - Priority: 10

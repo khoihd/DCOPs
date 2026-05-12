@@ -7,6 +7,7 @@
   Satisfaction Problems"
 - Authors: Makoto Yokoo and Katsutoshi Hirayama
 - Implementation: `pydcop/algorithms/dba.py`
+- Status: Done / Verified
 
 ## Review Scope
 
@@ -53,9 +54,9 @@
 - `improve()` computes the best unilateral assignment, sets `can_move`,
   `quasi_local_minimum`, `consistent`, `my_improve`, and `new_value`, then
   broadcasts `DbaImproveMessage`.
-- `_handle_improve_message()` applies the improvement comparison and
-  lexicographic tie-break, folds neighbor termination counters with `min()`,
-  marks the local neighborhood inconsistent when a neighbor reports nonzero
+- `_handle_improve_message()` applies the improvement comparison and natural
+  name-order tie-break, folds neighbor termination counters with `min()`, marks
+  the local neighborhood inconsistent when a neighbor reports nonzero
   evaluation, and waits for all neighbor improve messages.
 - `_send_ok()` implements the paper's end-of-round action: increment
   termination counter when consistent, stop when `max_distance` is reached,
