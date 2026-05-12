@@ -103,30 +103,30 @@ For each algorithm:
   - Status: Not started
   - Notes:
 
-- ADSA
-  - Priority: 7
-  - Implementation: `pydcop/algorithms/adsa.py`
-  - Paper / Source: TBD
-  - Check File: `verification_archive/adsa_paper_check.md`
-  - Status: Not started
-  - Notes:
-
-- AMaxSum
-  - Priority: 8
-  - Implementation: `pydcop/algorithms/amaxsum.py`
-  - Paper / Source: TBD
-  - Check File: `verification_archive/amaxsum_paper_check.md`
-  - Status: Not started
-  - Notes:
-
 - DSA Tutorial
-  - Priority: 9
+  - Priority: 7
   - Implementation: `pydcop/algorithms/dsatuto.py`
   - Paper / Source: TBD
   - Check File: `verification_archive/dsatuto_paper_check.md`
   - Status: Not started
   - Notes: Tutorial implementation; verify if it should be checked against DSA
     paper or docs only.
+
+- ADSA
+  - Priority: 8
+  - Implementation: `pydcop/algorithms/adsa.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/adsa_paper_check.md`
+  - Status: Not started
+  - Notes:
+
+- MixedDSA
+  - Priority: 9
+  - Implementation: `pydcop/algorithms/mixeddsa.py`
+  - Paper / Source: TBD
+  - Check File: `verification_archive/mixeddsa_paper_check.md`
+  - Status: Not started
+  - Notes:
 
 - MaxSum
   - Priority: 10
@@ -136,19 +136,19 @@ For each algorithm:
   - Status: Not started
   - Notes:
 
-- Dynamic MaxSum
+- AMaxSum
   - Priority: 11
-  - Implementation: `pydcop/algorithms/maxsum_dynamic.py`
+  - Implementation: `pydcop/algorithms/amaxsum.py`
   - Paper / Source: TBD
-  - Check File: `verification_archive/maxsum_dynamic_paper_check.md`
+  - Check File: `verification_archive/amaxsum_paper_check.md`
   - Status: Not started
   - Notes:
 
-- MixedDSA
+- Dynamic MaxSum
   - Priority: 12
-  - Implementation: `pydcop/algorithms/mixeddsa.py`
+  - Implementation: `pydcop/algorithms/maxsum_dynamic.py`
   - Paper / Source: TBD
-  - Check File: `verification_archive/mixeddsa_paper_check.md`
+  - Check File: `verification_archive/maxsum_dynamic_paper_check.md`
   - Status: Not started
   - Notes:
 
