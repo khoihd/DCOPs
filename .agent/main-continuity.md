@@ -34,7 +34,8 @@
   - GDBA is done
   - DSA is done
   - ADSA is done
-  - next planned verification focus is MixedDSA
+  - MixedDSA is done / no separate paper source found
+  - next planned verification focus is MaxSum
 - Generator cleanup remains open:
   - seed support is done for the active generators recently touched
   - random graph support is done
@@ -47,8 +48,8 @@
 - Generator docs were updated and Sphinx verified after docs config cleanup.
 - Recent runtime/algorithm cleanup focused on logging/debugging notes, Ruff
   modernization warnings in VS Code, MGM/MGM2 termination behavior, GDBA
-  fixed-cycle support, DSA paper verification, and removing the obsolete
-  DSA tutorial algorithm.
+  fixed-cycle support, DSA/ADSA verification, MixedDSA review, and removing
+  the obsolete DSA tutorial algorithm.
 
 ## Recent Maintenance Notes
 
@@ -236,9 +237,32 @@
   - `variant="A"|"B"|"C"`, default `probability=0.7`, `mode="max"`, variable
     costs, and generic N-ary relations are repo-level extensions/adaptations
   - no code behavior change was required; doc comments were tightened
+  - the ADSA BibTeX key was corrected from `weiss_distributed_2003` to
+    `fitzpatrick_distributed_2003`
 - Recent focused ADSA checks used:
   - `pytest tests/unit/test_algorithms_adsa.py`
   - `ruff check pydcop/algorithms/adsa.py`
+- MixedDSA has been documented in
+  `verification_archive/mixeddsa_paper_check.md` and marked done / no separate
+  paper source found in `verification_archive/algorithm_paper_check_tracker.md`.
+- MixedDSA review notes:
+  - `pydcop/algorithms/mixeddsa.py` is treated as a pyDcop-specific hard/soft
+    extension of DSA, with base A/B/C move variants from
+    `verification_archive/papers/dsa.pdf`
+  - hard constraints are relations with at least one local assignment
+    evaluating to symbolic `+inf` or `-inf`; finite pseudo-hard penalties are
+    soft costs
+  - the algorithm first reduces the number of violated hard constraints, then
+    optimizes soft cost when hard violations cannot improve
+  - separate `proba_hard` and `proba_soft` parameters control hard-violation
+    and soft-cost moves
+  - recent fixes added no-neighbor local-best startup and stop behavior,
+    repaired `stop_cycle` to call both `finished()` and `stop()`, prevented
+    variant A from making equal-cost hard-conflict sideway moves, and made
+    variant C equal-cost/no-violation sideway moves reachable
+- Recent focused MixedDSA checks used:
+  - `pytest tests/unit/test_algorithms_mixeddsa.py`
+  - `ruff check pydcop/algorithms/mixeddsa.py tests/unit/test_algorithms_mixeddsa.py`
 - `pydcop/algorithms/dsatuto.py` was removed after DSA verification. Related
   unit/API tests, docs/reference pages, the algorithm-implementation tutorial,
   downloadable tutorial sample, optimization notes, and tracker entry were
