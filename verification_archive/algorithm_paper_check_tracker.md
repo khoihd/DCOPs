@@ -108,10 +108,13 @@ For each algorithm:
 - ADSA
   - Priority: 7
   - Implementation: `pydcop/algorithms/adsa.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/adsa.pdf`
   - Check File: `verification_archive/adsa_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: Done / Verified
+  - Notes: Core asynchronous wake-up/local stochastic optimization behavior
+    matches Fitzpatrick and Meertens. DSA A/B/C variants, generic N-ary
+    relations, `mode="max"`, variable costs, and every-tick broadcasts are
+    repo-level adaptations/extensions.
 
 - MixedDSA
   - Priority: 8

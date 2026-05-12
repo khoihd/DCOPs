@@ -34,10 +34,13 @@ A-DSA : Asynchronous Distributed Stochastic Algorithm
 -----------------------------------------------------
 
 ADSA :cite:`weiss_distributed_2003`
-is an asynchronous version of DSA, the Distributed Stochastic Algorithm
-:cite:`zhang_distributed_2005` ( stochastic, local search DCOP algorithm.)
-Instead of waiting for its neighbors, each variables periodically determines if
-it should select a new values, based on the values received from its neighbors.
+is an asynchronous stochastic local-search DCOP algorithm. Each variable
+periodically wakes up, uses its latest known neighbor values to choose a local
+best value, and applies that change with a configured probability.
+
+This implementation keeps the DSA A/B/C value-change variants from
+:cite:`zhang_distributed_2005` while using the asynchronous periodic wake-up
+model from :cite:`weiss_distributed_2003`.
 
 
 
@@ -69,8 +72,8 @@ Example
 See Also
 ^^^^^^^^
 
-:ref:`A-DSA<implementation_reference_algorithms_dsa>`: for an asynchronous
-implementation of DSA.
+:ref:`DSA<implementation_reference_algorithms_dsa>`: for the synchronous DSA
+implementation.
 
 
 
@@ -322,7 +325,7 @@ class ADsaComputation(VariableComputation):
 
     def variant_c(self, delta, best_cost, best_values):
         """
-        DSA-B value change : if gain is <= 0.
+        DSA-C value change : if gain is positive or zero.
         """
         if delta > 0:
             if self.logger.isEnabledFor(logging.DEBUG):

@@ -33,7 +33,8 @@
   - DBA is done
   - GDBA is done
   - DSA is done
-  - next planned verification focus is ADSA
+  - ADSA is done
+  - next planned verification focus is MixedDSA
 - Generator cleanup remains open:
   - seed support is done for the active generators recently touched
   - random graph support is done
@@ -174,7 +175,7 @@
 - DSA has been checked against `verification_archive/papers/dsa.pdf`,
   documented in `verification_archive/dsa_paper_check.md`, and marked
   done / verified.
-- Current planned paper-check focus for the next session is ADSA.
+- Current planned paper-check focus for the next session is MixedDSA.
 - DBA verification fixes in `pydcop/algorithms/dba.py`:
   - normal termination now preserves `finished` mode and calls `stop()`
   - breakout weights now apply per exact violated assignment tuple instead
@@ -219,6 +220,25 @@
   - `pytest tests/unit/test_algorithms_dsa.py`
   - `pytest tests/unit/test_algorithms_dsa.py tests/unit/test_algorithms_adsa.py`
   - `ruff check pydcop/algorithms/dsa.py tests/unit/test_algorithms_dsa.py`
+- ADSA has been checked against `verification_archive/papers/adsa.pdf`,
+  documented in `verification_archive/adsa_paper_check.md`, and marked done /
+  verified.
+- ADSA verification notes:
+  - Fitzpatrick and Meertens define an ongoing peer-to-peer stochastic local
+    optimizer with random initial values, periodic asynchronous wake-ups,
+    probability-gated local optimization, and value messages on changes
+  - `pydcop/algorithms/adsa.py` maps this to randomized startup offset,
+    periodic `tick()`, latest-neighbor-value storage, local exhaustive best
+    value search, and probability-gated DSA A/B/C value-change variants
+  - every-tick value broadcast is an intentional runtime adaptation for
+    startup timing and message-loss resilience, not the paper's lower-message
+    send-on-change rule
+  - `variant="A"|"B"|"C"`, default `probability=0.7`, `mode="max"`, variable
+    costs, and generic N-ary relations are repo-level extensions/adaptations
+  - no code behavior change was required; doc comments were tightened
+- Recent focused ADSA checks used:
+  - `pytest tests/unit/test_algorithms_adsa.py`
+  - `ruff check pydcop/algorithms/adsa.py`
 - `pydcop/algorithms/dsatuto.py` was removed after DSA verification. Related
   unit/API tests, docs/reference pages, the algorithm-implementation tutorial,
   downloadable tutorial sample, optimization notes, and tracker entry were
