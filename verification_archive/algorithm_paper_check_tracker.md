@@ -120,10 +120,14 @@ For each algorithm:
 - MixedDSA
   - Priority: 8
   - Implementation: `pydcop/algorithms/mixeddsa.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/dsa.pdf` for base DSA
+    behavior; no separate MixedDSA paper source found
   - Check File: `verification_archive/mixeddsa_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: Done / No Separate Paper Source
+  - Notes: MixedDSA is treated as a pyDcop-specific hard/soft extension of DSA.
+    A focused engineering review fixed no-neighbor startup, stop-cycle
+    stopping, variant A equal-cost hard-conflict behavior, and variant C
+    equal-cost/no-violation moves.
 
 - MaxSum
   - Priority: 9
