@@ -90,8 +90,9 @@ increase the weight for `(x1=G, x2=G)` on the same constraint.
   case, so no weights are changed.
 - Each computation stores its configured `infinity` threshold independently.
 - Isolated or purely unary computations are outside the paper's connected
-  graph-coloring focus and do not naturally receive messages to drive the
-  wait-ok/wait-improve loop.
+  graph-coloring focus. This implementation handles them explicitly at startup
+  by selecting a locally best value and finishing, because no neighbor messages
+  can arrive to drive the normal DBA loop.
 - Initial value selection is random and DBA has no dedicated seed parameter.
 - Tie-breaking uses natural computation name order as the fixed ordering, so
   names with numeric suffixes compare as expected (`v2` before `v10`).
@@ -109,5 +110,3 @@ increase the weight for `(x1=G, x2=G)` on the same constraint.
 ## Follow-Up
 
 - None currently required for core DBA paper correctness.
-- Consider explicit handling for isolated or unary-only computations so they
-  evaluate and terminate without waiting for neighbor messages.

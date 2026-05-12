@@ -351,6 +351,13 @@ class DbaComputation(VariableComputation):
         return self._neighbors
 
     def on_start(self):
+        if not self.neighbors:
+            self._select_no_neighbor_value()
+            self._mode = 'finished'
+            self.finished()
+            self.stop()
+            return
+
         # randomly select a value
         self.value_selection(random.choice(self.variable.domain),
                              self.current_cost)
@@ -359,6 +366,13 @@ class DbaComputation(VariableComputation):
                          self.current_value)
         self._send_current_value()
         self._go_to_wait_ok_mode()
+
+    def _select_no_neighbor_value(self):
+        bests, best_eval = self._compute_best_improvement(self.constraints)
+        self.value_selection(random.choice(bests), best_eval)
+        self.logger.info(
+            '%s dba starts without neighbors: select value %s',
+            self.variable.name, self.current_value)
 
     @register("dba_ok")
     def _on_ok_msg(self, variable_name, recv_msg, _):

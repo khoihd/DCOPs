@@ -195,6 +195,39 @@ def test_unary_constraints_have_no_neighbors():
     assert computation.constraints == [c1, c2]
 
 
+def test_start_without_neighbors_selects_local_value_and_stops():
+    v1 = Variable('v1', [1])
+    computation = _dba_computation(v1, [])
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+
+    computation.on_start()
+
+    assert computation.current_value == 1
+    assert computation.current_cost == 0
+    assert computation._mode == 'finished'
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+
+
+def test_start_with_unary_constraints_selects_satisfying_value_and_stops():
+    v1 = Variable('v1', [0, 1, 2])
+    c1 = UnaryFunctionRelation(
+        'c1', v1, lambda x: 0 if x == 1 else dba.INFINITY
+    )
+    computation = _dba_computation(v1, [c1])
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+
+    computation.on_start()
+
+    assert computation.current_value == 1
+    assert computation.current_cost == 0
+    assert computation._mode == 'finished'
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+
+
 def test_one_binary_constraint_has_one_neighbor():
     v1 = Variable('v1', [0, 1])
     v2 = Variable('v2', [0, 1])
