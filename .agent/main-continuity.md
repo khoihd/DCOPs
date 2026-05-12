@@ -30,7 +30,9 @@
 - `todo.md` currently emphasizes paper verification first:
   - DPOP is done
   - MGM / MGM2 is done
-  - next planned verification focus is DBA and DSA
+  - DBA is done
+  - GDBA is done
+  - next planned verification focus is DSA
 - Generator cleanup remains open:
   - seed support is done for the active generators recently touched
   - random graph support is done
@@ -64,7 +66,7 @@
 - Generated scratch files currently untracked and intentionally not committed:
   `dsa_max_metrics.csv`, `dsa_min_metrics.csv`, `mgm_max_metrics.csv`,
   `mgm_min_metrics.csv`, `mgm2_max_metrics.csv`, `mgm2_min_metrics.csv`, and
-  `random.yaml`.
+  `random.yaml`. `verification_archive/.DS_Store` is also untracked scratch.
 
 ## Generator Notes
 
@@ -158,7 +160,34 @@
   verified.
 - MGM and MGM2 use `verification_archive/papers/mgm.pdf`; both are marked
   verified in `verification_archive/algorithm_paper_check_tracker.md`.
-- Current planned paper-check focus for the next session is DBA and DSA.
+- DBA has been checked against `verification_archive/papers/dba.pdf`,
+  documented in `verification_archive/dba_paper_check.md`, and marked
+  done / verified.
+- GDBA has been checked against `verification_archive/papers/gdba.pdf`,
+  documented in `verification_archive/gdba_paper_check.md`, and marked
+  done / verified.
+- Current planned paper-check focus for the next session is DSA.
+- DBA verification fixes in `pydcop/algorithms/dba.py`:
+  - normal termination now preserves `finished` mode and calls `stop()`
+  - breakout weights now apply per exact violated assignment tuple instead
+    of one weight per constraint
+  - `infinity` is stored per computation as `self._infinity` instead of
+    mutating the module global
+  - equal-improvement tie-breaking uses natural name order, so `v2` precedes
+    `v10`
+  - no-neighbor / unary-only computations select a local best value, finish,
+    and stop at startup
+- Recent focused DBA checks used:
+  - `pytest tests/unit/test_algorithms_dba.py`
+  - `pytest tests/dcop_cli/test_solve.py::GraphColoringCsp`
+  - `ruff check pydcop/algorithms/dba.py tests/unit/test_algorithms_dba.py`
+- GDBA verification fixed `R` and `C` increase scopes in
+  `pydcop/algorithms/gdba.py` to follow the paper's row/column convention:
+  `C` increases all local values with neighbor context fixed, and `R`
+  increases the current local value across possible neighbor contexts.
+- Recent focused GDBA checks used:
+  - `pytest tests/unit/test_algorithms_gdba.py`
+  - `ruff check pydcop/algorithms/gdba.py tests/unit/test_algorithms_gdba.py`
 - MGM minimization treats `current_cost - candidate_cost > 0` as improvement;
   MGM maximization treats `current_cost - candidate_cost < 0` as improvement.
   Largest gain wins in `min`; smallest gain wins in `max`.
