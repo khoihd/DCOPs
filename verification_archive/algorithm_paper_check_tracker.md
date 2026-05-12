@@ -98,10 +98,12 @@ For each algorithm:
 - DSA
   - Priority: 6
   - Implementation: `pydcop/algorithms/dsa.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/dsa.pdf`
   - Check File: `verification_archive/dsa_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: In progress
+  - Notes: Initial paper mapping is captured. A/B/C value-selection behavior
+    appears aligned; communication differs because the implementation sends
+    value messages every cycle rather than only after value changes.
 
 - DSA Tutorial
   - Priority: 7
