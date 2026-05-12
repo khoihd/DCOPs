@@ -87,10 +87,12 @@ For each algorithm:
 - GDBA
   - Priority: 5
   - Implementation: `pydcop/algorithms/gdba.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/gdba.pdf`
   - Check File: `verification_archive/gdba_paper_check.md`
-  - Status: Not started
-  - Notes: Next planned verification focus.
+  - Status: Done / Verified
+  - Notes: Core minimization flow matches the paper. During verification,
+    `R` and `C` increase scopes were corrected to follow the paper's
+    row/column convention.
 
 - DSA
   - Priority: 6

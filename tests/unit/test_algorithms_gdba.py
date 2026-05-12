@@ -407,7 +407,7 @@ class TestIncreaseCost(unittest.TestCase):
         modifier = frozenset(asgt.items())
         self.assertEqual(g.__constraints_modifiers__[c][modifier], 1)
 
-    def test_increase_R(self):
+    def test_increase_C_updates_local_column(self):
         domain = list(range(2))
         x1 = Variable('x1', domain)
         x2 = Variable('x2', domain)
@@ -421,9 +421,9 @@ class TestIncreaseCost(unittest.TestCase):
                 return 1
             return 0
 
-        g = GdbaComputation(x1, [phi], increase_mode='R', comp_def=MagicMock())
+        g = GdbaComputation(x1, [phi], increase_mode='C', comp_def=MagicMock())
         g._neighbors_values['x2'] = 1
-        g._neighbors_values['x3'] = 2
+        g._neighbors_values['x3'] = 1
         c, _, _ = g.__constraints__[0]
         g._increase_cost(c)
         asgt = g._neighbors_values.copy()
@@ -432,7 +432,7 @@ class TestIncreaseCost(unittest.TestCase):
             modifier = frozenset(asgt.items())
             self.assertEqual(g.__constraints_modifiers__[c][modifier], 1)
 
-    def test_increase_C(self):
+    def test_increase_R_updates_local_row(self):
         domain = list(range(3))
         x1 = Variable('x1', domain)
         x2 = Variable('x2', domain)
@@ -446,7 +446,7 @@ class TestIncreaseCost(unittest.TestCase):
                 return 1
             return 0
 
-        g = GdbaComputation(x1, [phi], increase_mode='C', comp_def=MagicMock())
+        g = GdbaComputation(x1, [phi], increase_mode='R', comp_def=MagicMock())
         c, _, _ = g.__constraints__[0]
         g.__value__ = 0
         g._neighbors_values['x2'] = 1

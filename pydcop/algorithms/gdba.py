@@ -650,11 +650,11 @@ class GdbaComputation(VariableComputation):
         self.logger.debug("%s increases cost for %s", self.name, constraint)
         if self._increase_mode == "E":
             self._increase_modifier(constraint, asgt)
-        elif self._increase_mode == "R":
+        elif self._increase_mode == "C":
             for val in self.variable.domain:
                 asgt[self.name] = val
                 self._increase_modifier(constraint, asgt)
-        elif self._increase_mode == "C":
+        elif self._increase_mode == "R":
             # Creates all the assignments for the constraints, with the
             # agent variable set to its current value
             asgts = generate_assignment_as_dict(list(self._neighbors))
