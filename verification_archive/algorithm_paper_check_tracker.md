@@ -112,9 +112,10 @@ For each algorithm:
   - Check File: `verification_archive/adsa_paper_check.md`
   - Status: Done / Verified
   - Notes: Core asynchronous wake-up/local stochastic optimization behavior
-    matches Fitzpatrick and Meertens. DSA A/B/C variants, generic N-ary
-    relations, `mode="max"`, variable costs, and every-tick broadcasts are
-    repo-level adaptations/extensions.
+    matches Fitzpatrick and Meertens. The probability gate is applied after
+    local best-value computation for allowed DSA A/B/C moves, and every-tick
+    broadcasts are an intentional runtime adaptation. Generic N-ary relations,
+    `mode="max"`, and variable costs are repo-level extensions.
 
 - MixedDSA
   - Priority: 8

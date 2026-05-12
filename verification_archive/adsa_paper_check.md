@@ -7,6 +7,7 @@
 - Authors: Stephen Fitzpatrick and Lambert Meertens
 - Implementation: `pydcop/algorithms/adsa.py`
 - Status: Done / Verified
+- Result: No behavior change required.
 
 ## Review Scope
 
@@ -92,6 +93,6 @@ wake-up model and the implementation's DSA A/B/C variant extension.
   periodic ticks, current-cost calculation, variants A/B/C, probability
   threshold behavior, and violated-constraint detection.
 
-## Follow-Up
+## Done
 
 - None currently required for core ADSA paper correctness.

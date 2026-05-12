@@ -42,6 +42,12 @@ This implementation keeps the DSA A/B/C value-change variants from
 :cite:`zhang_distributed_2005` while using the asynchronous periodic wake-up
 model from :cite:`weiss_distributed_2003`.
 
+Compared with the paper's fixed-probability presentation, this implementation
+computes the locally best values before applying the probability threshold for
+an allowed DSA move. It also broadcasts the current value every tick, not only
+when the value changes, to improve startup and message-loss resilience in the
+runtime.
+
 
 
 Algorithm Parameters
