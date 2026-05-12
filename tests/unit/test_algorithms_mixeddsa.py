@@ -209,6 +209,22 @@ def test_compute_best_value_uses_isolated_variable_cost():
     assert values == [1]
 
 
+def test_on_start_without_neighbors_selects_best_value_and_stops():
+    variable = VariableWithCostDict("v1", [0, 1, 2], {0: 5, 1: 0, 2: 4})
+    computation = MixedDsaComputation(
+        variable, [], comp_def=_comp_def(variable, [])
+    )
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+
+    computation.on_start()
+
+    assert computation.current_value == 1
+    assert computation.current_cost == 0
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+
+
 def test_compute_best_value_prefers_fewer_hard_violations_before_soft_cost():
     v1 = Variable("v1", [0, 1])
     v2 = Variable("v2", [0])
@@ -272,6 +288,7 @@ def test_send_value_stops_at_stop_cycle_without_posting():
     )
     computation.value_selection(0, 0)
     computation.finished = MagicMock()
+    computation.stop = MagicMock()
     message_sender = MagicMock()
     computation.message_sender = message_sender
 
@@ -279,7 +296,67 @@ def test_send_value_stops_at_stop_cycle_without_posting():
 
     assert computation.cycle_count == 1
     computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
     message_sender.assert_not_called()
+
+
+def test_variant_a_does_not_make_equal_cost_hard_sideway_move():
+    v1 = Variable("v1", [0, 1], initial_value=0)
+    v2 = Variable("v2", [0])
+
+    @AsNAryFunctionRelation(v1, v2)
+    def hard(v1_, v2_):
+        return mixeddsa.INFINITY
+
+    computation = MixedDsaComputation(
+        v1,
+        [hard],
+        variant="A",
+        proba_hard=1,
+        comp_def=_comp_def(v1, [hard], params={"variant": "A", "proba_hard": 1}),
+    )
+    computation.value_selection(0, mixeddsa.INFINITY)
+    computation._neighbors_values["v2"] = 0
+    computation.message_sender = MagicMock()
+
+    with patch("pydcop.algorithms.mixeddsa.random.random", return_value=0), patch(
+        "pydcop.algorithms.mixeddsa.random.choice", lambda values: values[-1]
+    ):
+        computation._on_neighbors_values()
+
+    assert computation.current_value == 0
+
+
+def test_variant_c_can_make_equal_cost_sideway_move_without_violation():
+    v1 = Variable("v1", [0, 1], initial_value=0)
+    v2 = Variable("v2", [0])
+
+    @AsNAryFunctionRelation(v1, v2)
+    def soft(v1_, v2_):
+        return 0
+
+    computation = MixedDsaComputation(
+        v1,
+        [soft],
+        variant="C",
+        proba_hard=1,
+        proba_soft=1,
+        comp_def=_comp_def(
+            v1,
+            [soft],
+            params={"variant": "C", "proba_hard": 1, "proba_soft": 1},
+        ),
+    )
+    computation.value_selection(0, 0)
+    computation._neighbors_values["v2"] = 0
+    computation.message_sender = MagicMock()
+
+    with patch("pydcop.algorithms.mixeddsa.random.random", return_value=0), patch(
+        "pydcop.algorithms.mixeddsa.random.choice", lambda values: values[-1]
+    ):
+        computation._on_neighbors_values()
+
+    assert computation.current_value == 1
 
 
 def test_value_message_full_cycle_processes_postponed_messages():

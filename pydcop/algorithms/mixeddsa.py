@@ -29,6 +29,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+"""
+MixedDSA
+--------
+
+MixedDSA is a pyDcop extension of DSA for DCOPs containing both hard and soft
+constraints. Hard constraints are relations with at least one assignment
+evaluating to symbolic infinity. MixedDSA first tries to reduce the number of
+violated hard constraints, then optimizes the remaining soft cost when the hard
+violation count cannot be improved.
+
+The base stochastic A/B/C move variants are inherited from DSA, described in
+:cite:`zhang_distributed_2005`. The hard/soft split and the separate
+``proba_hard`` / ``proba_soft`` parameters are repository-level extensions.
+"""
+
 import random
 
 
@@ -156,9 +171,8 @@ class MixedDsaMessage(Message):
 
 class MixedDsaComputation(VariableComputation):
     """
-    MixedDsaComputation implements several variant of th DSA. It is said to be
-    mixed because it is designed to help improving DSA performances in DCOPs
-    with both hard and soft constraints.
+    MixedDsaComputation implements several variants of DSA for DCOPs with both
+    hard and soft constraints.
 
     See. the following article for a complete description of DSA:
     'Distributed stochastic search and distributed breakout: properties,
@@ -233,6 +247,18 @@ class MixedDsaComputation(VariableComputation):
             INFINITY = float("inf")
 
     def on_start(self):
+        if not self._neighbors:
+            nb_violated, dcop_cost, bests = self._compute_best_value()
+            self.value_selection(
+                random.choice(bests), self._eff_cost(dcop_cost, nb_violated)
+            )
+            self.logger.debug(
+                '%s mixed dsa starts without neighbors: select value %s',
+                self.variable.name, self.current_value)
+            self.finished()
+            self.stop()
+            return
+
         if self.variable.initial_value is None:
             self.value_selection(random.choice(self.variable.domain),
                                  self.current_cost)
@@ -322,10 +348,11 @@ class MixedDsaComputation(VariableComputation):
                     # MixDSA-B and C may still change their value when no
                     # improvement is possible, if there are still conflicts.
                     # This helps escaping local optima
-                    if nb_violated_cons > 0:
-                        if len(bests) > 1 and self.proba_hard > random.random():
-                            bests.remove(self.current_value)
-                            self.value_selection(random.choice(bests), eff_cost)
+                    candidates = self._sideway_candidates(bests)
+                    if nb_violated_cons > 0 and self.variant in ['B', 'C']:
+                        if candidates and self.proba_hard > random.random():
+                            self.value_selection(
+                                random.choice(candidates), eff_cost)
                         self.logger.info('%s select new value %s with same cost'
                                          ' (%s, %s) (MixDSA B/C)',
                                          self.variable.name,
@@ -333,9 +360,9 @@ class MixedDsaComputation(VariableComputation):
                                          nb_violated_cons, dcop_cost)
                     elif self.exists_violated_soft_constraint(current_asgt) and\
                                     self.variant in ['B', 'C']:
-                        if len(bests) > 1 and self.proba_soft > random.random():
-                            bests.remove(self.current_value)
-                            self.value_selection(random.choice(bests), eff_cost)
+                        if candidates and self.proba_soft > random.random():
+                            self.value_selection(
+                                random.choice(candidates), eff_cost)
 
                         self.logger.info('%s select new value %s with same cost'
                                          ' (%s, %s) (MixDSA B/C)',
@@ -343,14 +370,13 @@ class MixedDsaComputation(VariableComputation):
                                          self.current_value,
                                          nb_violated_cons, dcop_cost)
 
-                elif delta_dcop == 0 and self.variant == 'C':
-                    # MixDSA-C may change the value event with no conflict nor
-                    # improvement.
-                    if len(bests) > 1 and\
-                            min(self.proba_hard, self.proba_soft) > \
-                                    random.random():
-                        bests.remove(self.current_value)
-                        self.value_selection(random.choice(bests), eff_cost)
+                    elif self.variant == 'C':
+                        # MixDSA-C may change the value even with no conflict
+                        # nor improvement.
+                        if candidates and min(self.proba_hard, self.proba_soft) > \
+                                random.random():
+                            self.value_selection(
+                                random.choice(candidates), eff_cost)
                         self.logger.info(
                             '%s select new value %s with no conflict '
                             'and same cost  (%s, %s) (DSA-C)',
@@ -362,7 +388,8 @@ class MixedDsaComputation(VariableComputation):
                         'value', self.name)
 
             self._neighbors_values.clear()
-            self._send_value()
+            if not self._send_value():
+                return
             # Beginning of next turn: process the postponed messages
             while self._postponed_messages:
                 neighbor, value = self._postponed_messages.pop()
@@ -405,14 +432,22 @@ class MixedDsaComputation(VariableComputation):
 
         return best_dcsp, best_dcop, best_vals
 
+    def _sideway_candidates(self, bests):
+        candidates = list(bests)
+        if self.current_value in candidates:
+            candidates.remove(self.current_value)
+        return candidates
+
     def _send_value(self):
         self.new_cycle()
         if self.stop_cycle and self.cycle_count >= self.stop_cycle:
             self.finished()
-            return
+            self.stop()
+            return False
         for n in self._neighbors:
             msg = MixedDsaMessage(self.current_value)
             self.post_msg(n, msg)
+        return True
 
     def _compute_dcop_cost(self, assignment, soft_cons=None, hard_cons=None) \
             -> tuple[float, list[RelationProtocol]]:
