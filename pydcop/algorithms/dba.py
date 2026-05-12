@@ -97,6 +97,7 @@ Computation
 
 """
 import random
+import re
 
 from collections.abc import Iterable
 
@@ -173,6 +174,18 @@ def communication_load(src: VariableComputationNode, target: str) -> float:
         The size of messages sent from the src variable to the target variable.
     """
     return 2 * UNIT_SIZE + HEADER_SIZE
+
+
+def _natural_name_key(name):
+    return tuple(
+        (0, int(part)) if part.isdigit() else (1, part)
+        for part in re.split(r'(\d+)', name)
+    )
+
+
+def _name_precedes(name, other_name):
+    return (_natural_name_key(name), name) < (
+        _natural_name_key(other_name), other_name)
 
 
 # ###########################   MESSAGES   ################################
@@ -529,7 +542,8 @@ class DbaComputation(VariableComputation):
         if recv_msg.improve > self._my_improve:
             self._can_move = False
             self._quasi_local_minimum = False
-        elif recv_msg.improve == self._my_improve and self.name > variable_name:
+        elif recv_msg.improve == self._my_improve and _name_precedes(
+                variable_name, self.name):
             self._can_move = False
 
         if recv_msg.current_eval > 0:

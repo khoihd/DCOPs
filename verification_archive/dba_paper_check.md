@@ -93,9 +93,8 @@ increase the weight for `(x1=G, x2=G)` on the same constraint.
   graph-coloring focus and do not naturally receive messages to drive the
   wait-ok/wait-improve loop.
 - Initial value selection is random and DBA has no dedicated seed parameter.
-- Tie-breaking uses lexicographic computation names as the fixed ordering. This
-  satisfies the paper's need for a deterministic order, but names such as
-  `v10` and `v2` compare lexicographically rather than numerically.
+- Tie-breaking uses natural computation name order as the fixed ordering, so
+  names with numeric suffixes compare as expected (`v2` before `v10`).
 
 ## Existing Coverage
 

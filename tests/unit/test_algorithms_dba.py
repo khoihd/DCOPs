@@ -461,6 +461,32 @@ def test_equal_improvement_tie_break_prevents_larger_name_from_moving():
     )
 
 
+def test_equal_improvement_tie_break_uses_natural_name_order():
+    v2 = Variable('v2', [0, 1])
+    v10 = Variable('v10', [0, 1])
+    c1 = constraint_from_str(
+        'c1', f'0 if v2 == v10 else {dba.INFINITY}', [v2, v10]
+    )
+    computation = _dba_computation(v10, [c1])
+    computation.message_sender = MagicMock()
+    computation.value_selection(0)
+    computation.__cost__ = 1
+    computation._mode = 'improve'
+    computation._my_improve = 1
+    computation._can_move = True
+    computation._new_value = 1
+    computation._consistent = False
+
+    computation._on_improve_msg('v2', DbaImproveMessage(1, 1, 0), None)
+
+    assert computation._in_wait_ok_mode()
+    assert not computation._can_move
+    assert computation.current_value == 0
+    computation.message_sender.assert_called_once_with(
+        'v10', 'v2', DbaOkMessage(0), None, None
+    )
+
+
 def test_send_ok_increases_weights_in_quasi_local_minimum():
     v1 = Variable('v1', [0, 1])
     v2 = Variable('v2', [0, 1])
