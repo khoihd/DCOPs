@@ -305,7 +305,7 @@ class DbaComputation(VariableComputation):
         self.__postponed_ok_messages__ = []
 
         self.__constraints__ = list(constraints)
-        self.__constraints_weights__ = [1 for _ in self.__constraints__]
+        self.__violation_weights__ = {}
         self.__constraint_dimensions__ = [
             tuple(v.name for v in c.dimensions) for c in self.__constraints__
         ]
@@ -386,9 +386,10 @@ class DbaComputation(VariableComputation):
                 reduced_cs.append(c.slice(asgt))
 
             self.__cost__, violated_constraints = self.compute_eval_value(
-                self.current_value, reduced_cs)
+                self.current_value, reduced_cs, context=self._neighbors_values)
             # Compute and send best improvement to neighbors
-            self.improve(reduced_cs, violated_constraints)
+            self.improve(reduced_cs, violated_constraints,
+                         self._neighbors_values)
 
             self._go_to_wait_improve_mode()
         else:
@@ -398,9 +399,9 @@ class DbaComputation(VariableComputation):
                 'neighbors are %s',
                 self.name, self._neighbors_values, self.neighbors)
 
-    def improve(self, relations, violated_constraints=None):
+    def improve(self, relations, violated_constraints=None, context=None):
         current_eval = self.__cost__
-        bests, best_eval = self._compute_best_improvement(relations)
+        bests, best_eval = self._compute_best_improvement(relations, context)
 
         if current_eval == 0:
             self._consistent = True
@@ -419,7 +420,7 @@ class DbaComputation(VariableComputation):
 
         if violated_constraints is None:
             _, violated_constraints = self.compute_eval_value(
-                self.current_value, relations)
+                self.current_value, relations, context=context)
         self._violated_constraints = violated_constraints
 
         self._send_improve(current_eval)
@@ -430,7 +431,7 @@ class DbaComputation(VariableComputation):
         for n in self.neighbors:
             self.post_msg(n, msg)
 
-    def _compute_best_improvement(self, relations):
+    def _compute_best_improvement(self, relations, context=None):
         """
         :param: the reduced constraints for the variable, so that only its value
          is not set
@@ -441,7 +442,7 @@ class DbaComputation(VariableComputation):
         best_eval = INFINITY
         for v in self.variable.domain:
             curr_eval, _ = self.compute_eval_value(
-                v, relations, collect_violated=False)
+                v, relations, collect_violated=False, context=context)
             if curr_eval < best_eval:
                 best_eval = curr_eval
                 best_vals = [v]
@@ -455,7 +456,8 @@ class DbaComputation(VariableComputation):
             msg = DbaOkMessage(self.current_value)
             self.post_msg(n, msg)
 
-    def compute_eval_value(self, val, relations, collect_violated=True):
+    def compute_eval_value(
+            self, val, relations, collect_violated=True, context=None):
         """
         This function compute the evaluation value (the number of violated
         constraints) regarding the current assignment.
@@ -481,10 +483,22 @@ class DbaComputation(VariableComputation):
         violated_constraints = [] if collect_violated else None
         for i, rel in enumerate(relations):
             if rel(val) >= INFINITY:
+                violation_key = self._violation_key(i, val, context)
                 if collect_violated:
-                    violated_constraints.append(i)
-                new_eval_value += self.__constraints_weights__[i]
+                    violated_constraints.append(violation_key)
+                new_eval_value += self.__violation_weights__.get(
+                    violation_key, 1)
         return new_eval_value, violated_constraints
+
+    def _violation_key(self, constraint_index, val, context=None):
+        assignment = {self.variable.name: val}
+        if context:
+            assignment.update(context)
+
+        return constraint_index, tuple(
+            assignment[v_name]
+            for v_name in self.__constraint_dimensions__[constraint_index]
+        )
 
     def _go_to_wait_improve_mode(self):
         self._mode = 'improve'
@@ -569,11 +583,12 @@ class DbaComputation(VariableComputation):
                 self.post_msg(n, msg)
             return True
 
-    def _increase_weights(self, constraints):
-        self.logger.info('Increasing the weights of the constraints %s',
-                            constraints)
-        for i in constraints:
-            self.__constraints_weights__[i] += 1
+    def _increase_weights(self, violations):
+        self.logger.info('Increasing the weights of the violations %s',
+                            violations)
+        for violation in violations:
+            self.__violation_weights__[violation] = (
+                self.__violation_weights__.get(violation, 1) + 1)
 
     def _go_to_wait_ok_mode(self):
         self._mode = 'ok'

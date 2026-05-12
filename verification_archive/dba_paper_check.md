@@ -66,16 +66,14 @@
 
 ## Verdict
 
-The core two-phase DBA message loop mostly matches the paper, and the normal
-termination path now preserves the `finished` state and stops the computation.
+The core two-phase DBA message loop matches the paper, and the normal
+termination path preserves the `finished` state and stops the computation.
 
-The implementation is not fully paper-equivalent yet because breakout weights
-are stored as one scalar per constraint. The paper defines weights for each
-violating variable-value pair, so increasing the weight for one violated tuple
-should not necessarily increase the weight for other violating tuples of the
-same constraint. This can change the search trajectory on constraints with more
-than one forbidden tuple, such as graph coloring, where each edge has one
-forbidden same-color tuple per color.
+Breakout weights are stored per exact violated assignment tuple, matching the
+paper's "pair of variable values" weighting for binary CSPs while extending the
+same idea to this implementation's generic relation support. For example,
+increasing the weight for graph-coloring violation `(x1=R, x2=R)` does not
+increase the weight for `(x1=G, x2=G)` on the same constraint.
 
 ## Caveats
 
@@ -95,12 +93,12 @@ forbidden same-color tuple per color.
 
 - `tests/unit/test_algorithms_dba.py` covers message properties, memory and
   communication estimates, construction, min-mode validation, evaluation and
-  weight counting, startup, postponed messages, tie-breaking, quasi-local weight
-  increase, end-message propagation, and termination state handling.
+  per-violation-tuple weight counting, startup, postponed messages,
+  tie-breaking, quasi-local weight increase, end-message propagation, and
+  termination state handling.
 - `tests/dcop_cli/test_solve.py` exercises DBA on graph-coloring CSP instances
   in thread and process modes.
 
 ## Follow-Up
 
-- Decide whether to implement paper-faithful per-violating-tuple weights or to
-  document the current per-constraint weighting as an intentional deviation.
+- None currently required for DBA paper correctness.

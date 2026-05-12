@@ -242,14 +242,44 @@ def test_compute_eval_value_counts_violated_constraints_and_weights():
     )
     computation = _dba_computation(v1, [c1, c2])
 
-    assert computation.compute_eval_value(1, [c1, c2]) == (1, [1])
-    assert computation.compute_eval_value(0, [c1, c2]) == (1, [0])
+    assert computation.compute_eval_value(1, [c1, c2]) == (1, [(1, (1,))])
+    assert computation.compute_eval_value(0, [c1, c2]) == (1, [(0, (0,))])
     assert computation.compute_eval_value(
         1, [c1, c2], collect_violated=False) == (1, None)
 
-    computation._increase_weights([1])
+    computation._increase_weights([(1, (1,))])
 
-    assert computation.compute_eval_value(1, [c1, c2]) == (2, [1])
+    assert computation.compute_eval_value(1, [c1, c2]) == (2, [(1, (1,))])
+
+
+def test_compute_eval_value_uses_exact_violation_tuple_weights():
+    v1 = Variable('v1', ['R', 'G', 'B'])
+    v2 = Variable('v2', ['R', 'G', 'B'])
+    c1 = constraint_from_str(
+        'c1',
+        f'0 if v1 != v2 else {dba.INFINITY}',
+        [v1, v2],
+    )
+    computation = _dba_computation(v1, [c1])
+
+    red_context = {'v2': 'R'}
+    red_relation = c1.slice(red_context)
+    red_violation = (0, ('R', 'R'))
+    assert computation.compute_eval_value(
+        'R', [red_relation], context=red_context
+    ) == (1, [red_violation])
+
+    computation._increase_weights([red_violation])
+
+    assert computation.compute_eval_value(
+        'R', [red_relation], context=red_context
+    ) == (2, [red_violation])
+
+    green_context = {'v2': 'G'}
+    green_relation = c1.slice(green_context)
+    assert computation.compute_eval_value(
+        'G', [green_relation], context=green_context
+    ) == (1, [(0, ('G', 'G'))])
 
 
 def test_compute_best_improvement_returns_all_best_values():
@@ -276,7 +306,7 @@ def test_improve_keeps_direct_call_violated_constraint_fallback():
 
     computation.improve([c1])
 
-    assert computation._violated_constraints == [0]
+    assert computation._violated_constraints == [(0, (0,))]
 
 
 def test_select_and_send_random_value_when_starting():
@@ -428,11 +458,11 @@ def test_send_ok_increases_weights_in_quasi_local_minimum():
     computation.value_selection(0)
     computation._consistent = False
     computation._quasi_local_minimum = True
-    computation._violated_constraints = [0]
+    computation._violated_constraints = [(0, (0, 0))]
 
     computation._send_ok()
 
-    assert computation.__constraints_weights__ == [2]
+    assert computation.__violation_weights__ == {(0, (0, 0)): 2}
     computation.message_sender.assert_called_once_with(
         'v1', 'v2', DbaOkMessage(0), None, None
     )

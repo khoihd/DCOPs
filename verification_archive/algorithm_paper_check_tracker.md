@@ -103,11 +103,10 @@ For each algorithm:
   - Implementation: `pydcop/algorithms/dba.py`
   - Paper / Source: `verification_archive/papers/dba.pdf`
   - Check File: `verification_archive/dba_paper_check.md`
-  - Status: Needs fix
-  - Notes: Core ok/improve flow matches the paper and termination state handling
-    was fixed during the check. Remaining mismatch: DBA uses one breakout
-    weight per constraint, while the paper defines weights per violating
-    variable-value tuple.
+  - Status: Verified
+  - Notes: Core ok/improve flow matches the paper. Termination state handling
+    was fixed, and breakout weights now use exact violated assignment tuples
+    instead of one weight per constraint.
 
 - DSA Tutorial
   - Priority: 8
