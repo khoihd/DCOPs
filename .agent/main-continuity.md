@@ -34,6 +34,8 @@
   MixedDSA, MaxSum, and AMaxSum.
 - No next paper-verification target has been selected yet. Dynamic MaxSum
   remains a separate tracker item.
+- `todo.md` currently has uncommitted user edits and should be left alone
+  unless explicitly requested.
 - Generated scratch files are currently untracked and intentionally not
   committed:
   - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`
@@ -111,23 +113,36 @@
 
 - AMaxSum has been checked against `verification_archive/papers/maxsum.pdf`,
   documented in `verification_archive/amaxsum_paper_check.md`, and marked
-  done / verified with documented runtime caveats in the tracker.
+  done / verified in the tracker.
 - The Farinelli et al. Max-Sum paper explicitly describes asynchronous local
   updates, so `pydcop/algorithms/amaxsum.py` uses the same paper source as
   synchronous MaxSum.
-- AMaxSum reuses MaxSum parameters and defaults `start_messages` to `all`.
+- AMaxSum reuses MaxSum parameters but overrides `auto_stop` to default to `1`
+  and requires either `stop_cycle > 0` or `auto_stop:1`.
+- AMaxSum defaults `start_messages` to `all`.
 - `stop_cycle` is interpreted as a local async update limit, not a globally
   synchronized round count. Variable computations increment the local count for
   each processed factor message; factor computations increment it only when
   they have enough variable messages to run a real factor update.
-- `auto_stop` and `stable_cycles` are interpreted as local async stability:
-  after enough consecutive local updates where outgoing messages are stable
-  according to the existing `stability` check, the computation reports
-  `finished()`. `SAME_COUNT` remains the resend/suppression throttle.
+- `auto_stop` and `stable_cycles` are interpreted as coordinated async
+  stability: computations report `finished()` after enough stable local updates
+  but keep processing messages until the orchestrator sees every computation
+  stable and stops the run. If a later message changes an outgoing message,
+  AMaxSum reports `finished("running")` so the orchestrator clears its
+  finished state.
+- A quiet-period check lets an AMaxSum computation report stable when its last
+  changed outgoing message does not trigger another incoming update.
+- The generic computation finished management message now carries a `status`
+  field; existing algorithms still call `finished()` with the default
+  `"finished"` status.
+- `SAME_COUNT` remains the resend/suppression throttle.
 - Relevant checks used recently:
-  - `pytest tests/unit/test_algorithms_amaxsum.py`
-  - `ruff check pydcop/algorithms/amaxsum.py tests/unit/test_algorithms_amaxsum.py`
-  - `python -m pydcop.dcop_cli -t 10 solve -a amaxsum -p noise:0 -p stop_cycle:2 -d oneagent tests/instances/graph_coloring1.yaml`
+  - `pytest tests/unit/test_algorithms_amaxsum.py tests/unit/test_infra_orchestrator.py`
+  - `pytest tests/unit/test_algorithms_amaxsum.py tests/unit/test_infra_orchestrator.py tests/unit/test_infra_agents.py tests/unit/test_infra_orchestratedagents.py`
+  - `ruff check pydcop/algorithms/__init__.py pydcop/commands/_utils.py pydcop/algorithms/amaxsum.py tests/unit/test_algorithms_amaxsum.py`
+  - `ruff check pydcop/algorithms/amaxsum.py pydcop/infrastructure/computations.py pydcop/infrastructure/orchestratedagents.py pydcop/infrastructure/orchestrator.py tests/unit/test_algorithms_amaxsum.py tests/unit/test_infra_orchestrator.py`
+  - `python -m pydcop.dcop_cli -t 10 solve -a amaxsum -p noise:0 -d oneagent tests/instances/graph_coloring1.yaml`
+  - `python -m pydcop.dcop_cli -t 10 solve -a amaxsum -p noise:0 -p auto_stop:0 -d oneagent tests/instances/graph_coloring1.yaml` exits early with the expected parameter error unless `stop_cycle` is set.
 
 ## Generator And Docs Notes
 
