@@ -8,7 +8,7 @@
 - Authors: A. Farinelli, A. Rogers, A. Petcu, and N. R. Jennings
 - Venue: AAMAS 2008
 - Implementation: `pydcop/algorithms/amaxsum.py`
-- Status: Done / Verified with documented runtime caveats
+- Status: Done / Verified
 
 ## Review Scope
 
@@ -111,15 +111,6 @@
 - Shared helper coverage in `tests/unit/test_algorithms_maxsum.py` covers
   variable-to-factor normalization, value selection, and the underlying
   factor-message equations used by AMaxSum.
-
-## Caveats
-
-- `start_messages: leafs` can under-seed cyclic graphs without a leaf-based
-  seed and may start with little or no propagation.
-- `damping`, `damping_nodes`, `stability`, `noise`, `start_messages`, generic
-  N-ary constraints, integrated variable costs, and `min` mode are repo-level
-  extensions or generalizations beyond the graph-colouring examples in the
-  paper.
 
 ## Follow-Up
 
