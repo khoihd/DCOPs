@@ -82,3 +82,29 @@ def test_solve_pulp_handles_random_graph_instance():
     assert result["status"] == "FINISHED"
     assert result["solver"] == "pulp"
     assert result["cost"] == pytest.approx(35)
+
+
+def test_solve_pulp_accepts_threads_parameter():
+    output = check_output(
+        [
+            sys.executable,
+            "-m",
+            "pydcop.dcop_cli",
+            "-v",
+            "0",
+            "solve",
+            "-a",
+            "pulp",
+            "-p",
+            "threads:4",
+            instance_path("graph_coloring1.yaml"),
+        ],
+        stderr=STDOUT,
+        timeout=10,
+    )
+
+    result = json.loads(output.decode(encoding="utf-8"))
+    assert result["status"] == "FINISHED"
+    assert result["solver"] == "pulp"
+    assert result["solver_backend"] == "cbc"
+    assert result["solver_threads"] == 4

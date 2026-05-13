@@ -31,16 +31,22 @@
 from dataclasses import dataclass
 import math
 import os
+import shutil
 from typing import Any
 from collections.abc import Mapping
 
-from pulp import GLPK_CMD, PULP_CBC_CMD, LpBinary, LpMaximize, LpMinimize, LpProblem
+from pulp import COIN_CMD, GLPK_CMD, LpBinary, LpMaximize, LpMinimize, LpProblem
 from pulp import LpStatus
 from pulp import LpStatusOptimal, LpVariable, lpSum, value
 from pulp import PulpSolverError as PulpBackendError
 
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.relations import generate_assignment_as_dict
+
+try:
+    from pulp import PULP_CBC_CMD
+except ImportError:
+    PULP_CBC_CMD = None
 
 
 DEFAULT_PULP_SOLVER = "cbc"
@@ -196,6 +202,26 @@ def _build_solver(
 
     if threads is None:
         threads = os.cpu_count() or 1
+
+    cbc_path = shutil.which("cbc")
+    if cbc_path is not None:
+        return (
+            COIN_CMD(
+                path=cbc_path,
+                msg=False,
+                timeLimit=timeout,
+                threads=threads,
+            ),
+            solver_name,
+            threads,
+        )
+
+    if PULP_CBC_CMD is None:
+        raise PulpDcopSolverError(
+            "CBC solver not found on PATH and this PuLP version does not provide "
+            "a bundled CBC solver"
+        )
+
     return (
         PULP_CBC_CMD(msg=False, timeLimit=timeout, threads=threads),
         solver_name,

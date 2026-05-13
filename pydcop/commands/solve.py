@@ -135,7 +135,8 @@ Options
   check :ref:`algorithms documentation<implementation_reference_algorithms>`.
   With ``--algo pulp``, supported parameters are ``solver:cbc``,
   ``solver:glpk``, and ``threads:<count>``. CBC is used by default with one
-  thread per available CPU core.
+  thread per available CPU core, preferring a ``cbc`` executable found on
+  ``PATH`` before falling back to PuLP's bundled CBC solver.
 
 ``--distribution <distribution>`` / ``-d <distribution>``
   Either a :ref:`distribution algorithm<implementation_reference_distributions>`
