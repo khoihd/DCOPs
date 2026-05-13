@@ -753,6 +753,9 @@ class SynchronousComputationMixin:
     def _switch_cycle(self):
         self.logger.debug(f"Running cycle {self._current_cycle}")
         self._current_cycle += 1
+        if hasattr(self, "_on_new_cycle"):
+            self._on_new_cycle(self.cycle_count)
+        event_bus.send("computations.cycle." + self.name, (self.name, self.cycle_count))
         algo_message = {
             k: (msg, t)
             for k, (msg, t) in self._cycle_messages.items()

@@ -213,6 +213,18 @@ def test_receive_one_neighbor():
     assert c.cycle_count == 2
 
 
+def test_receive_one_neighbor_notifies_cycle_hook():
+    c = SynchC("test", ["bar"])
+    c._on_new_cycle = MagicMock()
+    c.start()
+
+    msg1 = FooMsg(1)
+    msg1.cycle_id = 0
+    c.on_message("bar", msg1, 42)
+
+    c._on_new_cycle.assert_called_once_with(1)
+
+
 def test_receive_two_neighbors():
     c = SynchC("test", ["bar", "yup"])
     c.on_new_cycle = MagicMock()

@@ -83,9 +83,17 @@
 
 ## Caveats
 
-- The synchronous runtime uses synchronization messages to advance cycles. These
-  are runtime bookkeeping messages, not Max-Sum algorithm messages from the
-  paper.
+- The synchronous runtime uses synchronization messages to advance cycles.
+  Farinelli et al. describe Max-Sum as local updates over factor-graph edges,
+  where the algorithmic messages are only the Q messages from variables to
+  functions and the R messages from functions to variables. In this
+  implementation, `SynchronousComputationMixin` adds separate synchronization
+  messages when a computation has no Max-Sum payload to send to a neighbor in a
+  given cycle. Those messages only let both endpoints agree that the cycle is
+  complete and that the next batch of Q/R messages can be processed. They do not
+  carry costs, utilities, selected values, marginals, or any other term from the
+  Max-Sum equations, so they are runtime bookkeeping rather than part of the
+  paper algorithm.
 - The implementation's convergence handling suppresses stable Max-Sum messages
   after repeated approximate matches. It does not implement a global proof of
   convergence for cyclic graphs, which the paper also does not provide.

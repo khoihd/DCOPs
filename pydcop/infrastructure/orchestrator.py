@@ -1246,7 +1246,10 @@ class AgentsMgt(MessagePassingComputation):
                 self.logger.warning(
                     'Incomplete metrics for computation %s : %s ',
                     agt, agt_metrics)
-        max_cycle = max(agt_cycles, default=0)
+        if self._collect_moment == 'cycle_change':
+            max_cycle = self._current_cycle
+        else:
+            max_cycle = max(agt_cycles, default=0)
 
         total_time = t - self.start_time if self.start_time is not None else 0
 
