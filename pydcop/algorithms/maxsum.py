@@ -62,6 +62,13 @@ Algorithm Parameters
   stop after a fixed number of synchronous cycles. Set to 0 to run until the
   runtime stops the algorithm.
 
+**auto_stop**
+  set to 1 to stop when all local outgoing messages have been stable for
+  `stable_cycles` cycles. This is a local heuristic convergence stop.
+
+**stable_cycles**
+  number of consecutive stable local cycles required by `auto_stop`.
+
 
 Example
 ^^^^^^^
@@ -219,6 +226,8 @@ algo_params = [
     AlgoParameterDef("noise", "float", None, 0.01),
     AlgoParameterDef("start_messages", "str", ["leafs", "leafs_vars", "all"], "leafs"),
     AlgoParameterDef("stop_cycle", "int", None, 0),
+    AlgoParameterDef("auto_stop", "int", [0, 1], 0),
+    AlgoParameterDef("stable_cycles", "int", None, 1),
 ]
 
 
@@ -300,6 +309,9 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
         self.stability_coef = comp_def.algo.params["stability"]
         self.start_messages = comp_def.algo.params["start_messages"]
         self.stop_cycle = comp_def.algo.params["stop_cycle"]
+        self.auto_stop, self.stable_cycles = _auto_stop_params(comp_def)
+        self._stable_cycle_count = 0
+        self._auto_stop_notified = False
         self.logger.info(f"Running maxsum with params: {comp_def.algo.params}")
 
         # A dict var_name -> (message, count)
@@ -348,6 +360,7 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
             self.stop()
             return None
 
+        cycle_stable = True
         for v in self.variables:
             costs_v = factor_costs_for_var(self.factor, v, self._costs, self.mode)
             prev_costs, count = self._prev_messages[v.name]
@@ -368,6 +381,7 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
                 )
                 self.post_msg(v.name, MaxSumMessage(costs_v))
                 self._prev_messages[v.name] = costs_v, 1
+                cycle_stable = False
 
             elif count < SAME_COUNT:
                 # Same as previous, but not yet sent SAME_COUNT times: send
@@ -376,13 +390,31 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
                 )
                 self.post_msg(v.name, MaxSumMessage(costs_v))
                 self._prev_messages[v.name] = costs_v, count + 1
+                cycle_stable = False
             else:
                 # Same and already sent SAME_COUNT times: no-send
                 self.logger.debug(
                     f"Not sending (similar) from {self.name} -> {v.name} : {costs_v}"
                 )
 
+        self._handle_auto_stop(cycle_stable)
         return None
+
+    def _handle_auto_stop(self, cycle_stable):
+        if not self.auto_stop:
+            return
+
+        if cycle_stable:
+            self._stable_cycle_count += 1
+        else:
+            self._stable_cycle_count = 0
+
+        if (
+            self._stable_cycle_count >= self.stable_cycles
+            and not self._auto_stop_notified
+        ):
+            self.finished()
+            self._auto_stop_notified = True
 
 
 def factor_costs_for_var(factor: Constraint, variable: Variable, recv_costs, mode: str):
@@ -465,6 +497,9 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
         self.stability_coef = comp_def.algo.params["stability"]
         self.start_messages = comp_def.algo.params["start_messages"]
         self.stop_cycle = comp_def.algo.params["stop_cycle"]
+        self.auto_stop, self.stable_cycles = _auto_stop_params(comp_def)
+        self._stable_cycle_count = 0
+        self._auto_stop_notified = False
         self.logger.info(f"Running maxsum with params: {comp_def.algo.params}")
 
         # The list of factors (names) this variables is linked with
@@ -533,6 +568,7 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
             self.costs[sender] = message.costs
 
         # select our value, based on new costs
+        previous_value = self.current_value
         self.value_selection(*select_value(self.variable, self.costs, self.mode))
 
         if self.stop_cycle and cycle_id >= self.stop_cycle:
@@ -542,6 +578,7 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
 
         # Compute and send our own costs to  factors.
 
+        cycle_stable = self.current_value == previous_value
         for f_name in self.factors:
             costs_f = costs_for_factor(self.variable, f_name, self.factors, self.costs)
             prev_costs, count = self._prev_messages[f_name]
@@ -558,6 +595,7 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
                 )
                 self.post_msg(f_name, MaxSumMessage(costs_f))
                 self._prev_messages[f_name] = costs_f, 1
+                cycle_stable = False
 
             elif count < SAME_COUNT:
                 # Same as previous, but not yet sent SAME_COUNT times: send
@@ -566,12 +604,30 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
                 )
                 self.post_msg(f_name, MaxSumMessage(costs_f))
                 self._prev_messages[f_name] = costs_f, count + 1
+                cycle_stable = False
             else:
                 # Same and already sent SAME_COUNT times: no-send
                 self.logger.debug(
                     f"Not sending (similar) from {self.name} -> {f_name} : {costs_f}"
                 )
+        self._handle_auto_stop(cycle_stable)
         return None
+
+    def _handle_auto_stop(self, cycle_stable):
+        if not self.auto_stop:
+            return
+
+        if cycle_stable:
+            self._stable_cycle_count += 1
+        else:
+            self._stable_cycle_count = 0
+
+        if (
+            self._stable_cycle_count >= self.stable_cycles
+            and not self._auto_stop_notified
+        ):
+            self.finished()
+            self._auto_stop_notified = True
 
     def _match_previous(self, f_name, costs):
         """
@@ -709,6 +765,13 @@ def approx_match(costs, prev_costs, stability_coef):
             else:
                 return False
     return True
+
+
+def _auto_stop_params(comp_def: ComputationDef):
+    stable_cycles = comp_def.algo.params["stable_cycles"]
+    if stable_cycles < 1:
+        raise ValueError("maxsum stable_cycles must be greater than 0")
+    return bool(comp_def.algo.params["auto_stop"]), stable_cycles
 
 
 def _valid_assignments(constraint: Constraint, infinity_value):

@@ -139,6 +139,8 @@ def test_factor_computation_init_from_real_computation_def():
     assert computation.damping_nodes == "both"
     assert computation.start_messages == "leafs"
     assert computation.stop_cycle == 0
+    assert not computation.auto_stop
+    assert computation.stable_cycles == 1
 
 
 def test_variable_computation_init_from_real_computation_def():
@@ -153,6 +155,8 @@ def test_variable_computation_init_from_real_computation_def():
             "stability": 0.2,
             "start_messages": "all",
             "stop_cycle": 3,
+            "auto_stop": 1,
+            "stable_cycles": 2,
         },
     )
 
@@ -165,6 +169,8 @@ def test_variable_computation_init_from_real_computation_def():
     assert computation.stability_coef == 0.2
     assert computation.start_messages == "all"
     assert computation.stop_cycle == 3
+    assert computation.auto_stop
+    assert computation.stable_cycles == 2
     assert computation.costs == {}
 
 
@@ -512,6 +518,55 @@ def test_factor_cycle_suppresses_stable_message_after_same_count():
     message_sender.assert_not_called()
 
 
+def test_factor_auto_stops_after_stable_cycle():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(f1, params={"auto_stop": 1})
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.finished = MagicMock()
+    computation.start()
+    message_sender.reset_mock()
+    computation._prev_messages["v1"] = ({0: 0, 1: 0}, SAME_COUNT)
+    computation._prev_messages["v2"] = ({0: 0, 1: 0}, SAME_COUNT)
+
+    computation.on_new_cycle({"v2": (MaxSumMessage({0: 0, 1: 0}), 0)}, 1)
+
+    assert computation.is_running
+    assert computation._stable_cycle_count == 1
+    computation.finished.assert_called_once_with()
+    message_sender.assert_not_called()
+
+
+def test_factor_auto_stop_waits_for_configured_stable_cycles():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(
+        f1, params={"auto_stop": 1, "stable_cycles": 2}
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.finished = MagicMock()
+    computation.start()
+    message_sender.reset_mock()
+    computation._prev_messages["v1"] = ({0: 0, 1: 0}, SAME_COUNT)
+    computation._prev_messages["v2"] = ({0: 0, 1: 0}, SAME_COUNT)
+
+    computation.on_new_cycle({"v2": (MaxSumMessage({0: 0, 1: 0}), 0)}, 1)
+
+    assert computation.is_running
+    assert computation._stable_cycle_count == 1
+    computation.finished.assert_not_called()
+
+    computation.on_new_cycle({"v2": (MaxSumMessage({0: 0, 1: 0}), 0)}, 2)
+
+    assert computation.is_running
+    assert computation._stable_cycle_count == 2
+    computation.finished.assert_called_once_with()
+
+
 def test_variable_sends_initial_leaf_message_on_start():
     variable = Variable("v1", [0, 1], initial_value=1)
     computation = _variable_computation(variable, ["f1"])
@@ -623,4 +678,30 @@ def test_variable_cycle_suppresses_stable_message_after_same_count():
 
     computation.on_new_cycle({"f1": (MaxSumMessage({0: 0, 1: 0}), 0)}, 1)
 
+    message_sender.assert_not_called()
+
+
+def test_variable_auto_stop_requires_stable_selected_value():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(variable, ["f1"], params={"auto_stop": 1})
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.finished = MagicMock()
+    computation.start()
+    message_sender.reset_mock()
+    computation._prev_messages["f1"] = ({0: 0.0, 1: 0.0}, SAME_COUNT)
+
+    computation.on_new_cycle({"f1": (MaxSumMessage({0: 5, 1: 0}), 0)}, 1)
+
+    assert computation.is_running
+    assert computation.current_value == 1
+    assert computation._stable_cycle_count == 0
+    computation.finished.assert_not_called()
+
+    computation.on_new_cycle({"f1": (MaxSumMessage({0: 5, 1: 0}), 0)}, 2)
+
+    assert computation.is_running
+    assert computation.current_value == 1
+    assert computation._stable_cycle_count == 1
+    computation.finished.assert_called_once_with()
     message_sender.assert_not_called()

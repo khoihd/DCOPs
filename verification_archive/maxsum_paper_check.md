@@ -56,10 +56,11 @@
   by the paper's normalized Q-message equation.
 - `select_value()` implements the marginal decision step by optimizing the
   variable cost plus all incoming factor-message values.
-- `damping`, `damping_nodes`, `stability`, `noise`, and `start_messages` are
-  repo/runtime extensions. Damping and stability are practical loopy-belief
-  propagation controls; `noise` represents a small unary preference/tie-breaker;
-  `start_messages` controls how synchronous startup is seeded.
+- `damping`, `damping_nodes`, `stability`, `noise`, `start_messages`,
+  `auto_stop`, and `stable_cycles` are repo/runtime extensions. Damping,
+  stability, and auto-stop are practical loopy-belief propagation controls;
+  `noise` represents a small unary preference/tie-breaker; `start_messages`
+  controls how synchronous startup is seeded.
 - `stop_cycle` now supports the paper's fixed-iteration termination option for
   the synchronous implementation.
 
@@ -67,6 +68,10 @@
 
 - Added `stop_cycle` to `algo_params` and made factor and variable computations
   call `finished()` and `stop()` at the configured synchronous cycle boundary.
+- Added optional `auto_stop` / `stable_cycles` support. Computations report
+  `finished()` after their local outgoing messages have remained stable for the
+  configured number of cycles, but they keep participating in synchronization
+  until the orchestrator stops all computations together.
 - Corrected variable-to-function normalization so integrated variable costs are
   included in the average that is subtracted from the outgoing message.
 - Updated MaxSum and AMaxSum tests affected by the shared normalization helper.
@@ -83,20 +88,21 @@
 
 ## Caveats
 
-- The synchronous runtime uses synchronization messages to advance cycles.
-  Farinelli et al. describe Max-Sum as local updates over factor-graph edges,
-  where the algorithmic messages are only the Q messages from variables to
-  functions and the R messages from functions to variables. In this
-  implementation, `SynchronousComputationMixin` adds separate synchronization
-  messages when a computation has no Max-Sum payload to send to a neighbor in a
-  given cycle. Those messages only let both endpoints agree that the cycle is
-  complete and that the next batch of Q/R messages can be processed. They do not
-  carry costs, utilities, selected values, marginals, or any other term from the
-  Max-Sum equations, so they are runtime bookkeeping rather than part of the
-  paper algorithm.
-- The implementation's convergence handling suppresses stable Max-Sum messages
-  after repeated approximate matches. It does not implement a global proof of
-  convergence for cyclic graphs, which the paper also does not provide.
+- The synchronous runtime adds bookkeeping sync messages between Q/R Max-Sum
+  payloads. They only advance cycles and carry no costs, utilities, selected
+  values, marginals, or other Max-Sum equation terms.
+- The implementation's convergence handling is local and message-level. Each
+  directed Q or R message is compared with the previous message on that edge
+  using the `stability` coefficient. If the vector remains approximately the
+  same, the computation still sends it for `SAME_COUNT` cycles, then suppresses
+  further copies until the vector changes again. This reduces redundant traffic
+  in stable loopy runs. When `auto_stop` is enabled, local computations report
+  completion after `stable_cycles` such stable local cycles. This is still not a
+  global termination proof: different edges can stabilize at different times,
+  variables can still update from other incoming messages, and cyclic factor
+  graphs can settle to a fixed point or oscillate depending on the instance and
+  damping. The paper also treats convergence on cyclic graphs as an
+  empirical/fixed-iteration matter rather than proving global convergence.
 - Generic relation objects, N-ary constraints, integrated variable costs, and
   `min` mode are repo-level generalizations beyond the graph-colouring examples
   in the paper.
