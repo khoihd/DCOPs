@@ -29,6 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
+from pulp import LpSolutionIntegerFeasible, LpStatusOptimal
 
 from pydcop.solvers import pulp_solver
 from pydcop.solvers.pulp_solver import PulpDcopSolverError, solve_dcop
@@ -47,6 +48,7 @@ def test_pulp_solver_matches_known_solution(known_case):
     result = solve_dcop(dcop)
 
     assert result.status == "FINISHED"
+    assert result.solver_solution_status == "Optimal Solution Found"
     assert result.assignment == known_case.optimal_assignment
     assert result.objective_value == pytest.approx(known_case.optimal_cost)
 
@@ -72,6 +74,33 @@ def test_pulp_solver_solves_random_graph_instance():
 
     assert result.status == "FINISHED"
     assert result.objective_value == pytest.approx(35)
+
+
+def test_pulp_solver_marks_unproven_incumbent_as_feasible(monkeypatch):
+    class FeasibleOnlySolver:
+        def actualSolve(self, problem, **kwargs):
+            for variable in problem.variables():
+                variable.varValue = 1 if variable.name.endswith("_0") else 0
+            problem.assignStatus(LpStatusOptimal, LpSolutionIntegerFeasible)
+            return LpStatusOptimal
+
+    monkeypatch.setattr(
+        pulp_solver,
+        "_build_solver",
+        lambda solver_name="cbc", timeout=None, threads=None: (
+            FeasibleOnlySolver(),
+            solver_name,
+            threads,
+        ),
+    )
+    dcop = load_test_dcop("graph_coloring1.yaml")
+
+    result = solve_dcop(dcop, threads=4)
+
+    assert result.status == "FEASIBLE"
+    assert result.solver_status == "Optimal"
+    assert result.solver_solution_status == "Solution Found"
+    assert result.assignment
 
 
 def test_pulp_solver_prefers_cbc_from_path(monkeypatch):

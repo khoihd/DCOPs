@@ -36,8 +36,8 @@ from typing import Any
 from collections.abc import Mapping
 
 from pulp import COIN_CMD, GLPK_CMD, LpBinary, LpMaximize, LpMinimize, LpProblem
-from pulp import LpStatus
-from pulp import LpStatusOptimal, LpVariable, lpSum, value
+from pulp import LpSolution, LpSolutionIntegerFeasible, LpSolutionOptimal, LpStatus
+from pulp import LpVariable, lpSum, value
 from pulp import PulpSolverError as PulpBackendError
 
 from pydcop.dcop.dcop import DCOP
@@ -59,6 +59,7 @@ class PulpDcopResult:
     assignment: dict[str, Any]
     objective_value: float | None
     solver_status: str
+    solver_solution_status: str | None
     solver: str = DEFAULT_PULP_SOLVER
     threads: int | None = None
 
@@ -124,7 +125,7 @@ def solve_dcop(
 
         if not tuple_choices:
             return PulpDcopResult(
-                "INFEASIBLE", {}, None, "Infeasible", solver_name, threads
+                "INFEASIBLE", {}, None, "Infeasible", None, solver_name, threads
             )
 
         problem += lpSum(tuple_choices) == 1
@@ -160,12 +161,21 @@ def solve_dcop(
     except PulpBackendError as e:
         raise PulpDcopSolverError(str(e)) from e
     solver_status = LpStatus[status]
-    if status != LpStatusOptimal:
+    solution_status_code = getattr(problem, "sol_status", None)
+    solver_solution_status = (
+        LpSolution.get(solution_status_code, "Unknown")
+        if solution_status_code is not None
+        else None
+    )
+
+    result_status = _status_from_pulp_status(solver_status, solution_status_code)
+    if not _has_feasible_solution(solution_status_code):
         return PulpDcopResult(
-            _status_from_pulp_status(solver_status),
+            result_status,
             {},
             None,
             solver_status,
+            solver_solution_status,
             solver_name,
             threads,
         )
@@ -176,7 +186,13 @@ def solve_dcop(
         objective_value = 0
 
     return PulpDcopResult(
-        "FINISHED", assignment, objective_value, solver_status, solver_name, threads
+        result_status,
+        assignment,
+        objective_value,
+        solver_status,
+        solver_solution_status,
+        solver_name,
+        threads,
     )
 
 
@@ -256,7 +272,17 @@ def _is_forbidden_cost(cost, infinity) -> bool:
     return False
 
 
-def _status_from_pulp_status(solver_status: str) -> str:
+def _status_from_pulp_status(
+    solver_status: str,
+    solution_status_code: int | None,
+) -> str:
+    if solver_status == "Optimal" and solution_status_code in (
+        None,
+        LpSolutionOptimal,
+    ):
+        return "FINISHED"
+    if solution_status_code == LpSolutionIntegerFeasible:
+        return "FEASIBLE"
     if solver_status == "Infeasible":
         return "INFEASIBLE"
     if solver_status == "Unbounded":
@@ -264,6 +290,10 @@ def _status_from_pulp_status(solver_status: str) -> str:
     if solver_status == "Not Solved":
         return "TIMEOUT"
     return "ERROR"
+
+
+def _has_feasible_solution(solution_status_code: int | None) -> bool:
+    return solution_status_code in (LpSolutionOptimal, LpSolutionIntegerFeasible)
 
 
 def _extract_assignment(dcop, domain_values, variable_choices):

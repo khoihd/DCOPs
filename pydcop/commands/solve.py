@@ -600,7 +600,7 @@ def _run_pulp_solver(dcop, args, timer=None, timeout=None):
 
 
 def _pulp_metrics(dcop, result, elapsed):
-    if result.status == "FINISHED":
+    if result.assignment:
         violation, cost = dcop.solution_cost(result.assignment, INFINITY)
     else:
         violation, cost = None, None
@@ -619,6 +619,7 @@ def _pulp_metrics(dcop, result, elapsed):
         "solver_backend": result.solver,
         "solver_threads": result.threads,
         "solver_status": result.solver_status,
+        "solver_solution_status": result.solver_solution_status,
         "objective": result.objective_value,
     }
 
