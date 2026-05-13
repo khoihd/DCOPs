@@ -12,6 +12,7 @@
   - NCBB
   - SyncBB
 
+- Require a parameter for termination mechanism to all iterative algorithms
 
 - (WIP) Review instance generators:
   - (DONE) Add seed value
