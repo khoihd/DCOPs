@@ -8,7 +8,7 @@
   - (DONE) Maxsum / AMaxsum
   - (DONE) Maxsum Dynamic
   - (DONE) DSAAuto
-  - GDBA
+  - (DONE) GDBA
   - NCBB
   - SyncBB
 
