@@ -58,8 +58,8 @@
   update their selected value from the latest local marginal, and send updated
   variable-to-factor messages to the other factors.
 - `start_messages` controls how outgoing messages are seeded. `all` most
-  closely mirrors the paper's initialized-message description; `leafs` and
-  `leafs_vars` are repo-level startup controls.
+  closely mirrors the paper's initialized-message description and is now the
+  default; `leafs` and `leafs_vars` are repo-level startup controls.
 - `stop_cycle` is interpreted as a local async update limit. Each computation
   increments its own local cycle count when it performs a real message-driven
   processing update, and reports finished once that count reaches
@@ -112,9 +112,8 @@
 - AMaxSum runs until `stop_cycle` is reached locally by every computation, all
   computations report completion through `auto_stop`, the runtime stops it
   externally, or stable-message suppression leaves no more messages to send.
-- With the default `start_messages: leafs`, cyclic graphs without a leaf-based
-  seed can start with little or no propagation. For paper-like initialized
-  outgoing messages, use `-p start_messages:all`.
+- `start_messages: leafs` can under-seed cyclic graphs without a leaf-based
+  seed and may start with little or no propagation.
 - `damping`, `damping_nodes`, `stability`, `noise`, `start_messages`, generic
   N-ary constraints, integrated variable costs, and `min` mode are repo-level
   extensions or generalizations beyond the graph-colouring examples in the

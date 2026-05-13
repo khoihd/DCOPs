@@ -109,7 +109,7 @@ def test_factor_computation_init_from_real_computation_def():
     assert f._costs == {}
     assert f.damping == 0.5
     assert f.damping_nodes == "both"
-    assert f.start_messages == "leafs"
+    assert f.start_messages == "all"
     assert f.stop_cycle == 0
     assert not f.auto_stop
     assert f.stable_cycles == 1
@@ -433,7 +433,7 @@ def test_unary_factor_sends_initial_message_when_leaf_start_messages_enabled():
     d1 = VariableDomain("d1", "", [1, 2])
     v1 = Variable("v1", d1)
     f1 = relation_from_str("f1", "v1 * 0.5", [v1])
-    computation = _factor_computation(f1)
+    computation = _factor_computation(f1, params={"start_messages": "leafs"})
     message_sender = MagicMock()
     computation.message_sender = message_sender
 

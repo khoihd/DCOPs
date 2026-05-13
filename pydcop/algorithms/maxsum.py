@@ -56,7 +56,8 @@ Algorithm Parameters
   noise level for variable
 
 **start_messages**
-  nodes that initiate messages : "leafs", "leafs_vars", "all"
+  nodes that initiate messages : "leafs", "leafs_vars", "all". Defaults to
+  "all".
 
 **stop_cycle**
   stop after a fixed number of synchronous cycles. Set to 0 to run until the
@@ -224,7 +225,7 @@ algo_params = [
     ),
     AlgoParameterDef("stability", "float", None, STABILITY_COEFF),
     AlgoParameterDef("noise", "float", None, 0.01),
-    AlgoParameterDef("start_messages", "str", ["leafs", "leafs_vars", "all"], "leafs"),
+    AlgoParameterDef("start_messages", "str", ["leafs", "leafs_vars", "all"], "all"),
     AlgoParameterDef("stop_cycle", "int", None, 0),
     AlgoParameterDef("auto_stop", "int", [0, 1], 0),
     AlgoParameterDef("stable_cycles", "int", None, 1),

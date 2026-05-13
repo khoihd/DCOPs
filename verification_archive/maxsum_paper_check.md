@@ -60,7 +60,7 @@
   `auto_stop`, and `stable_cycles` are repo/runtime extensions. Damping,
   stability, and auto-stop are practical loopy-belief propagation controls;
   `noise` represents a small unary preference/tie-breaker; `start_messages`
-  controls how synchronous startup is seeded.
+  controls how synchronous startup is seeded and defaults to `all`.
 - `stop_cycle` now supports the paper's fixed-iteration termination option for
   the synchronous implementation.
 

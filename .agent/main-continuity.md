@@ -90,6 +90,7 @@
   - supports fixed-cycle stop with `-p stop_cycle:N`
   - supports optional heuristic convergence stop with
     `-p auto_stop:1 -p stable_cycles:N`
+  - defaults `start_messages` to `all`
   - keeps computations participating in synchronization after local
     auto-stop notification until the orchestrator stops all computations
   - supports `--run_metrics` with `--collect_on cycle_change`
@@ -113,6 +114,7 @@
 - The Farinelli et al. Max-Sum paper explicitly describes asynchronous local
   updates, so `pydcop/algorithms/amaxsum.py` uses the same paper source as
   synchronous MaxSum.
+- AMaxSum reuses MaxSum parameters and defaults `start_messages` to `all`.
 - `stop_cycle` is interpreted as a local async update limit, not a globally
   synchronized round count. Variable computations increment the local count for
   each processed factor message; factor computations increment it only when

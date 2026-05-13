@@ -137,7 +137,7 @@ def test_factor_computation_init_from_real_computation_def():
     assert computation._costs == {}
     assert computation.damping == 0.5
     assert computation.damping_nodes == "both"
-    assert computation.start_messages == "leafs"
+    assert computation.start_messages == "all"
     assert computation.stop_cycle == 0
     assert not computation.auto_stop
     assert computation.stable_cycles == 1
@@ -422,7 +422,7 @@ def test_maxsum_message_serializes_integer_keys():
 def test_unary_factor_sends_initial_message_when_leaf_start_messages_enabled():
     v1 = Variable("v1", VariableDomain("d1", "", [1, 2]))
     f1 = relation_from_str("f1", "v1 * 0.5", [v1])
-    computation = _factor_computation(f1)
+    computation = _factor_computation(f1, params={"start_messages": "leafs"})
     message_sender = MagicMock()
     computation.message_sender = message_sender
 
