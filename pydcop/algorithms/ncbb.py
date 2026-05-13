@@ -58,6 +58,12 @@ however I'm not sure it is correct and it is not fully implemented
 In order to make this algorithm easier to understand, we tried to make the implmentation
 as close as possible to the description of the original article.
 
+.. warning::
+
+  This module is incomplete. The initialization phase and the paper's
+  AgentCost/LB helpers are implemented, but the NCBB branch-and-bound search
+  phase is not implemented yet.
+
 
 Initialization phase:
 
@@ -101,7 +107,7 @@ from random import choice
 
 from pydcop.algorithms import ComputationDef
 from pydcop.computations_graph.pseudotree import get_dfs_relations
-from pydcop.dcop.relations import find_optimal
+from pydcop.dcop.relations import assignment_cost, find_optimal, generate_assignment_as_dict
 from pydcop.infrastructure.computations import (
     VariableComputation,
     SynchronousComputationMixin,
@@ -114,11 +120,11 @@ GRAPH_TYPE = "pseudotree"
 
 
 def memory_footprint_estimate(*args):
-    raise NotImplementedError("DPOP has no computation memory implementation (yet)")
+    raise NotImplementedError("NCBB has no computation memory implementation (yet)")
 
 
 def communication_load(*args):
-    raise NotImplementedError("DPOP has no communication_load implementation (yet)")
+    raise NotImplementedError("NCBB has no communication_load implementation (yet)")
 
 
 def build_computation(comp_def: ComputationDef):
@@ -172,6 +178,7 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
         # Raise an exception if we pass a non-binary constraint
         self._constraints = []
         self._ancestor_constraints = []
+        self._variables_by_name = {self.variable.name: self.variable}
         for r in computation_definition.node.constraints:
             if r.arity != 2:
                 raise ComputationException(
@@ -180,6 +187,8 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
                     f"NCBB implementation only supports binary constraints."
                 )
             self._constraints.append(r)
+            for v in r.dimensions:
+                self._variables_by_name[v.name] = v
             if any(v.name in self._ancestor_names for v in r.dimensions):
                 self._ancestor_constraints.append(r)
 
@@ -273,10 +282,10 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
             pass
 
         elif msg_type == "search":
-            pass
+            raise NotImplementedError("NCBB search phase is not implemented")
 
         elif msg_type == "stop":
-            pass
+            raise NotImplementedError("NCBB search phase is not implemented")
 
         return
 
@@ -340,11 +349,40 @@ class NcbbAlgo(SynchronousComputationMixin, VariableComputation):
             self.phase = "SEARCH"
 
     def search(self):
-        pass
+        raise NotImplementedError("NCBB search phase is not implemented")
 
     def agent_cost(self, assignment):
-        pass
+        """Return the paper's AgentCost for this variable and assignment."""
+        return assignment_cost(assignment, self._ancestor_constraints)
 
     def lower_bound(self, assignment, k):
-        # k ancestor index
-        pass
+        """Return the paper's LB(x, assignment, k) for minimization.
+
+        ``k`` is the number of leading ancestors whose values are fixed by
+        ``assignment``. Remaining ancestors and this computation's variable
+        are minimized over.
+        """
+        if k < 0 or k > len(self._ancestors):
+            raise ValueError(
+                f"k must be between 0 and {len(self._ancestors)} for {self.name}"
+            )
+
+        fixed_names = set(self._ancestors[:k])
+        missing = fixed_names - set(assignment)
+        if missing:
+            raise ValueError(
+                f"Missing ancestor values for lower_bound at {self.name}: {missing}"
+            )
+
+        free_names = [self.variable.name] + [
+            ancestor for ancestor in self._ancestors[k:] if ancestor in self._variables_by_name
+        ]
+        free_variables = [self._variables_by_name[name] for name in free_names]
+
+        best_cost = float("inf")
+        for free_assignment in generate_assignment_as_dict(free_variables):
+            candidate = dict(assignment)
+            candidate.update(free_assignment)
+            best_cost = min(best_cost, self.agent_cost(candidate))
+
+        return best_cost

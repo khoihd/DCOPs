@@ -400,6 +400,7 @@ def test_cost_msg_at_root(toy_pb):
     comp_a = get_computation_instance(toy_pb, "A")
     comp_a.start()
     comp_a._upper_bound = 0
+    comp_a.search = MagicMock()
     comp_a.cost_phase("B", 3)
     comp_a.cost_phase("C", 0)
 
@@ -482,3 +483,31 @@ def test_on_new_cycle_rejects_search_messages_during_init(toy_pb):
         comp_b.on_new_cycle({"A": (SearchMessage(5), 0)}, 1)
 
     assert "search messages received" in str(comp_exc.value)
+
+
+def test_agent_cost_matches_paper_definition(toy_pb):
+    comp_d = get_computation_instance(toy_pb, "D")
+
+    assert comp_d.agent_cost({"A": "R", "B": "B", "D": "B"}) == 4
+
+
+def test_lower_bound_matches_paper_definition(toy_pb):
+    comp_d = get_computation_instance(toy_pb, "D")
+
+    assert comp_d.lower_bound({}, 0) == 1
+    assert comp_d.lower_bound({"A": "R"}, 1) == 2
+    assert comp_d.lower_bound({"A": "R", "B": "B"}, 2) == 4
+
+
+def test_lower_bound_rejects_missing_fixed_ancestor(toy_pb):
+    comp_d = get_computation_instance(toy_pb, "D")
+
+    with pytest.raises(ValueError, match="Missing ancestor values"):
+        comp_d.lower_bound({}, 1)
+
+
+def test_search_phase_is_not_implemented(toy_pb):
+    comp_a = get_computation_instance(toy_pb, "A")
+
+    with pytest.raises(NotImplementedError, match="search phase"):
+        comp_a.search()

@@ -172,10 +172,12 @@ For each algorithm:
 - NCBB
   - Priority: 12
   - Implementation: `pydcop/algorithms/ncbb.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/ncbb.pdf`
   - Check File: `verification_archive/ncbb_paper_check.md`
-  - Status: Not started
-  - Notes: Search phase is known incomplete from continuity notes.
+  - Status: Needs fix
+  - Notes: Initialization and the paper's `AgentCost` / `LB` helper definitions
+    are covered, but the main branch-and-bound search loop, subtree search,
+    pruning, result selection, and stop propagation are not implemented.
 
 - SyncBB
   - Priority: 13
