@@ -76,6 +76,8 @@ def build_algo_def(algo_module, algo_name: str, objective, cli_params: list[str]
 
         try:
             params = prepare_algo_params(params, algo_module.algo_params)
+            if hasattr(algo_module, "validate_algo_params"):
+                algo_module.validate_algo_params(params)
             logger.info("parameters for %s : %s", algo_name, params)
 
             return AlgorithmDef.build_with_default_param(

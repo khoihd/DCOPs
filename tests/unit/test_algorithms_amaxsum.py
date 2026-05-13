@@ -111,7 +111,7 @@ def test_factor_computation_init_from_real_computation_def():
     assert f.damping_nodes == "both"
     assert f.start_messages == "all"
     assert f.stop_cycle == 0
-    assert not f.auto_stop
+    assert f.auto_stop
     assert f.stable_cycles == 1
 
 
@@ -138,9 +138,16 @@ def test_variable_computation_init_from_real_computation_def():
     assert computation.stability_coef == 0.2
     assert computation.start_messages == "all"
     assert computation.stop_cycle == 0
-    assert not computation.auto_stop
+    assert computation.auto_stop
     assert computation.stable_cycles == 1
     assert computation._costs == {}
+
+
+def test_amaxsum_rejects_missing_termination_condition():
+    variable = Variable("v1", [0, 1])
+
+    with pytest.raises(ValueError, match="requires stop_cycle > 0 or auto_stop:1"):
+        _variable_computation(variable, ["f1"], params={"auto_stop": 0})
 
 
 def test_build_computation_factory_creates_factor_and_variable_computations():
@@ -544,7 +551,7 @@ def test_factor_stop_cycle_counts_local_processing_updates():
     v1 = Variable("v1", [0, 1])
     v2 = Variable("v2", [0, 1])
     f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
-    computation = _factor_computation(f1, params={"stop_cycle": 1})
+    computation = _factor_computation(f1, params={"stop_cycle": 1, "auto_stop": 0})
     message_sender = MagicMock()
     computation.message_sender = message_sender
     computation.finished = MagicMock()
@@ -765,7 +772,7 @@ def test_variable_suppresses_stable_message_after_same_count():
 def test_variable_stop_cycle_counts_local_message_updates():
     variable = Variable("v1", [0, 1])
     computation = _variable_computation(
-        variable, ["f1", "f2"], params={"stop_cycle": 1}
+        variable, ["f1", "f2"], params={"stop_cycle": 1, "auto_stop": 0}
     )
     message_sender = MagicMock()
     computation.message_sender = message_sender

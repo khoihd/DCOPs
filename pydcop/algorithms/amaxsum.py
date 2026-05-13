@@ -52,8 +52,10 @@ as a local async update limit: each computation increments its own count when it
 performs a real message-driven update and stops once that local count reaches
 ``stop_cycle``.
 
-``auto_stop`` and ``stable_cycles`` are also local to each computation. When
-``auto_stop`` is enabled, a computation reports completion after
+``auto_stop`` and ``stable_cycles`` are also local to each computation.
+AMaxSum requires either ``stop_cycle > 0`` or ``auto_stop:1``; ``auto_stop``
+defaults to ``1`` for AMaxSum. When ``auto_stop`` is enabled, a computation
+reports completion after
 ``stable_cycles`` consecutive local updates where its outgoing messages are
 approximately stable according to the existing ``stability`` check, but keeps
 processing messages until the orchestrator stops all computations.
@@ -83,7 +85,7 @@ import logging
 from collections import defaultdict
 
 from pydcop.dcop.objects import VariableNoisyCostFunc
-from pydcop.algorithms import ComputationDef
+from pydcop.algorithms import AlgoParameterDef, ComputationDef
 from pydcop.algorithms import maxsum
 from pydcop.infrastructure.computations import (
     DcopComputation,
@@ -112,8 +114,19 @@ def build_computation(comp_def: ComputationDef):
 memory_footprint_estimate = maxsum.memory_footprint_estimate
 communication_load = maxsum.communication_load
 
-# reuse same algorithms parameters as MaxSum
-algo_params = maxsum.algo_params
+algo_params = [
+    (
+        AlgoParameterDef("auto_stop", param.type, param.values, 1)
+        if param.name == "auto_stop"
+        else param
+    )
+    for param in maxsum.algo_params
+]
+
+
+def validate_algo_params(params):
+    if not params["stop_cycle"] and not params["auto_stop"]:
+        raise ValueError("AMaxSum requires stop_cycle > 0 or auto_stop:1")
 
 
 class MaxSumFactorComputation(DcopComputation):
@@ -124,6 +137,7 @@ class MaxSumFactorComputation(DcopComputation):
 
     def __init__(self, comp_def=None):
         assert comp_def.algo.algo == "amaxsum"
+        validate_algo_params(comp_def.algo.params)
         super().__init__(comp_def.node.factor.name, comp_def)
         self.mode = comp_def.algo.mode
         self.factor = comp_def.node.factor
@@ -340,6 +354,7 @@ class MaxSumVariableComputation(VariableComputation):
     def __init__(self, comp_def: ComputationDef = None):
         super().__init__(comp_def.node.variable, comp_def)
         assert comp_def.algo.algo == "amaxsum"
+        validate_algo_params(comp_def.algo.params)
 
         self.mode = comp_def.algo.mode
         self.damping = comp_def.algo.params["damping"]

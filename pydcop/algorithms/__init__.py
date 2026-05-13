@@ -222,12 +222,15 @@ class AlgorithmDef(SimpleRepr):
 
         """
 
+        algo_module = None
         if parameters_definitions is None:
             algo_module = load_algorithm_module(algo)
             parameters_definitions = algo_module.algo_params
 
         params = {} if params is None else params
         params: dict[str, Any] = prepare_algo_params(params, parameters_definitions)
+        if algo_module is not None and hasattr(algo_module, "validate_algo_params"):
+            algo_module.validate_algo_params(params)
 
         return AlgorithmDef(algo, params, mode)
 

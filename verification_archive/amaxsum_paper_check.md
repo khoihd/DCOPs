@@ -75,6 +75,9 @@
   another incoming update.
   The existing `SAME_COUNT` threshold remains the resend / suppression throttle
   for stable messages.
+- AMaxSum requires an explicit termination mechanism: either `stop_cycle > 0`
+  or `auto_stop:1`. `auto_stop` defaults to `1` for AMaxSum, unlike the shared
+  synchronous Max-Sum parameters.
 - `stability` and `SAME_COUNT` implement local stable-message suppression:
   once a directed message remains approximately unchanged for several sends,
   the computation stops resending it until the value changes. This corresponds
@@ -111,13 +114,6 @@
 
 ## Caveats
 
-- `auto_stop` is still local and message-based, but completion is coordinated
-  globally: locally stable computations keep processing messages and can reset
-  themselves to running before the orchestrator sees every computation stable.
-- AMaxSum runs until `stop_cycle` stops computations locally, `auto_stop`
-  reports every computation stable and the orchestrator stops the run, the
-  runtime stops it externally, or
-  stable-message suppression leaves no more messages to send.
 - `start_messages: leafs` can under-seed cyclic graphs without a leaf-based
   seed and may start with little or no propagation.
 - `damping`, `damping_nodes`, `stability`, `noise`, `start_messages`, generic
