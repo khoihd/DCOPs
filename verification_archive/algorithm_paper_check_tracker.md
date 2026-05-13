@@ -138,7 +138,10 @@ For each algorithm:
   - Notes: Core factor-graph message equations match the Farinelli et al.
     Max-Sum paper. Verification added fixed-cycle `stop_cycle` support and
     corrected variable-to-factor normalization so integrated variable costs are
-    included in the zero-sum Q-message normalization.
+    included in the zero-sum Q-message normalization. Optional `auto_stop` /
+    `stable_cycles` is documented as a heuristic local convergence stop, and
+    both `min` and `max` objective support are covered as repo-level
+    generalizations.
 
 - AMaxSum
   - Priority: 10

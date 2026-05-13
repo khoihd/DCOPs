@@ -104,8 +104,10 @@
   damping. The paper also treats convergence on cyclic graphs as an
   empirical/fixed-iteration matter rather than proving global convergence.
 - Generic relation objects, N-ary constraints, integrated variable costs, and
-  `min` mode are repo-level generalizations beyond the graph-colouring examples
-  in the paper.
+  support for both `min` and `max` objectives are repo-level generalizations
+  beyond the graph-colouring examples in the paper. The paper is mostly framed
+  as maximization; this implementation maps the same message updates to
+  minimization by switching the local optimization operator.
 
 ## Follow-Up
 
