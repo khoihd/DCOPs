@@ -35,7 +35,8 @@
   - DSA is done
   - ADSA is done
   - MixedDSA is done / no separate paper source found
-  - next planned verification focus is MaxSum
+  - MaxSum is done
+  - no next paper-verification target has been selected yet
 - Generator cleanup remains open:
   - seed support is done for the active generators recently touched
   - random graph support is done
@@ -50,6 +51,10 @@
   modernization warnings in VS Code, MGM/MGM2 termination behavior, GDBA
   fixed-cycle support, DSA/ADSA verification, MixedDSA review, and removing
   the obsolete DSA tutorial algorithm.
+- Recent MaxSum/runtime work fixed synchronous cycle metrics so MaxSum now
+  supports `--run_metrics` with `--collect_on cycle_change`; the runtime row
+  uses the completed orchestrator cycle, and the final `FINISHED` row is still
+  appended by `solve` shutdown behavior.
 
 ## Recent Maintenance Notes
 
@@ -70,8 +75,9 @@
   use `--collect_on cycle_change`.
 - Generated scratch files currently untracked and intentionally not committed:
   `dsa_max_metrics.csv`, `dsa_min_metrics.csv`, `mgm_max_metrics.csv`,
-  `mgm_min_metrics.csv`, `mgm2_max_metrics.csv`, `mgm2_min_metrics.csv`, and
-  `random.yaml`. `verification_archive/.DS_Store` is also untracked scratch.
+  `mgm_min_metrics.csv`, `mgm2_max_metrics.csv`, `mgm2_min_metrics.csv`,
+  `maxsum_max_metrics.csv`, and `random.yaml`. `verification_archive/.DS_Store`
+  is also untracked scratch.
 
 ## Generator Notes
 
@@ -314,6 +320,17 @@
 - Recent focused MaxSum checks used:
   - `pytest tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
   - `ruff check pydcop/algorithms/maxsum.py tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
+- MaxSum `--run_metrics` support depends on the standard cycle hook in
+  `pydcop/infrastructure/computations.py:SynchronousComputationMixin`; this
+  hook now fires when synchronous computations advance cycles.
+- `pydcop/infrastructure/orchestrator.py` reports the completed orchestrator
+  cycle for `cycle_change` metrics instead of the max cycle from per-agent
+  snapshots, because many computations on one agent can be at slightly
+  different cycle counts during aggregation.
+- Recent focused MaxSum metrics checks used:
+  - `pytest tests/unit/test_infra_synchronous_computation.py tests/unit/test_infra_orchestrator.py tests/unit/test_algorithms_maxsum.py`
+  - `ruff check pydcop/infrastructure/computations.py pydcop/infrastructure/orchestrator.py tests/unit/test_infra_synchronous_computation.py tests/unit/test_infra_orchestrator.py`
+  - `pydcop solve -a maxsum -d adhoc random.yaml -p stop_cycle:3 -c cycle_change --run_metrics /tmp/maxsum_cycle_metrics.csv`
 
 ## Durable Caveats
 
