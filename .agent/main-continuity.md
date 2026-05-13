@@ -55,7 +55,17 @@
 - PuLP solve now defaults to CBC and accepts:
   - `-p solver:cbc|glpk`
   - `-p threads:N`
-- PuLP metrics include `solver_backend` and `solver_threads`.
+- PuLP metrics include `solver_backend`, `solver_threads`,
+  `solver_status`, and `solver_solution_status`.
+- CBC via PuLP can report coarse `solver_status: Optimal` even when the
+  separate solution status is only `Solution Found` after a timeout or manual
+  stop. The CLI maps this case to top-level `status: FEASIBLE`, meaning the
+  assignment is valid but not proven optimal. Only `solver_solution_status:
+  Optimal Solution Found` maps to top-level `status: FINISHED`.
+- On the untracked `random.yaml` instance (`RandomGraph_30_10_0.4`, max),
+  `-t 20` and `-t 60` with `-p threads:4` found objective/cost `1013` with
+  `status: FEASIBLE`, so `1013` is a feasible incumbent, not a certified
+  optimum.
 - CBC selection prefers a `cbc` executable found on `PATH` via
   `COIN_CMD(path=...)`, falling back to PuLP's bundled `PULP_CBC_CMD` when no
   PATH CBC exists.
