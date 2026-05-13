@@ -30,7 +30,8 @@
 
 import pytest
 
-from pydcop.solvers.pulp_solver import solve_dcop
+from pydcop.solvers import pulp_solver
+from pydcop.solvers.pulp_solver import PulpDcopSolverError, solve_dcop
 from tests.utils.known_instances import KNOWN_INSTANCE_COSTS, KNOWN_INSTANCE_SOLUTIONS
 from tests.utils.known_instances import load_test_dcop
 
@@ -71,3 +72,28 @@ def test_pulp_solver_solves_random_graph_instance():
 
     assert result.status == "FINISHED"
     assert result.objective_value == pytest.approx(35)
+
+
+def test_pulp_solver_uses_cbc_threads_by_default(monkeypatch):
+    captured = {}
+
+    class FakeCbcSolver:
+        def __init__(self, msg, timeLimit, threads):
+            captured["msg"] = msg
+            captured["timeLimit"] = timeLimit
+            captured["threads"] = threads
+
+    monkeypatch.setattr(pulp_solver, "PULP_CBC_CMD", FakeCbcSolver)
+    monkeypatch.setattr(pulp_solver.os, "cpu_count", lambda: 8)
+
+    solver, solver_name, threads = pulp_solver._build_solver("cbc", timeout=12)
+
+    assert isinstance(solver, FakeCbcSolver)
+    assert solver_name == "cbc"
+    assert threads == 8
+    assert captured == {"msg": False, "timeLimit": 12, "threads": 8}
+
+
+def test_pulp_solver_rejects_threads_for_glpk():
+    with pytest.raises(PulpDcopSolverError, match="GLPK"):
+        pulp_solver._build_solver("glpk", threads=2)

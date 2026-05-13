@@ -30,15 +30,21 @@
 
 from dataclasses import dataclass
 import math
+import os
 from typing import Any
 from collections.abc import Mapping
 
-from pulp import GLPK_CMD, LpBinary, LpMaximize, LpMinimize, LpProblem, LpStatus
+from pulp import GLPK_CMD, PULP_CBC_CMD, LpBinary, LpMaximize, LpMinimize, LpProblem
+from pulp import LpStatus
 from pulp import LpStatusOptimal, LpVariable, lpSum, value
 from pulp import PulpSolverError as PulpBackendError
 
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.relations import generate_assignment_as_dict
+
+
+DEFAULT_PULP_SOLVER = "cbc"
+SUPPORTED_PULP_SOLVERS = ("cbc", "glpk")
 
 
 @dataclass(frozen=True)
@@ -47,13 +53,23 @@ class PulpDcopResult:
     assignment: dict[str, Any]
     objective_value: float | None
     solver_status: str
+    solver: str = DEFAULT_PULP_SOLVER
+    threads: int | None = None
 
 
 class PulpDcopSolverError(Exception):
     pass
 
 
-def solve_dcop(dcop: DCOP, infinity=float("inf"), timeout=None) -> PulpDcopResult:
+def solve_dcop(
+    dcop: DCOP,
+    infinity=float("inf"),
+    timeout=None,
+    solver_name: str = DEFAULT_PULP_SOLVER,
+    threads: int | None = None,
+) -> PulpDcopResult:
+    solver, solver_name, threads = _build_solver(solver_name, timeout, threads)
+
     sense = LpMinimize if dcop.objective == "min" else LpMaximize
     problem_name = "{}_pulp".format(dcop.name or "dcop").replace(" ", "_")
     problem = LpProblem(problem_name, sense=sense)
@@ -101,7 +117,9 @@ def solve_dcop(dcop: DCOP, infinity=float("inf"), timeout=None) -> PulpDcopResul
             objective_terms.append(relation_value * choice)
 
         if not tuple_choices:
-            return PulpDcopResult("INFEASIBLE", {}, None, "Infeasible")
+            return PulpDcopResult(
+                "INFEASIBLE", {}, None, "Infeasible", solver_name, threads
+            )
 
         problem += lpSum(tuple_choices) == 1
 
@@ -131,7 +149,6 @@ def solve_dcop(dcop: DCOP, infinity=float("inf"), timeout=None) -> PulpDcopResul
 
     problem += lpSum(objective_terms)
 
-    solver = GLPK_CMD(msg=False, timeLimit=timeout)
     try:
         status = problem.solve(solver)
     except PulpBackendError as e:
@@ -139,7 +156,12 @@ def solve_dcop(dcop: DCOP, infinity=float("inf"), timeout=None) -> PulpDcopResul
     solver_status = LpStatus[status]
     if status != LpStatusOptimal:
         return PulpDcopResult(
-            _status_from_pulp_status(solver_status), {}, None, solver_status
+            _status_from_pulp_status(solver_status),
+            {},
+            None,
+            solver_status,
+            solver_name,
+            threads,
         )
 
     assignment = _extract_assignment(dcop, domain_values, variable_choices)
@@ -147,7 +169,38 @@ def solve_dcop(dcop: DCOP, infinity=float("inf"), timeout=None) -> PulpDcopResul
     if objective_value is None:
         objective_value = 0
 
-    return PulpDcopResult("FINISHED", assignment, objective_value, solver_status)
+    return PulpDcopResult(
+        "FINISHED", assignment, objective_value, solver_status, solver_name, threads
+    )
+
+
+def _build_solver(
+    solver_name: str = DEFAULT_PULP_SOLVER,
+    timeout=None,
+    threads: int | None = None,
+):
+    solver_name = solver_name.lower()
+    if solver_name not in SUPPORTED_PULP_SOLVERS:
+        supported = ", ".join(SUPPORTED_PULP_SOLVERS)
+        raise PulpDcopSolverError(
+            f"Unsupported PuLP solver '{solver_name}', expected one of: {supported}"
+        )
+
+    if threads is not None and threads < 1:
+        raise PulpDcopSolverError("PuLP solver threads must be greater than 0")
+
+    if solver_name == "glpk":
+        if threads is not None:
+            raise PulpDcopSolverError("GLPK does not support a threads parameter")
+        return GLPK_CMD(msg=False, timeLimit=timeout), solver_name, None
+
+    if threads is None:
+        threads = os.cpu_count() or 1
+    return (
+        PULP_CBC_CMD(msg=False, timeLimit=timeout, threads=threads),
+        solver_name,
+        threads,
+    )
 
 
 def _compatible_external_assignment(

@@ -133,6 +133,9 @@ Options
   This option may be used multiple times to set several parameters.
   Available parameters depend on the algorithm,
   check :ref:`algorithms documentation<implementation_reference_algorithms>`.
+  With ``--algo pulp``, supported parameters are ``solver:cbc``,
+  ``solver:glpk``, and ``threads:<count>``. CBC is used by default with one
+  thread per available CPU core.
 
 ``--distribution <distribution>`` / ``-d <distribution>``
   Either a :ref:`distribution algorithm<implementation_reference_distributions>`
@@ -576,16 +579,15 @@ def run_cmd(args, timer=None, timeout=None):
 
 
 def _run_pulp_solver(dcop, args, timer=None, timeout=None):
-    if args.algo_params:
-        _error("Algo pulp does not support any parameter")
     if args.run_metrics or args.end_metrics:
         _error("CSV metrics are only available for distributed algorithms")
 
     from pydcop.solvers.pulp_solver import PulpDcopSolverError, solve_dcop
 
+    solver_name, threads = _parse_pulp_params(args.algo_params)
     start_time = perf_counter()
     try:
-        result = solve_dcop(dcop, INFINITY, timeout)
+        result = solve_dcop(dcop, INFINITY, timeout, solver_name, threads)
     except PulpDcopSolverError as e:
         _error("Error while solving with pulp", e)
 
@@ -613,9 +615,40 @@ def _pulp_metrics(dcop, result, elapsed):
         "cycle": 0,
         "agt_metrics": {},
         "solver": PULP_ALGORITHM,
+        "solver_backend": result.solver,
+        "solver_threads": result.threads,
         "solver_status": result.solver_status,
         "objective": result.objective_value,
     }
+
+
+def _parse_pulp_params(cli_params):
+    solver_name = "cbc"
+    threads = None
+    for raw_param in cli_params or []:
+        try:
+            name, value = raw_param.split(":", maxsplit=1)
+        except ValueError:
+            _error(
+                "Invalid pulp parameter",
+                f"{raw_param!r}, expected name:value syntax",
+            )
+
+        if name == "solver":
+            solver_name = value
+        elif name == "threads":
+            try:
+                threads = int(value)
+            except ValueError:
+                _error("Invalid pulp threads parameter", value)
+            if threads < 1:
+                _error("Invalid pulp threads parameter", value)
+        else:
+            _error(
+                "Unsupported pulp parameter",
+                f"{name!r}, expected 'solver' or 'threads'",
+            )
+    return solver_name, threads
 
 
 def on_timeout():
