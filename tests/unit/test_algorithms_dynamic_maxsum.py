@@ -71,11 +71,7 @@ class DynamicFunctionFactorComputationTest(unittest.TestCase):
         def phi(x1_, x2_):
             return x1_ + x2_
 
-        comp_def = MagicMock()
-        comp_def.algo.algo = "amaxsum"
-        comp_def.algo.mode = "min"
-        comp_def.node.factor = phi
-        f = DynamicFunctionFactorComputation(comp_def=comp_def)
+        f = DynamicFunctionFactorComputation(comp_def=_factor_comp_def(phi))
 
         self.assertEqual(f.name, "phi")
 
@@ -92,11 +88,7 @@ class DynamicFunctionFactorComputationTest(unittest.TestCase):
         def phi2(x1_, x2_):
             return x1_ - x2_
 
-        comp_def = MagicMock()
-        comp_def.algo.algo = "amaxsum"
-        comp_def.algo.mode = "min"
-        comp_def.node.factor = phi
-        f = DynamicFunctionFactorComputation(comp_def=comp_def)
+        f = DynamicFunctionFactorComputation(comp_def=_factor_comp_def(phi))
         f.message_sender = MagicMock()
         f.change_factor_function(phi2)
 
@@ -115,11 +107,7 @@ class DynamicFunctionFactorComputationTest(unittest.TestCase):
         def phi2(x2_, x1_):
             return x1_ - x2_
 
-        comp_def = MagicMock()
-        comp_def.algo.algo = "amaxsum"
-        comp_def.algo.mode = "min"
-        comp_def.node.factor = phi
-        f = DynamicFunctionFactorComputation(comp_def=comp_def)
+        f = DynamicFunctionFactorComputation(comp_def=_factor_comp_def(phi))
         f.message_sender = MagicMock()
         f.change_factor_function(phi2)
 
@@ -139,12 +127,7 @@ class DynamicFunctionFactorComputationTest(unittest.TestCase):
         def phi2(x1_, x2_, x3_):
             return x1_ - x2_ + x3_
 
-        comp_def = MagicMock()
-        comp_def.algo.algo = "amaxsum"
-        comp_def.algo.mode = "min"
-        comp_def.node.factor = phi
-
-        f = DynamicFunctionFactorComputation(comp_def=comp_def)
+        f = DynamicFunctionFactorComputation(comp_def=_factor_comp_def(phi))
         # Monkey patch post_msg method with dummy mock to avoid error:
         f.post_msg = types.MethodType(lambda w, x, y, z: None, f)
 
@@ -262,6 +245,40 @@ def test_dynamic_factor_sends_add_and_remove_when_external_scope_changes():
     )
 
 
+def test_dynamic_factor_scope_change_updates_retained_variables():
+    x = Variable("x", [0, 1])
+    y = Variable("y", [0, 1])
+    z = Variable("z", [0, 1])
+
+    @AsNAryFunctionRelation(x, y)
+    def phi(x_, y_):
+        return x_ + 10 * y_
+
+    @AsNAryFunctionRelation(x, z)
+    def phi2(x_, z_):
+        return x_ + 2 * z_
+
+    computation = DynamicFactorComputation(phi)
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+
+    msg_count, msg_size = computation.change_factor_function(phi2)
+
+    assert computation.factor == phi2
+    assert computation.variables == [x, z]
+    assert msg_count == 3
+    assert msg_size == 8
+    message_sender.assert_has_calls(
+        [
+            call("phi", "y", Message("REMOVE", None), None, None),
+            call("phi", "z", Message("ADD", {0: 0, 1: 2}), None, None),
+            call("phi", "x", MaxSumMessage({0: 0, 1: 1}), None, None),
+        ]
+    )
+    assert computation._prev_messages["z"] == ({0: 0, 1: 2}, 1)
+    assert computation._prev_messages["x"] == ({0: 0, 1: 1}, 1)
+
+
 def test_dynamic_variable_processes_add_message_as_factor_costs():
     variable = Variable("x", [0, 1])
     computation = DynamicFactorVariableComputation(variable, ["old_factor"])
@@ -277,6 +294,18 @@ def test_dynamic_variable_processes_add_message_as_factor_costs():
     message_sender.assert_called_once_with(
         "x", "old_factor", MaxSumMessage({0: 2.5, 1: -2.5}), None, None
     )
+
+
+def test_dynamic_variable_add_message_is_idempotent():
+    variable = Variable("x", [0, 1])
+    computation = DynamicFactorVariableComputation(variable, ["old_factor"])
+    computation.message_sender = MagicMock()
+
+    computation._on_add_msg("new_factor", Message("ADD", {0: 5, 1: 0}), None)
+    computation._on_add_msg("new_factor", Message("ADD", {0: 2, 1: 0}), None)
+
+    assert computation.factors == ["old_factor", "new_factor"]
+    assert computation._costs == {"new_factor": {0: 2, 1: 0}}
 
 
 def test_dynamic_variable_removes_factor_and_recomputes_remaining_messages():
@@ -322,12 +351,7 @@ def test_change_function_wrong_dimensions_var():
     def phi2(x1_, x3_):
         return x1_ + x3_
 
-    comp_def = MagicMock()
-    comp_def.algo.algo = "amaxsum"
-    comp_def.algo.mode = "min"
-    comp_def.node.factor = phi
-
-    f = DynamicFunctionFactorComputation(comp_def=comp_def)
+    f = DynamicFunctionFactorComputation(comp_def=_factor_comp_def(phi))
 
     with pytest.raises(ValueError):
         f.change_factor_function(phi2)

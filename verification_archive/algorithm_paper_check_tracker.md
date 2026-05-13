@@ -159,10 +159,15 @@ For each algorithm:
 - Dynamic MaxSum
   - Priority: 11
   - Implementation: `pydcop/algorithms/maxsum_dynamic.py`
-  - Paper / Source: TBD
+  - Paper / Source: no separate Dynamic MaxSum paper source found; contextual
+    sources are `rust_deployment_2017`, `rust_self-organized_2018`, and the
+    base Max-Sum paper
   - Check File: `verification_archive/maxsum_dynamic_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: Done / No Separate Paper Source
+  - Notes: Treated as a pyDcop-specific dynamic factor-graph extension around
+    AMaxSum/MaxSum. Review fixed retained-variable cost propagation after
+    dynamic factor scope changes, synchronized forced dynamic sends with
+    `_prev_messages`, and made variable-side `ADD` idempotent.
 
 - NCBB
   - Priority: 12

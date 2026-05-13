@@ -123,6 +123,7 @@ class DynamicFunctionFactorComputation(MaxSumFactorComputation):
             )
             msg = MaxSumMessage(costs_v)
             self.post_msg(v.name, msg)
+            self._prev_messages[v.name] = costs_v, 1
             msg_count += 1
             msg_size += msg.size
         return msg_count, msg_size
@@ -272,6 +273,7 @@ class DynamicFactorComputation(MaxSumFactorComputation):
         fn_dimension_set = set(fn_dimensions)
         var_removed = [v for v in factor_dimensions if v not in fn_dimension_set]
         var_added = [v for v in fn_dimensions if v not in factor_dimension_set]
+        var_retained = [v for v in fn_dimensions if v in factor_dimension_set]
         if not var_removed and not var_added:
             # Dimensions have not changed, simply change factor object and emit
             # cost messages
@@ -303,8 +305,13 @@ class DynamicFactorComputation(MaxSumFactorComputation):
                 c, s = self._send_add_var_msg(var_added)
                 msg_count += c
                 msg_size += s
-            # FIXME : send costs to other variables ?
 
+            if var_retained:
+                c, s = self._send_current_costs(var_retained)
+                msg_count += c
+                msg_size += s
+
+        self._current_relation = fn
         return msg_count, msg_size
 
     @register("VARIABLE_VALUE")
@@ -322,8 +329,22 @@ class DynamicFactorComputation(MaxSumFactorComputation):
         if hash(new_sliced) != hash(self._current_relation):
             self.logger.info("Changing factor function %s ", self.name)
             msg_count, msg_size = self.change_factor_function(new_sliced)
-            self._current_relation = new_sliced
             self._active = True
+
+        return {"num_msg_out": msg_count, "size_msg_out": msg_size}
+
+    def _send_current_costs(self, variables):
+        msg_count, msg_size = 0, 0
+        for v in variables:
+            costs_v = maxsum.factor_costs_for_var(
+                self.factor, v, self._costs, self.mode
+            )
+            msg = MaxSumMessage(costs_v)
+            self.post_msg(v.name, msg)
+            self._prev_messages[v.name] = costs_v, 1
+            msg_count += 1
+            msg_size += msg.size
+        return msg_count, msg_size
 
     def _send_add_var_msg(self, var_added):
         """
@@ -342,6 +363,7 @@ class DynamicFactorComputation(MaxSumFactorComputation):
             )
             msg = Message("ADD", costs_v)
             self.post_msg(v.name, msg)
+            self._prev_messages[v.name] = costs_v, 1
             msg_debug[v.name] = costs_v
             msg_size += MaxSumMessage(costs_v).size
             msg_count += 1
@@ -445,7 +467,8 @@ class DynamicFactorVariableComputation(MaxSumVariableComputation):
     @register("ADD")
     def _on_add_msg(self, factor_name, msg, t):
         self.logger.debug("Received ADD msg from %s : %s ", factor_name, msg.content)
-        self._factors.append(factor_name)
+        if factor_name not in self._factors:
+            self._factors.append(factor_name)
         return self._on_maxsum_msg(
             factor_name, MaxSumMessage(msg.content), t
         )
