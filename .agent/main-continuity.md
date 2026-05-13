@@ -31,11 +31,16 @@
   `verification_archive/algorithm_paper_check_tracker.md`; detailed notes live
   in `verification_archive/*_paper_check.md`.
 - Verified/done paper checks include DPOP, MGM, MGM2, DBA, GDBA, DSA, ADSA,
-  MixedDSA, MaxSum, and AMaxSum.
-- No next paper-verification target has been selected yet. Dynamic MaxSum
-  remains a separate tracker item.
-- `todo.md` currently has uncommitted user edits and should be left alone
-  unless explicitly requested.
+  MixedDSA, MaxSum, AMaxSum, and Dynamic MaxSum.
+- Dynamic MaxSum is marked `Done / No Separate Paper Source`, documented in
+  `verification_archive/maxsum_dynamic_paper_check.md`, and treated as a
+  pyDcop-specific dynamic factor-graph extension around AMaxSum/MaxSum.
+- NCBB is marked `Needs fix`, documented in
+  `verification_archive/ncbb_paper_check.md`, with
+  `verification_archive/papers/ncbb.pdf` committed as the source paper.
+- No next paper-verification target has been selected yet. SyncBB is the next
+  tracker item that is still not started.
+- `todo.md` verification status edits have been committed.
 - Generated scratch files are currently untracked and intentionally not
   committed:
   - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`
@@ -144,6 +149,51 @@
   - `python -m pydcop.dcop_cli -t 10 solve -a amaxsum -p noise:0 -d oneagent tests/instances/graph_coloring1.yaml`
   - `python -m pydcop.dcop_cli -t 10 solve -a amaxsum -p noise:0 -p auto_stop:0 -d oneagent tests/instances/graph_coloring1.yaml` exits early with the expected parameter error unless `stop_cycle` is set.
 
+## Dynamic MaxSum
+
+- Dynamic MaxSum has no separate paper source found. Contextual sources are
+  Rust/Picard/Ramparany dynamic deployment/resilience papers plus the base
+  Farinelli et al. Max-Sum paper for Q/R equations.
+- `pydcop/algorithms/maxsum_dynamic.py` is a low-level helper module, not a
+  normal CLI algorithm entry point: it has no `GRAPH_TYPE`, `algo_params`, or
+  `build_computation()`.
+- Current behavior is documented in
+  `verification_archive/maxsum_dynamic_paper_check.md` and marked
+  `Done / No Separate Paper Source` in the tracker.
+- Recent review fixes:
+  - retained variables receive refreshed factor-to-variable costs after a
+    dynamic factor scope change
+  - forced dynamic factor sends update `_prev_messages`, keeping stable-message
+    suppression state aligned with messages sent outside the normal AMaxSum
+    receive loop
+  - variable-side `ADD` handling is idempotent for repeated `ADD` messages from
+    the same factor
+- Relevant checks used recently:
+  - `pytest tests/unit/test_algorithms_dynamic_maxsum.py`
+  - `pytest tests/unit/test_algorithms_dynamic_maxsum.py tests/unit/test_algorithms_amaxsum.py tests/unit/test_algorithms_maxsum.py`
+  - `ruff check pydcop/algorithms/maxsum_dynamic.py tests/unit/test_algorithms_dynamic_maxsum.py`
+
+## NCBB
+
+- NCBB has been checked against `verification_archive/papers/ncbb.pdf`,
+  documented in `verification_archive/ncbb_paper_check.md`, and marked
+  `Needs fix` in the tracker.
+- The paper is "No-Commitment Branch and Bound Search for Distributed
+  Constraint Optimization" by Anton Chechetka and Katia Sycara.
+- `pydcop/algorithms/ncbb.py` is incomplete: initialization and the paper's
+  `AgentCost` / `LB` helper definitions are implemented, but the defining
+  branch-and-bound search loop is not implemented.
+- `search()` now raises `NotImplementedError` explicitly. Search-phase message
+  handling, subtree search, pruning, result selection, and STOP propagation are
+  still missing.
+- `memory_footprint_estimate()` and `communication_load()` still raise
+  `NotImplementedError`.
+- The implementation rejects non-binary constraints, matching the paper's
+  restricted binary-constraint presentation.
+- Relevant checks used recently:
+  - `pytest tests/unit/test_algorithms_ncbb.py`
+  - `ruff check pydcop/algorithms/ncbb.py tests/unit/test_algorithms_ncbb.py`
+
 ## Generator And Docs Notes
 
 - Generate YAML DCOP instances with
@@ -159,6 +209,10 @@
 - `docs/conf.py` uses `bibtex_bibfiles = ["biblio.bib"]`, `language = "en"`,
   and no longer points at a missing `_static` directory.
 - `Makefile` supports `SPHINXOPTS` and `make html` as an alias for `make doc`.
+- Algorithm reference docs were updated with verified-behavior notes for DBA,
+  GDBA, DSA, ADSA, MaxSum, AMaxSum, and MixedDSA. The docs build used
+  `SPHINXOPTS="-D autosummary_generate=0" make html` and succeeded with only
+  existing multiple-toctree consistency notices.
 
 ## Durable Caveats
 
@@ -173,8 +227,9 @@
   behavior. Use `profiling/profile_dpop_utils.py --case generated --strategy all`
   before future DPOP join/projection changes.
 - NCBB search-phase stubs remain incomplete. Existing tests cover implemented
-  initialization behavior, message dispatch, phase validation, and root
-  transition into search, but not a real search implementation.
+  initialization behavior, message dispatch, phase validation, root transition
+  into search, `agent_cost()`, `lower_bound()`, and explicit search-phase
+  incompleteness, but not a real search implementation.
 - SyncBB behavior tests cover direct message flow, pruning, termination, and
   solve-level min/max outcomes.
 - MGM and DSA do not currently implement a global convergence stop such as
