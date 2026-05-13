@@ -58,8 +58,9 @@ Algorithm Parameters
 **start_messages**
   nodes that initiate messages : "leafs", "leafs_vars", "all"
 
-
-FIXME: add support for stop_cycle
+**stop_cycle**
+  stop after a fixed number of synchronous cycles. Set to 0 to run until the
+  runtime stops the algorithm.
 
 
 Example
@@ -217,6 +218,7 @@ algo_params = [
     AlgoParameterDef("stability", "float", None, STABILITY_COEFF),
     AlgoParameterDef("noise", "float", None, 0.01),
     AlgoParameterDef("start_messages", "str", ["leafs", "leafs_vars", "all"], "leafs"),
+    AlgoParameterDef("stop_cycle", "int", None, 0),
 ]
 
 
@@ -297,6 +299,7 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
         self.damping_nodes = comp_def.algo.params["damping_nodes"]
         self.stability_coef = comp_def.algo.params["stability"]
         self.start_messages = comp_def.algo.params["start_messages"]
+        self.stop_cycle = comp_def.algo.params["stop_cycle"]
         self.logger.info(f"Running maxsum with params: {comp_def.algo.params}")
 
         # A dict var_name -> (message, count)
@@ -339,6 +342,11 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
         # Collect costs messages from neighbor variables for this cycle (aka iteration)
         for sender, (message, t) in messages.items():
             self._costs[sender] = message.costs
+
+        if self.stop_cycle and cycle_id >= self.stop_cycle:
+            self.finished()
+            self.stop()
+            return None
 
         for v in self.variables:
             costs_v = factor_costs_for_var(self.factor, v, self._costs, self.mode)
@@ -456,6 +464,7 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
         self.damping_nodes = comp_def.algo.params["damping_nodes"]
         self.stability_coef = comp_def.algo.params["stability"]
         self.start_messages = comp_def.algo.params["start_messages"]
+        self.stop_cycle = comp_def.algo.params["stop_cycle"]
         self.logger.info(f"Running maxsum with params: {comp_def.algo.params}")
 
         # The list of factors (names) this variables is linked with
@@ -525,6 +534,11 @@ class MaxSumVariableComputation(SynchronousComputationMixin, VariableComputation
 
         # select our value, based on new costs
         self.value_selection(*select_value(self.variable, self.costs, self.mode))
+
+        if self.stop_cycle and cycle_id >= self.stop_cycle:
+            self.finished()
+            self.stop()
+            return None
 
         # Compute and send our own costs to  factors.
 
@@ -641,7 +655,6 @@ def costs_for_factor(
         a dict containing a cost for each value in the domain of the variable
     """
     msg_costs = {}
-    sum_cost = 0
     other_costs = [costs[f] for f in factors if f != factor and f in costs]
     for d in variable.domain:
         # If our variable has integrated costs, add them
@@ -650,7 +663,6 @@ def costs_for_factor(
             if d not in f_costs:
                 continue
             c = f_costs[d]
-            sum_cost += c
             msg_cost += c
         msg_costs[d] = msg_cost
 
@@ -659,7 +671,7 @@ def costs_for_factor(
     # return {d: c for d, c in msg_costs.items() }
 
     # Normalize costs with the average cost, to avoid exploding costs
-    avg_cost = sum_cost / len(msg_costs)
+    avg_cost = sum(msg_costs.values()) / len(msg_costs)
     normalized_msg_costs = {d: c - avg_cost for d, c in msg_costs.items()}
 
     return normalized_msg_costs

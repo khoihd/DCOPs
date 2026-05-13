@@ -559,7 +559,7 @@ def test_variable_sends_integrated_costs_on_start():
     assert computation.current_value == 0
     assert computation.current_cost == 0
     message_sender.assert_called_once_with(
-        "v1", "f1", MaxSumMessage({0: 0.0, 1: 2.0, 2: 4.0}), None, None
+        "v1", "f1", MaxSumMessage({0: -2.0, 1: 0.0, 2: 2.0}), None, None
     )
 
 
@@ -614,9 +614,9 @@ def test_variable_selects_value_and_sends_costs_to_other_factors():
     assert computation.current_value == 1
     assert computation.current_cost == 2
     message_sender.assert_called_once_with(
-        "v1", "f2", MaxSumMessage({0: 2.5, 1: -0.5}), None, None
+        "v1", "f2", MaxSumMessage({0: 1.5, 1: -1.5}), None, None
     )
-    assert computation._prev_messages["f2"] == ({0: 2.5, 1: -0.5}, 1)
+    assert computation._prev_messages["f2"] == ({0: 1.5, 1: -1.5}, 1)
 
 
 def test_variable_does_not_send_back_to_message_sender():

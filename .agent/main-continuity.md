@@ -303,6 +303,17 @@
 - DSA already calls both `finished()` and `stop()` at `stop_cycle`; its
   indefinite-run cases are by design (`stop_cycle=0`) or due to missing
   neighbor messages in the synchronous protocol.
+- MaxSum has been checked against `verification_archive/papers/maxsum.pdf`,
+  documented in `verification_archive/maxsum_paper_check.md`, and marked
+  done / verified.
+- MaxSum verification fixes in `pydcop/algorithms/maxsum.py`:
+  - added `stop_cycle` support for fixed-cycle termination
+  - corrected variable-to-factor normalization so integrated variable costs are
+    included in the zero-sum Q-message normalization from the paper
+  - updated shared-helper expectations in MaxSum and AMaxSum tests
+- Recent focused MaxSum checks used:
+  - `pytest tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
+  - `ruff check pydcop/algorithms/maxsum.py tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
 
 ## Durable Caveats
 

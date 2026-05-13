@@ -132,10 +132,13 @@ For each algorithm:
 - MaxSum
   - Priority: 9
   - Implementation: `pydcop/algorithms/maxsum.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/maxsum.pdf`
   - Check File: `verification_archive/maxsum_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: Done / Verified
+  - Notes: Core factor-graph message equations match the Farinelli et al.
+    Max-Sum paper. Verification added fixed-cycle `stop_cycle` support and
+    corrected variable-to-factor normalization so integrated variable costs are
+    included in the zero-sum Q-message normalization.
 
 - AMaxSum
   - Priority: 10

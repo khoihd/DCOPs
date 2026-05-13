@@ -138,6 +138,7 @@ def test_factor_computation_init_from_real_computation_def():
     assert computation.damping == 0.5
     assert computation.damping_nodes == "both"
     assert computation.start_messages == "leafs"
+    assert computation.stop_cycle == 0
 
 
 def test_variable_computation_init_from_real_computation_def():
@@ -151,6 +152,7 @@ def test_variable_computation_init_from_real_computation_def():
             "damping_nodes": "vars",
             "stability": 0.2,
             "start_messages": "all",
+            "stop_cycle": 3,
         },
     )
 
@@ -162,6 +164,7 @@ def test_variable_computation_init_from_real_computation_def():
     assert computation.damping_nodes == "vars"
     assert computation.stability_coef == 0.2
     assert computation.start_messages == "all"
+    assert computation.stop_cycle == 3
     assert computation.costs == {}
 
 
@@ -324,13 +327,14 @@ def test_select_value_max_mode_uses_cost_messages_and_variable_cost():
     assert cost == 7.1
 
 
-def test_costs_for_factor_normalizes_other_factor_costs():
+def test_costs_for_factor_normalizes_complete_message():
     v1 = VariableWithCostFunc("v1", [0, 1], lambda v: v)
     costs = {"f1": {0: 10, 1: 30}, "f2": {0: 3, 1: 5}}
 
     obtained = costs_for_factor(v1, "f1", ["f1", "f2"], costs)
 
-    assert obtained == {0: -1.0, 1: 2.0}
+    assert obtained == {0: -1.5, 1: 1.5}
+    assert sum(obtained.values()) == 0
 
 
 def test_variable_memory_no_neighbor():
@@ -533,7 +537,7 @@ def test_variable_sends_integrated_costs_on_start():
     assert computation.current_value == 0
     assert computation.current_cost == 0
     message_sender.assert_called_once_with(
-        "v1", "f1", MaxSumMessage({0: 0.0, 1: 2.0, 2: 4.0}), None, None
+        "v1", "f1", MaxSumMessage({0: -2.0, 1: 0.0, 2: 2.0}), None, None
     )
 
 
@@ -550,8 +554,8 @@ def test_variable_cycle_selects_value_and_sends_costs_to_all_factors():
     assert computation.current_cost == 2
     message_sender.assert_has_calls(
         [
-            call("v1", "f1", MaxSumMessage({0: 0.0, 1: 2.0}), None, None),
-            call("v1", "f2", MaxSumMessage({0: 2.5, 1: -0.5}), None, None),
+            call("v1", "f1", MaxSumMessage({0: -1.0, 1: 1.0}), None, None),
+            call("v1", "f2", MaxSumMessage({0: 1.5, 1: -1.5}), None, None),
         ],
         any_order=True,
     )
@@ -574,6 +578,39 @@ def test_variable_cycle_applies_damping_before_sending_message():
         "v1", "f2", MaxSumMessage({0: 2.0, 1: 0.0}), None, None
     )
     assert computation._prev_messages["f2"] == ({0: 2.0, 1: 0.0}, 1)
+
+
+def test_factor_stops_at_stop_cycle_before_sending_next_messages():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(f1, params={"stop_cycle": 1})
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.start()
+    message_sender.reset_mock()
+
+    computation.on_new_cycle({"v2": (MaxSumMessage({0: 0, 1: 0}), 0)}, 1)
+
+    assert not computation.is_running
+    message_sender.assert_not_called()
+
+
+def test_variable_stops_at_stop_cycle_after_selecting_final_value():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(
+        variable, ["f1", "f2"], params={"stop_cycle": 1}
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.start()
+    message_sender.reset_mock()
+
+    computation.on_new_cycle({"f1": (MaxSumMessage({0: 5, 1: 0}), 0)}, 1)
+
+    assert computation.current_value == 1
+    assert not computation.is_running
+    message_sender.assert_not_called()
 
 
 def test_variable_cycle_suppresses_stable_message_after_same_count():
