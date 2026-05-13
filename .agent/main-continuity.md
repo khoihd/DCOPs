@@ -31,9 +31,9 @@
   `verification_archive/algorithm_paper_check_tracker.md`; detailed notes live
   in `verification_archive/*_paper_check.md`.
 - Verified/done paper checks include DPOP, MGM, MGM2, DBA, GDBA, DSA, ADSA,
-  MixedDSA, and MaxSum.
-- No next paper-verification target has been selected yet. AMaxSum and Dynamic
-  MaxSum remain separate tracker items.
+  MixedDSA, MaxSum, and AMaxSum.
+- No next paper-verification target has been selected yet. Dynamic MaxSum
+  remains a separate tracker item.
 - Generated scratch files are currently untracked and intentionally not
   committed:
   - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`

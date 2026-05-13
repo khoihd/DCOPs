@@ -35,10 +35,10 @@ MaxSum: Belief-propagation DCOP algorithm
 Max-Sum :cite:`farinelli_decentralised_2008` is an incomplete inference-based DCOP
 algorithm.
 
-This is a **asynchronous implementation** of Max-Sum,
-where factors and variable send messages
+This is an **asynchronous implementation** of Max-Sum,
+where factors and variables send messages
 every time they receive a message.
-For an synchronous implementation,
+For a synchronous implementation,
 see. :ref:`Max-Sum<implementation_reference_algorithms_maxsum>`
 
 
@@ -60,7 +60,7 @@ FIXME: add results
 
 See Also
 ^^^^^^^^
-:ref:`Max-Sum<implementation_reference_algorithms_maxsum>`: an synchronous implementation of
+:ref:`Max-Sum<implementation_reference_algorithms_maxsum>`: a synchronous implementation of
 Max-Sum.
 
 
@@ -381,12 +381,8 @@ class MaxSumVariableComputation(VariableComputation):
             *maxsum.select_value(self.variable, self._costs, self.mode)
         )
 
-        # Compute and send our own costs to all other factors.
-        # If our variable has his own costs, we must sent them back even
-        # to the factor which sent us this message, as integrated costs are
-        # similar to an unary factor and with an unary factor we would have
-        # sent these costs back to the original sender:
-        # factor -> variable -> unary_cost_factor -> variable -> factor
+        # Compute and send our own costs to all other factors. The
+        # variable-to-factor Max-Sum message excludes the destination factor.
         for f_name in self._factors:
             if f_name == factor_name:
                 continue

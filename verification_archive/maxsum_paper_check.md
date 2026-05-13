@@ -111,4 +111,4 @@
 
 ## Follow-Up
 
-- AMaxSum and Dynamic MaxSum remain separate tracker items.
+- Dynamic MaxSum remains a separate tracker item.

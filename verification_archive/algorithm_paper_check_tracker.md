@@ -146,10 +146,16 @@ For each algorithm:
 - AMaxSum
   - Priority: 10
   - Implementation: `pydcop/algorithms/amaxsum.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/maxsum.pdf`
   - Check File: `verification_archive/amaxsum_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: Done / Verified with documented runtime caveats
+  - Notes: The asynchronous event-driven message flow is described in the same
+    Farinelli et al. Max-Sum paper as synchronous MaxSum. Core Q/R equations
+    are shared with `maxsum.py`; `start_messages`, damping, stability,
+    integrated variable costs, N-ary constraints, and `min` mode are repo-level
+    extensions. The inherited `stop_cycle`, `auto_stop`, and `stable_cycles`
+    parameters are not implemented by the async computations and remain a
+    follow-up API/runtime cleanup item.
 
 - Dynamic MaxSum
   - Priority: 11
