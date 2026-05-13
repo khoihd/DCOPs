@@ -105,6 +105,21 @@
   - `ruff check pydcop/algorithms/maxsum.py tests/unit/test_algorithms_maxsum.py`
   - `python -m pydcop.dcop_cli -t 10 solve -a maxsum -p auto_stop:1 -p stable_cycles:1 -d oneagent tests/instances/graph_coloring1.yaml`
 
+## AMaxSum
+
+- AMaxSum has been checked against `verification_archive/papers/maxsum.pdf`,
+  documented in `verification_archive/amaxsum_paper_check.md`, and marked
+  done / verified with documented runtime caveats in the tracker.
+- The Farinelli et al. Max-Sum paper explicitly describes asynchronous local
+  updates, so `pydcop/algorithms/amaxsum.py` uses the same paper source as
+  synchronous MaxSum.
+- `stop_cycle` is interpreted as a local async update limit, not a globally
+  synchronized round count. Variable computations increment the local count for
+  each processed factor message; factor computations increment it only when
+  they have enough variable messages to run a real factor update.
+- `auto_stop` and `stable_cycles` are still inherited from MaxSum parameters
+  but are not implemented by AMaxSum.
+
 ## Generator And Docs Notes
 
 - Generate YAML DCOP instances with

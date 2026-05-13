@@ -534,6 +534,32 @@ def test_factor_suppresses_stable_message_after_same_count():
     assert computation._prev_messages["v1"] == ({0: 0, 1: 0}, SAME_COUNT)
 
 
+def test_factor_stop_cycle_counts_local_processing_updates():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(f1, params={"stop_cycle": 1})
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+
+    computation._on_maxsum_msg("v1", MaxSumMessage({0: 0, 1: 0}), None)
+
+    assert computation.cycle_count == 0
+    computation.finished.assert_not_called()
+    computation.stop.assert_not_called()
+
+    computation._on_maxsum_msg("v2", MaxSumMessage({0: 0, 1: 0}), None)
+
+    assert computation.cycle_count == 1
+    message_sender.assert_called_once_with(
+        "f1", "v1", MaxSumMessage({0: 0, 1: 0}), None, None
+    )
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()
+
+
 def test_variable_sends_initial_leaf_message_on_start():
     variable = Variable("v1", [0, 1], initial_value=1)
     computation = _variable_computation(variable, ["f1"])
@@ -660,3 +686,24 @@ def test_variable_suppresses_stable_message_after_same_count():
 
     message_sender.assert_not_called()
     assert computation._prev_messages["f2"] == ({0: 0.0, 1: 0.0}, SAME_COUNT)
+
+
+def test_variable_stop_cycle_counts_local_message_updates():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(
+        variable, ["f1", "f2"], params={"stop_cycle": 1}
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.finished = MagicMock()
+    computation.stop = MagicMock()
+
+    computation._on_maxsum_msg("f1", MaxSumMessage({0: 2, 1: 0}), None)
+
+    assert computation.cycle_count == 1
+    assert computation.current_value == 1
+    message_sender.assert_called_once_with(
+        "v1", "f2", MaxSumMessage({0: 1.0, 1: -1.0}), None, None
+    )
+    computation.finished.assert_called_once_with()
+    computation.stop.assert_called_once_with()

@@ -60,6 +60,10 @@
 - `start_messages` controls how outgoing messages are seeded. `all` most
   closely mirrors the paper's initialized-message description; `leafs` and
   `leafs_vars` are repo-level startup controls.
+- `stop_cycle` is interpreted as a local async update limit. Each computation
+  increments its own local cycle count when it performs a real message-driven
+  processing update, and reports finished once that count reaches
+  `stop_cycle`.
 - `stability` and `SAME_COUNT` implement local stable-message suppression:
   once a directed message remains approximately unchanged for several sends,
   the computation stops resending it until the value changes. This corresponds
@@ -95,11 +99,11 @@
 
 ## Caveats
 
-- `amaxsum.py` reuses `maxsum.algo_params`, so it exposes `stop_cycle`,
-  `auto_stop`, and `stable_cycles`, but the asynchronous computation classes do
-  not currently implement those parameters. AMaxSum runs until the runtime stops
-  it externally, or until stable-message suppression leaves no more messages to
-  send.
+- `amaxsum.py` reuses `maxsum.algo_params`, so it exposes `auto_stop` and
+  `stable_cycles`, but the asynchronous computation classes do not currently
+  implement those convergence-stop parameters. AMaxSum runs until `stop_cycle`
+  is reached locally by every computation, the runtime stops it externally, or
+  stable-message suppression leaves no more messages to send.
 - With the default `start_messages: leafs`, cyclic graphs without a leaf-based
   seed can start with little or no propagation. For paper-like initialized
   outgoing messages, use `-p start_messages:all`.
@@ -110,6 +114,5 @@
 
 ## Follow-Up
 
-- Decide whether AMaxSum should hide inherited synchronous parameters
-  (`stop_cycle`, `auto_stop`, `stable_cycles`) or implement asynchronous
-  equivalents.
+- Decide whether AMaxSum should hide inherited convergence-stop parameters
+  (`auto_stop`, `stable_cycles`) or implement asynchronous equivalents.

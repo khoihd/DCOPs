@@ -47,6 +47,11 @@ see. :ref:`Max-Sum<implementation_reference_algorithms_maxsum>`
 Algorithm Parameters
 ^^^^^^^^^^^^^^^^^^^^
 
+AMaxSum reuses MaxSum parameters. In particular, ``stop_cycle`` is interpreted
+as a local async update limit: each computation increments its own count when it
+performs a real message-driven update and stops once that local count reaches
+``stop_cycle``.
+
 
 Example
 ^^^^^^^
@@ -127,6 +132,7 @@ class MaxSumFactorComputation(DcopComputation):
         self.damping_nodes = comp_def.algo.params["damping_nodes"]
         self.stability_coef = comp_def.algo.params["stability"]
         self.start_messages = comp_def.algo.params["start_messages"]
+        self.stop_cycle = comp_def.algo.params["stop_cycle"]
         self.logger.info(f"Running maxsum with params: {comp_def.algo.params}")
 
         # A dict var_name -> (message, count)
@@ -202,6 +208,7 @@ class MaxSumFactorComputation(DcopComputation):
         # Wait until we received costs from all our variables before sending
         # our own costs (if works without doing that, but results are worse)
         if len(self._costs) == len(self.factor.dimensions):
+            self.new_cycle()
             for v in self.variables:
                 if v.name != var_name:
                     costs_v = maxsum.factor_costs_for_var(
@@ -240,6 +247,10 @@ class MaxSumFactorComputation(DcopComputation):
                             f"Not sending (similar) from {self.name} -> {v.name} : {costs_v}"
                         )
 
+            if self.stop_cycle and self.cycle_count >= self.stop_cycle:
+                self.finished()
+                self.stop()
+
         else:
             self.logger.debug(
                 f" Still waiting for costs from all  the variables {self._costs.keys()}"
@@ -264,6 +275,7 @@ class MaxSumVariableComputation(VariableComputation):
         self.damping_nodes = comp_def.algo.params["damping_nodes"]
         self.stability_coef = comp_def.algo.params["stability"]
         self.start_messages = comp_def.algo.params["start_messages"]
+        self.stop_cycle = comp_def.algo.params["stop_cycle"]
         self.logger.info(f"Running amaxsum with params: {comp_def.algo.params}")
 
         # The list of factors (names) this variables is linked with
@@ -375,6 +387,7 @@ class MaxSumVariableComputation(VariableComputation):
             * cost if the minimum cost of the factor when taking value d
         """
         self._costs[factor_name] = msg.costs
+        self.new_cycle()
 
         # select our value
         self.value_selection(
@@ -416,3 +429,7 @@ class MaxSumVariableComputation(VariableComputation):
                 self.logger.debug(
                     f"Not sending (similar) from {self.name} -> {f_name} : {costs_f}"
                 )
+
+        if self.stop_cycle and self.cycle_count >= self.stop_cycle:
+            self.finished()
+            self.stop()
