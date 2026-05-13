@@ -331,6 +331,33 @@
   - `pytest tests/unit/test_infra_synchronous_computation.py tests/unit/test_infra_orchestrator.py tests/unit/test_algorithms_maxsum.py`
   - `ruff check pydcop/infrastructure/computations.py pydcop/infrastructure/orchestrator.py tests/unit/test_infra_synchronous_computation.py tests/unit/test_infra_orchestrator.py`
   - `pydcop solve -a maxsum -d adhoc random.yaml -p stop_cycle:3 -c cycle_change --run_metrics /tmp/maxsum_cycle_metrics.csv`
+- PuLP centralized solve now defaults to CBC instead of GLPK and accepts
+  `-p solver:cbc|glpk` and `-p threads:N`. Metrics include
+  `solver_backend` and `solver_threads`.
+- CBC selection now prefers a `cbc` executable found on `PATH` via
+  `COIN_CMD(path=...)`, falling back to PuLP's bundled `PULP_CBC_CMD` when no
+  PATH CBC exists. On the current M1 laptop, `/Users/khoihd/miniconda3/bin/cbc`
+  is ARM64 but does not recognize `-threads`; `/opt/homebrew/bin/cbc` is ARM64
+  and does recognize `-threads`. Prefer Homebrew CBC first in `PATH` for
+  threaded CBC runs.
+- Recent focused PuLP checks used:
+  - `pytest tests/unit/test_solvers_pulp.py tests/dcop_cli/test_solve_pulp.py`
+  - `ruff check pydcop/solvers/pulp_solver.py pydcop/commands/solve.py tests/unit/test_solvers_pulp.py tests/dcop_cli/test_solve_pulp.py`
+  - `python -m pydcop.dcop_cli solve -a pulp -p threads:2 tests/instances/graph_coloring1.yaml`
+- MaxSum now has optional heuristic convergence stopping with
+  `-p auto_stop:1 -p stable_cycles:N`. Each computation reports `finished()`
+  after its local outgoing Q/R messages have remained stable for the configured
+  number of cycles, but it keeps participating in synchronization until the
+  orchestrator stops all computations together.
+- `verification_archive/maxsum_paper_check.md` and
+  `verification_archive/algorithm_paper_check_tracker.md` now mark MaxSum
+  done / verified, document `auto_stop` as a heuristic local convergence stop,
+  and clarify that both `min` and `max` objective support are repo-level
+  generalizations of the paper's mostly maximization framing.
+- Recent focused MaxSum auto-stop checks used:
+  - `pytest tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
+  - `ruff check pydcop/algorithms/maxsum.py tests/unit/test_algorithms_maxsum.py`
+  - `python -m pydcop.dcop_cli -t 10 solve -a maxsum -p auto_stop:1 -p stable_cycles:1 -d oneagent tests/instances/graph_coloring1.yaml`
 
 ## Durable Caveats
 
