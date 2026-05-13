@@ -62,13 +62,13 @@
   default; `leafs` and `leafs_vars` are repo-level startup controls.
 - `stop_cycle` is interpreted as a local async update limit. Each computation
   increments its own local cycle count when it performs a real message-driven
-  processing update, and reports finished once that count reaches
-  `stop_cycle`.
+  processing update. Once the count reaches `stop_cycle`, the computation
+  reports finished if needed and then stops itself locally.
 - `auto_stop` and `stable_cycles` are also interpreted locally. A computation
   reports finished after `stable_cycles` consecutive local async updates where
   every outgoing message is approximately unchanged according to the existing
-  `stability` check. The existing `SAME_COUNT` threshold remains the resend /
-  suppression throttle for stable messages.
+  `stability` check, and then stops itself locally. The existing `SAME_COUNT`
+  threshold remains the resend / suppression throttle for stable messages.
 - `stability` and `SAME_COUNT` implement local stable-message suppression:
   once a directed message remains approximately unchanged for several sends,
   the computation stops resending it until the value changes. This corresponds
@@ -107,11 +107,10 @@
 
 - `auto_stop` is local, message-based, and heuristic, not a proof of global
   convergence. A computation can become locally stable before delayed neighbor
-  updates arrive, so it reports completion but does not immediately stop
-  processing messages.
-- AMaxSum runs until `stop_cycle` is reached locally by every computation, all
-  computations report completion through `auto_stop`, the runtime stops it
-  externally, or stable-message suppression leaves no more messages to send.
+  updates arrive, so it may stop based on a stale local view.
+- AMaxSum runs until `stop_cycle` or `auto_stop` stops computations locally,
+  the runtime stops it externally, or
+  stable-message suppression leaves no more messages to send.
 - `start_messages: leafs` can under-seed cyclic graphs without a leaf-based
   seed and may start with little or no propagation.
 - `damping`, `damping_nodes`, `stability`, `noise`, `start_messages`, generic

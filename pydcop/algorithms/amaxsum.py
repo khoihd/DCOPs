@@ -53,7 +53,7 @@ performs a real message-driven update and stops once that local count reaches
 ``stop_cycle``.
 
 ``auto_stop`` and ``stable_cycles`` are also local to each computation. When
-``auto_stop`` is enabled, a computation reports completion after
+``auto_stop`` is enabled, a computation stops after
 ``stable_cycles`` consecutive local updates where its outgoing messages are
 approximately stable according to the existing ``stability`` check.
 
@@ -263,7 +263,8 @@ class MaxSumFactorComputation(DcopComputation):
             if self.stop_cycle and self.cycle_count >= self.stop_cycle:
                 if not self._auto_stop_notified:
                     self.finished()
-                self.stop()
+                    self._auto_stop_notified = True
+                    self.stop()
 
         else:
             self.logger.debug(
@@ -285,6 +286,7 @@ class MaxSumFactorComputation(DcopComputation):
         ):
             self.finished()
             self._auto_stop_notified = True
+            self.stop()
 
 
 class MaxSumVariableComputation(VariableComputation):
@@ -471,7 +473,8 @@ class MaxSumVariableComputation(VariableComputation):
         if self.stop_cycle and self.cycle_count >= self.stop_cycle:
             if not self._auto_stop_notified:
                 self.finished()
-            self.stop()
+                self._auto_stop_notified = True
+                self.stop()
 
     def _handle_auto_stop(self, cycle_stable):
         if not self.auto_stop:
@@ -488,3 +491,4 @@ class MaxSumVariableComputation(VariableComputation):
         ):
             self.finished()
             self._auto_stop_notified = True
+            self.stop()
