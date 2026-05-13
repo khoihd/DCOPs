@@ -4,10 +4,10 @@
 - (WIP) Verify the correctness of the implementation with the provided paper
   - (DONE) DPOP
   - (DONE) MGM / MGM2
-  - DBA / DSA / ADSA
-  - Maxsum / AMaxsum
-  - Maxsum Dynamic
-  - DSAAuto
+  - (DONE) DBA / DSA / ADSA
+  - (DONE) Maxsum / AMaxsum
+  - (DONE) Maxsum Dynamic
+  - (DONE) DSAAuto
   - GDBA
   - NCBB
   - SyncBB
