@@ -102,9 +102,10 @@
   - fixed synchronous cycle metrics so the runtime row uses the completed
     orchestrator cycle
 - Relevant checks used recently:
-  - `pytest tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
-  - `ruff check pydcop/algorithms/maxsum.py tests/unit/test_algorithms_maxsum.py`
+  - `pytest tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py tests/unit/test_algorithms_objects.py`
+  - `ruff check pydcop/algorithms/maxsum.py pydcop/algorithms/amaxsum.py tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
   - `python -m pydcop.dcop_cli -t 10 solve -a maxsum -p auto_stop:1 -p stable_cycles:1 -d oneagent tests/instances/graph_coloring1.yaml`
+  - `python -m pydcop.dcop_cli -t 10 solve -a maxsum -p noise:0 -p stop_cycle:2 -d oneagent tests/instances/graph_coloring1.yaml`
 
 ## AMaxSum
 
@@ -123,6 +124,10 @@
   after enough consecutive local updates where outgoing messages are stable
   according to the existing `stability` check, the computation reports
   `finished()`. `SAME_COUNT` remains the resend/suppression throttle.
+- Relevant checks used recently:
+  - `pytest tests/unit/test_algorithms_amaxsum.py`
+  - `ruff check pydcop/algorithms/amaxsum.py tests/unit/test_algorithms_amaxsum.py`
+  - `python -m pydcop.dcop_cli -t 10 solve -a amaxsum -p noise:0 -p stop_cycle:2 -d oneagent tests/instances/graph_coloring1.yaml`
 
 ## Generator And Docs Notes
 
