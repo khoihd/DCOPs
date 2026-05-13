@@ -53,9 +53,10 @@ performs a real message-driven update and stops once that local count reaches
 ``stop_cycle``.
 
 ``auto_stop`` and ``stable_cycles`` are also local to each computation. When
-``auto_stop`` is enabled, a computation stops after
+``auto_stop`` is enabled, a computation reports completion after
 ``stable_cycles`` consecutive local updates where its outgoing messages are
-approximately stable according to the existing ``stability`` check.
+approximately stable according to the existing ``stability`` check, but keeps
+processing messages until the orchestrator stops all computations.
 
 
 Example
@@ -93,6 +94,8 @@ from pydcop.infrastructure.computations import (
 
 GRAPH_TYPE = "factor_graph"
 logger = logging.getLogger("pydcop.maxsum")
+
+QUIET_AUTO_STOP_PERIOD = 0.05
 
 
 def build_computation(comp_def: ComputationDef):
@@ -141,6 +144,8 @@ class MaxSumFactorComputation(DcopComputation):
         self.auto_stop, self.stable_cycles = maxsum._auto_stop_params(comp_def)
         self._stable_cycle_count = 0
         self._auto_stop_notified = False
+        self._auto_stop_update_seen = False
+        self._quiet_auto_stop_handle = None
         self.logger.info(f"Running maxsum with params: {comp_def.algo.params}")
 
         # A dict var_name -> (message, count)
@@ -150,6 +155,8 @@ class MaxSumFactorComputation(DcopComputation):
         return memory_footprint_estimate(self.computation_def.node)
 
     def on_start(self):
+        self._start_quiet_auto_stop_check()
+
         # Only unary factors (leaf in the graph) needs to send their costs at
         # init.Each leaf factor sends his costs to its only variable.
         # When possible it is better to use a variable with integrated costs
@@ -182,6 +189,7 @@ class MaxSumFactorComputation(DcopComputation):
         self._prev_messages.clear()
         self._stable_cycle_count = 0
         self._auto_stop_notified = False
+        self._auto_stop_update_seen = False
         if len(self.variables) == 1 and self.start_messages in ["leafs", "leafs_vars"]:
             for v in self.variables:
                 costs_v = maxsum.factor_costs_for_var(
@@ -264,7 +272,7 @@ class MaxSumFactorComputation(DcopComputation):
                 if not self._auto_stop_notified:
                     self.finished()
                     self._auto_stop_notified = True
-                    self.stop()
+                self.stop()
 
         else:
             self.logger.debug(
@@ -275,10 +283,14 @@ class MaxSumFactorComputation(DcopComputation):
         if not self.auto_stop:
             return
 
+        self._auto_stop_update_seen = True
         if cycle_stable:
             self._stable_cycle_count += 1
         else:
             self._stable_cycle_count = 0
+            if self._auto_stop_notified:
+                self.finished("running")
+                self._auto_stop_notified = False
 
         if (
             self._stable_cycle_count >= self.stable_cycles
@@ -286,7 +298,34 @@ class MaxSumFactorComputation(DcopComputation):
         ):
             self.finished()
             self._auto_stop_notified = True
-            self.stop()
+
+    def _start_quiet_auto_stop_check(self):
+        if (
+            self.auto_stop
+            and self._quiet_auto_stop_handle is None
+            and self.periodic_action_handler is not None
+        ):
+            self._quiet_auto_stop_handle = self.add_periodic_action(
+                QUIET_AUTO_STOP_PERIOD, self._quiet_auto_stop_check
+            )
+
+    def _quiet_auto_stop_check(self):
+        if (
+            not self.auto_stop
+            or self._auto_stop_notified
+            or not self.is_running
+            or self.cycle_count == 0
+        ):
+            return
+
+        if self._auto_stop_update_seen:
+            self._auto_stop_update_seen = False
+            return
+
+        self._stable_cycle_count += 1
+        if self._stable_cycle_count >= self.stable_cycles:
+            self.finished()
+            self._auto_stop_notified = True
 
 
 class MaxSumVariableComputation(VariableComputation):
@@ -311,6 +350,8 @@ class MaxSumVariableComputation(VariableComputation):
         self.auto_stop, self.stable_cycles = maxsum._auto_stop_params(comp_def)
         self._stable_cycle_count = 0
         self._auto_stop_notified = False
+        self._auto_stop_update_seen = False
+        self._quiet_auto_stop_handle = None
         self.logger.info(f"Running amaxsum with params: {comp_def.algo.params}")
 
         # The list of factors (names) this variables is linked with
@@ -343,6 +384,7 @@ class MaxSumVariableComputation(VariableComputation):
         At startup, a variable select an initial value and send its cost to the factors
         it depends on.
         """
+        self._start_quiet_auto_stop_check()
 
         # select our initial value
         if self.variable.initial_value is not None:
@@ -385,6 +427,7 @@ class MaxSumVariableComputation(VariableComputation):
         self._prev_messages.clear()
         self._stable_cycle_count = 0
         self._auto_stop_notified = False
+        self._auto_stop_update_seen = False
         if len(self._factors) == 1 and self.start_messages == "leafs":
 
             # Only send costs if we are a leaf:
@@ -474,16 +517,20 @@ class MaxSumVariableComputation(VariableComputation):
             if not self._auto_stop_notified:
                 self.finished()
                 self._auto_stop_notified = True
-                self.stop()
+            self.stop()
 
     def _handle_auto_stop(self, cycle_stable):
         if not self.auto_stop:
             return
 
+        self._auto_stop_update_seen = True
         if cycle_stable:
             self._stable_cycle_count += 1
         else:
             self._stable_cycle_count = 0
+            if self._auto_stop_notified:
+                self.finished("running")
+                self._auto_stop_notified = False
 
         if (
             self._stable_cycle_count >= self.stable_cycles
@@ -491,4 +538,31 @@ class MaxSumVariableComputation(VariableComputation):
         ):
             self.finished()
             self._auto_stop_notified = True
-            self.stop()
+
+    def _start_quiet_auto_stop_check(self):
+        if (
+            self.auto_stop
+            and self._quiet_auto_stop_handle is None
+            and self.periodic_action_handler is not None
+        ):
+            self._quiet_auto_stop_handle = self.add_periodic_action(
+                QUIET_AUTO_STOP_PERIOD, self._quiet_auto_stop_check
+            )
+
+    def _quiet_auto_stop_check(self):
+        if (
+            not self.auto_stop
+            or self._auto_stop_notified
+            or not self.is_running
+            or self.cycle_count == 0
+        ):
+            return
+
+        if self._auto_stop_update_seen:
+            self._auto_stop_update_seen = False
+            return
+
+        self._stable_cycle_count += 1
+        if self._stable_cycle_count >= self.stable_cycles:
+            self.finished()
+            self._auto_stop_notified = True

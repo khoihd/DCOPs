@@ -327,9 +327,9 @@ class OrchestrationComputation(MessagePassingComputation):
                 )
             )
 
-    def on_computation_finished(self, computation):
+    def on_computation_finished(self, computation, status="finished"):
         self.send_to_orchestrator(
-            ComputationFinishedMessage(self.agent.name, computation)
+            ComputationFinishedMessage(self.agent.name, computation, status)
         )
 
     def on_repair_done(self, selected_computation: list[str], metrics):

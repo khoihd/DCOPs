@@ -2,7 +2,11 @@ import json
 from collections import defaultdict
 from unittest.mock import Mock
 
-from pydcop.infrastructure.orchestrator import AgentsMgt, RepairReadyMessage
+from pydcop.infrastructure.orchestrator import (
+    AgentsMgt,
+    ComputationFinishedMessage,
+    RepairReadyMessage,
+)
 from pydcop.utils.simple_repr import simple_repr
 
 
@@ -48,3 +52,35 @@ def test_global_metrics_period_uses_agent_cycle_count():
     metrics = _metrics_manager('period').global_metrics('RUNNING', 12)
 
     assert metrics['cycle'] == 5
+
+
+def _end_message_manager():
+    mgt = object.__new__(AgentsMgt)
+    mgt.logger = Mock()
+    mgt._computation_status = {"c1": "", "c2": ""}
+    mgt._orchestrator_stop_agents = Mock()
+    return mgt
+
+
+def test_computation_finished_message_stops_when_all_finished():
+    mgt = _end_message_manager()
+    mgt._computation_status["c1"] = "finished"
+
+    mgt._on_computation_end_msg(
+        "a2", ComputationFinishedMessage("a2", "c2", "finished"), 0
+    )
+
+    assert mgt._computation_status == {"c1": "finished", "c2": "finished"}
+    mgt._orchestrator_stop_agents.assert_called_once_with()
+
+
+def test_computation_running_status_resets_finished_state():
+    mgt = _end_message_manager()
+    mgt._computation_status = {"c1": "finished", "c2": "finished"}
+
+    mgt._on_computation_end_msg(
+        "a2", ComputationFinishedMessage("a2", "c2", "running"), 0
+    )
+
+    assert mgt._computation_status == {"c1": "finished", "c2": "running"}
+    mgt._orchestrator_stop_agents.assert_not_called()

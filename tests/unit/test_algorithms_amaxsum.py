@@ -596,7 +596,42 @@ def test_factor_auto_stop_after_stable_local_updates():
     assert computation._stable_cycle_count == 2
     assert message_sender.call_count == 2
     computation.finished.assert_called_once_with()
-    computation.stop.assert_called_once_with()
+    computation.stop.assert_not_called()
+
+    computation._on_maxsum_msg("v2", MaxSumMessage({0: 0, 1: 10}), None)
+
+    assert computation._stable_cycle_count == 0
+    assert not computation._auto_stop_notified
+    computation.finished.assert_has_calls([call(), call("running")])
+    computation.stop.assert_not_called()
+
+
+def test_factor_quiet_auto_stop_after_changed_update():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(
+        f1, params={"auto_stop": 1, "stable_cycles": 1}
+    )
+    computation.message_sender = MagicMock()
+    computation.finished = MagicMock()
+    computation._costs["v1"] = {0: 0, 1: 0}
+    computation._running = True
+
+    computation._on_maxsum_msg("v2", MaxSumMessage({0: 0, 1: 0}), None)
+
+    computation.finished.assert_not_called()
+    assert computation._auto_stop_update_seen
+
+    computation._quiet_auto_stop_check()
+
+    computation.finished.assert_not_called()
+    assert not computation._auto_stop_update_seen
+
+    computation._quiet_auto_stop_check()
+
+    computation.finished.assert_called_once_with()
+    assert computation._auto_stop_notified
 
 
 def test_variable_sends_initial_leaf_message_on_start():
@@ -776,4 +811,36 @@ def test_variable_auto_stop_after_stable_local_updates():
     assert computation._stable_cycle_count == 2
     assert message_sender.call_count == 2
     computation.finished.assert_called_once_with()
-    computation.stop.assert_called_once_with()
+    computation.stop.assert_not_called()
+
+    computation._on_maxsum_msg("f1", MaxSumMessage({0: 2, 1: 0}), None)
+
+    assert computation._stable_cycle_count == 0
+    assert not computation._auto_stop_notified
+    computation.finished.assert_has_calls([call(), call("running")])
+    computation.stop.assert_not_called()
+
+
+def test_variable_quiet_auto_stop_after_changed_update():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(
+        variable, ["f1", "f2"], params={"auto_stop": 1, "stable_cycles": 1}
+    )
+    computation.message_sender = MagicMock()
+    computation.finished = MagicMock()
+    computation._running = True
+
+    computation._on_maxsum_msg("f1", MaxSumMessage({0: 2, 1: 0}), None)
+
+    computation.finished.assert_not_called()
+    assert computation._auto_stop_update_seen
+
+    computation._quiet_auto_stop_check()
+
+    computation.finished.assert_not_called()
+    assert not computation._auto_stop_update_seen
+
+    computation._quiet_auto_stop_check()
+
+    computation.finished.assert_called_once_with()
+    assert computation._auto_stop_notified

@@ -67,8 +67,14 @@
 - `auto_stop` and `stable_cycles` are also interpreted locally. A computation
   reports finished after `stable_cycles` consecutive local async updates where
   every outgoing message is approximately unchanged according to the existing
-  `stability` check, and then stops itself locally. The existing `SAME_COUNT`
-  threshold remains the resend / suppression throttle for stable messages.
+  `stability` check, but keeps processing messages until the orchestrator
+  observes all computations as stable and stops the run. If a later update
+  changes an outgoing message, the computation reports itself as running again.
+  A computation can also report stable after a local quiet period, which
+  handles the asynchronous case where its last changed message does not trigger
+  another incoming update.
+  The existing `SAME_COUNT` threshold remains the resend / suppression throttle
+  for stable messages.
 - `stability` and `SAME_COUNT` implement local stable-message suppression:
   once a directed message remains approximately unchanged for several sends,
   the computation stops resending it until the value changes. This corresponds
@@ -105,11 +111,12 @@
 
 ## Caveats
 
-- `auto_stop` is local, message-based, and heuristic, not a proof of global
-  convergence. A computation can become locally stable before delayed neighbor
-  updates arrive, so it may stop based on a stale local view.
-- AMaxSum runs until `stop_cycle` or `auto_stop` stops computations locally,
-  the runtime stops it externally, or
+- `auto_stop` is still local and message-based, but completion is coordinated
+  globally: locally stable computations keep processing messages and can reset
+  themselves to running before the orchestrator sees every computation stable.
+- AMaxSum runs until `stop_cycle` stops computations locally, `auto_stop`
+  reports every computation stable and the orchestrator stops the run, the
+  runtime stops it externally, or
   stable-message suppression leaves no more messages to send.
 - `start_messages: leafs` can under-seed cyclic graphs without a leaf-based
   seed and may start with little or no propagation.

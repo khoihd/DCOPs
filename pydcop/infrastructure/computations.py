@@ -346,7 +346,7 @@ class MessagePassingComputation(metaclass=ComputationMetaClass):
             raise AttributeError("Can only set periodic_action_handler once")
         self._periodic_action_handler = handler
 
-    def finished(self):
+    def finished(self, status="finished"):
         pass
 
     def start(self):

@@ -424,9 +424,10 @@ CycleChangeMessage = message_type(
 MetricsMessage = message_type('metrics', ['agent', 'metrics'])
 
 # A ComputationFinishedMessage is sent by an agent to inform the orchestrator
-# that a computation is finished.
+# that a computation is finished. The status can be reset to "running" by
+# algorithms with heuristic local completion detection.
 ComputationFinishedMessage = message_type(
-    'end_of_computation', ['agent', 'computation'])
+    'end_of_computation', ['agent', 'computation', 'status'])
 
 # A AgentRemovedMessage is sent to an agent to inform it that it has been
 # removed from the system and must stop all operations.
@@ -897,7 +898,7 @@ class AgentsMgt(MessagePassingComputation):
         self.logger.info('Received computation_end from %s : %s - %s',
                          msg.agent, msg.computation, sender)
 
-        self._computation_status[msg.computation] = 'finished'
+        self._computation_status[msg.computation] = msg.status
         self.logger.debug(' status %s', self._computation_status.items())
         all_finished = all(s == 'finished'
                            for n, s in self._computation_status.items())
