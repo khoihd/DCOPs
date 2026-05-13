@@ -153,9 +153,8 @@ For each algorithm:
     Farinelli et al. Max-Sum paper as synchronous MaxSum. Core Q/R equations
     are shared with `maxsum.py`; `start_messages`, damping, stability,
     integrated variable costs, N-ary constraints, and `min` mode are repo-level
-    extensions. `stop_cycle` is implemented as a local async update limit; the
-    inherited `auto_stop` and `stable_cycles` parameters remain a follow-up
-    API/runtime cleanup item.
+    extensions. `stop_cycle`, `auto_stop`, and `stable_cycles` are implemented
+    using local async update counts rather than globally synchronized cycles.
 
 - Dynamic MaxSum
   - Priority: 11

@@ -110,6 +110,9 @@ def test_factor_computation_init_from_real_computation_def():
     assert f.damping == 0.5
     assert f.damping_nodes == "both"
     assert f.start_messages == "leafs"
+    assert f.stop_cycle == 0
+    assert not f.auto_stop
+    assert f.stable_cycles == 1
 
 
 def test_variable_computation_init_from_real_computation_def():
@@ -134,6 +137,9 @@ def test_variable_computation_init_from_real_computation_def():
     assert computation.damping_nodes == "vars"
     assert computation.stability_coef == 0.2
     assert computation.start_messages == "all"
+    assert computation.stop_cycle == 0
+    assert not computation.auto_stop
+    assert computation.stable_cycles == 1
     assert computation._costs == {}
 
 
@@ -560,6 +566,36 @@ def test_factor_stop_cycle_counts_local_processing_updates():
     computation.stop.assert_called_once_with()
 
 
+def test_factor_auto_stop_after_stable_local_updates():
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    f1 = relation_from_str("f1", "abs(v1 - v2)", [v1, v2])
+    computation = _factor_computation(
+        f1, params={"auto_stop": 1, "stable_cycles": 2}
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.finished = MagicMock()
+    computation._costs["v1"] = {0: 0, 1: 0}
+    computation._prev_messages["v1"] = ({0: 0, 1: 0}, 1)
+
+    computation._on_maxsum_msg("v2", MaxSumMessage({0: 0, 1: 0}), None)
+
+    assert computation.cycle_count == 1
+    assert computation._stable_cycle_count == 1
+    message_sender.assert_called_once_with(
+        "f1", "v1", MaxSumMessage({0: 0, 1: 0}), None, None
+    )
+    computation.finished.assert_not_called()
+
+    computation._on_maxsum_msg("v2", MaxSumMessage({0: 0, 1: 0}), None)
+
+    assert computation.cycle_count == 2
+    assert computation._stable_cycle_count == 2
+    assert message_sender.call_count == 2
+    computation.finished.assert_called_once_with()
+
+
 def test_variable_sends_initial_leaf_message_on_start():
     variable = Variable("v1", [0, 1], initial_value=1)
     computation = _variable_computation(variable, ["f1"])
@@ -707,3 +743,31 @@ def test_variable_stop_cycle_counts_local_message_updates():
     )
     computation.finished.assert_called_once_with()
     computation.stop.assert_called_once_with()
+
+
+def test_variable_auto_stop_after_stable_local_updates():
+    variable = Variable("v1", [0, 1])
+    computation = _variable_computation(
+        variable, ["f1", "f2"], params={"auto_stop": 1, "stable_cycles": 2}
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation.finished = MagicMock()
+    computation.value_selection(0, 0)
+    computation._prev_messages["f2"] = ({0: 0.0, 1: 0.0}, 1)
+
+    computation._on_maxsum_msg("f1", MaxSumMessage({0: 0, 1: 0}), None)
+
+    assert computation.cycle_count == 1
+    assert computation._stable_cycle_count == 1
+    message_sender.assert_called_once_with(
+        "v1", "f2", MaxSumMessage({0: 0.0, 1: 0.0}), None, None
+    )
+    computation.finished.assert_not_called()
+
+    computation._on_maxsum_msg("f1", MaxSumMessage({0: 0, 1: 0}), None)
+
+    assert computation.cycle_count == 2
+    assert computation._stable_cycle_count == 2
+    assert message_sender.call_count == 2
+    computation.finished.assert_called_once_with()

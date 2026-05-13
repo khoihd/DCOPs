@@ -52,6 +52,11 @@ as a local async update limit: each computation increments its own count when it
 performs a real message-driven update and stops once that local count reaches
 ``stop_cycle``.
 
+``auto_stop`` and ``stable_cycles`` are also local to each computation. When
+``auto_stop`` is enabled, a computation reports completion after
+``stable_cycles`` consecutive local updates where its outgoing messages are
+approximately stable according to the existing ``stability`` check.
+
 
 Example
 ^^^^^^^
@@ -133,6 +138,9 @@ class MaxSumFactorComputation(DcopComputation):
         self.stability_coef = comp_def.algo.params["stability"]
         self.start_messages = comp_def.algo.params["start_messages"]
         self.stop_cycle = comp_def.algo.params["stop_cycle"]
+        self.auto_stop, self.stable_cycles = maxsum._auto_stop_params(comp_def)
+        self._stable_cycle_count = 0
+        self._auto_stop_notified = False
         self.logger.info(f"Running maxsum with params: {comp_def.algo.params}")
 
         # A dict var_name -> (message, count)
@@ -172,6 +180,8 @@ class MaxSumFactorComputation(DcopComputation):
         # flushing cost table when resuming
         self._costs.clear()
         self._prev_messages.clear()
+        self._stable_cycle_count = 0
+        self._auto_stop_notified = False
         if len(self.variables) == 1 and self.start_messages in ["leafs", "leafs_vars"]:
             for v in self.variables:
                 costs_v = maxsum.factor_costs_for_var(
@@ -209,6 +219,7 @@ class MaxSumFactorComputation(DcopComputation):
         # our own costs (if works without doing that, but results are worse)
         if len(self._costs) == len(self.factor.dimensions):
             self.new_cycle()
+            cycle_stable = True
             for v in self.variables:
                 if v.name != var_name:
                     costs_v = maxsum.factor_costs_for_var(
@@ -233,6 +244,7 @@ class MaxSumFactorComputation(DcopComputation):
                         )
                         self.post_msg(v.name, maxsum.MaxSumMessage(costs_v))
                         self._prev_messages[v.name] = costs_v, 1
+                        cycle_stable = False
 
                     elif count < maxsum.SAME_COUNT:
                         # Same as previous, but not yet sent SAME_COUNT times: send
@@ -247,14 +259,32 @@ class MaxSumFactorComputation(DcopComputation):
                             f"Not sending (similar) from {self.name} -> {v.name} : {costs_v}"
                         )
 
+            self._handle_auto_stop(cycle_stable)
             if self.stop_cycle and self.cycle_count >= self.stop_cycle:
-                self.finished()
+                if not self._auto_stop_notified:
+                    self.finished()
                 self.stop()
 
         else:
             self.logger.debug(
                 f" Still waiting for costs from all  the variables {self._costs.keys()}"
             )
+
+    def _handle_auto_stop(self, cycle_stable):
+        if not self.auto_stop:
+            return
+
+        if cycle_stable:
+            self._stable_cycle_count += 1
+        else:
+            self._stable_cycle_count = 0
+
+        if (
+            self._stable_cycle_count >= self.stable_cycles
+            and not self._auto_stop_notified
+        ):
+            self.finished()
+            self._auto_stop_notified = True
 
 
 class MaxSumVariableComputation(VariableComputation):
@@ -276,6 +306,9 @@ class MaxSumVariableComputation(VariableComputation):
         self.stability_coef = comp_def.algo.params["stability"]
         self.start_messages = comp_def.algo.params["start_messages"]
         self.stop_cycle = comp_def.algo.params["stop_cycle"]
+        self.auto_stop, self.stable_cycles = maxsum._auto_stop_params(comp_def)
+        self._stable_cycle_count = 0
+        self._auto_stop_notified = False
         self.logger.info(f"Running amaxsum with params: {comp_def.algo.params}")
 
         # The list of factors (names) this variables is linked with
@@ -348,6 +381,8 @@ class MaxSumVariableComputation(VariableComputation):
         # test flush cost table when resuming
         self._costs.clear()
         self._prev_messages.clear()
+        self._stable_cycle_count = 0
+        self._auto_stop_notified = False
         if len(self._factors) == 1 and self.start_messages == "leafs":
 
             # Only send costs if we are a leaf:
@@ -396,6 +431,7 @@ class MaxSumVariableComputation(VariableComputation):
 
         # Compute and send our own costs to all other factors. The
         # variable-to-factor Max-Sum message excludes the destination factor.
+        cycle_stable = True
         for f_name in self._factors:
             if f_name == factor_name:
                 continue
@@ -416,6 +452,7 @@ class MaxSumVariableComputation(VariableComputation):
                 )
                 self.post_msg(f_name, maxsum.MaxSumMessage(costs_f))
                 self._prev_messages[f_name] = costs_f, 1
+                cycle_stable = False
 
             elif count < maxsum.SAME_COUNT:
                 # Same as previous, but not yet sent SAME_COUNT times: send
@@ -430,6 +467,24 @@ class MaxSumVariableComputation(VariableComputation):
                     f"Not sending (similar) from {self.name} -> {f_name} : {costs_f}"
                 )
 
+        self._handle_auto_stop(cycle_stable)
         if self.stop_cycle and self.cycle_count >= self.stop_cycle:
-            self.finished()
+            if not self._auto_stop_notified:
+                self.finished()
             self.stop()
+
+    def _handle_auto_stop(self, cycle_stable):
+        if not self.auto_stop:
+            return
+
+        if cycle_stable:
+            self._stable_cycle_count += 1
+        else:
+            self._stable_cycle_count = 0
+
+        if (
+            self._stable_cycle_count >= self.stable_cycles
+            and not self._auto_stop_notified
+        ):
+            self.finished()
+            self._auto_stop_notified = True

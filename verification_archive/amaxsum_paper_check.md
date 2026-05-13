@@ -64,6 +64,11 @@
   increments its own local cycle count when it performs a real message-driven
   processing update, and reports finished once that count reaches
   `stop_cycle`.
+- `auto_stop` and `stable_cycles` are also interpreted locally. A computation
+  reports finished after `stable_cycles` consecutive local async updates where
+  every outgoing message is approximately unchanged according to the existing
+  `stability` check. The existing `SAME_COUNT` threshold remains the resend /
+  suppression throttle for stable messages.
 - `stability` and `SAME_COUNT` implement local stable-message suppression:
   once a directed message remains approximately unchanged for several sends,
   the computation stops resending it until the value changes. This corresponds
@@ -92,18 +97,21 @@
   factor-to-variable messages in `min` and `max` modes, value-indexed message
   serialization, memory and communication estimates, startup messages, pause /
   resume state reset, damping, stable-message suppression, variable value
-  selection after incoming messages, and event-driven variable/factor sends.
+  selection after incoming messages, event-driven variable/factor sends,
+  `stop_cycle`, and `auto_stop` / `stable_cycles`.
 - Shared helper coverage in `tests/unit/test_algorithms_maxsum.py` covers
   variable-to-factor normalization, value selection, and the underlying
   factor-message equations used by AMaxSum.
 
 ## Caveats
 
-- `amaxsum.py` reuses `maxsum.algo_params`, so it exposes `auto_stop` and
-  `stable_cycles`, but the asynchronous computation classes do not currently
-  implement those convergence-stop parameters. AMaxSum runs until `stop_cycle`
-  is reached locally by every computation, the runtime stops it externally, or
-  stable-message suppression leaves no more messages to send.
+- `auto_stop` is local, message-based, and heuristic, not a proof of global
+  convergence. A computation can become locally stable before delayed neighbor
+  updates arrive, so it reports completion but does not immediately stop
+  processing messages.
+- AMaxSum runs until `stop_cycle` is reached locally by every computation, all
+  computations report completion through `auto_stop`, the runtime stops it
+  externally, or stable-message suppression leaves no more messages to send.
 - With the default `start_messages: leafs`, cyclic graphs without a leaf-based
   seed can start with little or no propagation. For paper-like initialized
   outgoing messages, use `-p start_messages:all`.
@@ -114,5 +122,4 @@
 
 ## Follow-Up
 
-- Decide whether AMaxSum should hide inherited convergence-stop parameters
-  (`auto_stop`, `stable_cycles`) or implement asynchronous equivalents.
+- No AMaxSum paper-check follow-up is currently pending.

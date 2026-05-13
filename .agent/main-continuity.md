@@ -117,8 +117,10 @@
   synchronized round count. Variable computations increment the local count for
   each processed factor message; factor computations increment it only when
   they have enough variable messages to run a real factor update.
-- `auto_stop` and `stable_cycles` are still inherited from MaxSum parameters
-  but are not implemented by AMaxSum.
+- `auto_stop` and `stable_cycles` are interpreted as local async stability:
+  after enough consecutive local updates where outgoing messages are stable
+  according to the existing `stability` check, the computation reports
+  `finished()`. `SAME_COUNT` remains the resend/suppression throttle.
 
 ## Generator And Docs Notes
 
