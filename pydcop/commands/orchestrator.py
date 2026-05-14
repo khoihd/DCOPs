@@ -165,7 +165,7 @@ import sys
 import threading
 import traceback
 from functools import partial
-from queue import Queue, Empty
+from queue import Queue
 from threading import Thread
 
 from importlib import import_module
@@ -325,6 +325,7 @@ end_metrics = None
 
 timeout_stopped = False
 output_file = None
+METRICS_COLLECTOR_STOP = object()
 
 
 def add_csvline(file, mode, metrics):
@@ -338,15 +339,14 @@ def add_csvline(file, mode, metrics):
 
 def collect_tread(collect_queue: Queue, csv_cb):
     while True:
-        try:
-            t, metrics = collect_queue.get()
+        item = collect_queue.get()
+        if item is METRICS_COLLECTOR_STOP:
+            return
 
-            if csv_cb is not None:
-                csv_cb(metrics)
+        _, metrics = item
 
-        except Empty:
-            pass
-        # FIXME : end of run ?
+        if csv_cb is not None:
+            csv_cb(metrics)
 
 
 def prepare_metrics_files(run, end, mode):
@@ -457,9 +457,6 @@ def run_cmd(args, timer=None, timeout=None):
     # processes did not work (why ?), but seems to be ok now ?!
     # multiprocessing.set_start_method('spawn')
 
-    # FIXME
-    infinity = 10000
-
     # Setup metrics collection
     collector_queue = Queue()
     collect_t = Thread(
@@ -484,7 +481,6 @@ def run_cmd(args, timer=None, timeout=None):
         distribution,
         comm,
         dcop,
-        infinity,
         collector=collector_queue,
         collect_moment=args.collect_on,
         collect_period=period,
@@ -506,6 +502,8 @@ def run_cmd(args, timer=None, timeout=None):
         else:
             logger.debug("No scenario, run the problem directly")
             orchestrator.run(timeout=timeout)
+        collector_queue.put(METRICS_COLLECTOR_STOP)
+        collect_t.join(timeout=1)
         if not timeout_stopped:
             if orchestrator.status == "TIMEOUT":
                 _results("TIMEOUT")
@@ -516,6 +514,8 @@ def run_cmd(args, timer=None, timeout=None):
 
     except Exception as e:
         logger.error(e, exc_info=1)
+        collector_queue.put(METRICS_COLLECTOR_STOP)
+        collect_t.join(timeout=1)
         orchestrator.stop_agents(5)
         orchestrator.stop()
         _results("ERROR")
