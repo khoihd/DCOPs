@@ -226,12 +226,6 @@ def set_parser(subparsers):
         help="distribution of the computations on agents, " "as a yaml file ",
     )
 
-    # FIXME: allow loading replica dist from file and pass it to the
-    # orchestrator
-    # parser.add_argument('-r', '--replica_dist',
-    #                    help='distribution of the computations replicas on '
-    #                         'agents, as a yaml file ')
-
     parser.add_argument(
         "-r",
         "--replication_method",
@@ -282,22 +276,9 @@ def set_parser(subparsers):
         "end of the run to a csv file.",
     )
 
-    # TODO : remove, this should no be at this level
-    parser.add_argument(
-        "--infinity",
-        "-i",
-        default=float("inf"),
-        type=float,
-        help="Argument to determine the value used for "
-        "infinity in case of hard constraints, "
-        "for algorithms that do not use symbolic "
-        "infinity. Defaults to 10 000",
-    )
-
 
 dcop = None
 orchestrator = None
-INFINITY = None
 
 collect_on = None
 run_metrics = None
@@ -311,8 +292,7 @@ DISTRIBUTION_METHODS = ["oneagent", "adhoc", "ilp_fgdp", "heur_comhost", "oilp_s
 def run_cmd(args, timer=None, timeout=None):
     logger.debug(f'dcop command "run" with arguments {args}')
 
-    global INFINITY, collect_on, output_file
-    INFINITY = args.infinity
+    global collect_on, output_file
     collect_on = args.collect_on
     output_file = args.output
 
@@ -375,7 +355,6 @@ def run_cmd(args, timer=None, timeout=None):
             cg,
             distribution,
             dcop,
-            INFINITY,
             collector=collector_queue,
             collect_moment=args.collect_on,
             period=period,
@@ -395,7 +374,6 @@ def run_cmd(args, timer=None, timeout=None):
             cg,
             distribution,
             dcop,
-            INFINITY,
             collector=collector_queue,
             collect_moment=args.collect_on,
             period=period,

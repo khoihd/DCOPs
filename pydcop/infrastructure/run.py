@@ -144,7 +144,7 @@ def run_local_thread_dcop(algo: AlgorithmDef,
                           cg: ComputationGraph,
                           distribution: Distribution,
                           dcop: DCOP,
-                          infinity,  # FIXME : this has nothing to to here, #41
+                          infinity=float('inf'),
                           collector: Queue=None,
                           collect_moment: str='value_change',
                           period=None,
@@ -222,7 +222,7 @@ def run_local_thread_dcop(algo: AlgorithmDef,
 
 def run_local_process_dcop(algo: AlgorithmDef, cg: ComputationGraph,
                            distribution: Distribution, dcop: DCOP,
-                           infinity,  # FIXME : this has nothing to to here, #41
+                           infinity=float('inf'),
                            collector: Queue=None,
                            collect_moment: str='value_change',
                            period=None,
