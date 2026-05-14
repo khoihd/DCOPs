@@ -215,7 +215,7 @@ import sys
 import threading
 import traceback
 from functools import partial
-from queue import Queue, Empty
+from queue import Queue
 from threading import Thread
 from time import perf_counter
 
@@ -394,6 +394,7 @@ end_metrics = None
 
 timeout_stopped = False
 output_file = None
+METRICS_COLLECTOR_STOP = object()
 
 
 def add_csvline(file, mode, metrics):
@@ -405,15 +406,19 @@ def add_csvline(file, mode, metrics):
 
 def collect_tread(collect_queue: Queue, csv_cb):
     while True:
-        try:
-            t, metrics = collect_queue.get()
+        item = collect_queue.get()
+        if item is METRICS_COLLECTOR_STOP:
+            return
 
-            if csv_cb is not None:
-                csv_cb(metrics)
+        _, metrics = item
 
-        except Empty:
-            pass
-        # FIXME : end of run ?
+        if csv_cb is not None:
+            csv_cb(metrics)
+
+
+def stop_collect_thread(collect_queue: Queue, collect_t: Thread):
+    collect_queue.put(METRICS_COLLECTOR_STOP)
+    collect_t.join(timeout=1)
 
 
 def prepare_metrics_files(run, end, mode):
@@ -560,6 +565,7 @@ def run_cmd(args, timer=None, timeout=None):
     try:
         orchestrator.deploy_computations()
         orchestrator.run(timeout=timeout)
+        stop_collect_thread(collector_queue, collect_t)
         if timer:
             timer.cancel()
         if not timeout_stopped:
@@ -574,6 +580,7 @@ def run_cmd(args, timer=None, timeout=None):
 
     except Exception as e:
         logger.error(e, exc_info=1)
+        stop_collect_thread(collector_queue, collect_t)
         orchestrator.stop_agents(5)
         orchestrator.stop()
         _results("ERROR")
