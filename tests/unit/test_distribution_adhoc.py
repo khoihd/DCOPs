@@ -36,8 +36,8 @@ from pydcop.computations_graph.factor_graph import ComputationsFactorGraph, \
     VariableComputationNode, FactorComputationNode
 from pydcop.dcop.objects import Variable, VariableDomain, AgentDef
 from pydcop.dcop.relations import relation_from_str
-from pydcop.distribution.adhoc import distribute
-from pydcop.distribution.objects import DistributionHints
+from pydcop.distribution.adhoc import distribute, distribute_add, distribute_remove
+from pydcop.distribution.objects import DistributionHints, ImpossibleDistributionException
 
 
 Agent = namedtuple('Agent', ['name'])
@@ -253,6 +253,28 @@ class TestDistributionAdHocFactorGraphSecp(unittest.TestCase):
                          agent_mapping.agent_for('r2'))
 
         self.assertTrue(is_all_hosted(self.cg, agent_mapping))
+
+
+class TestDynamicDistributionRepair(unittest.TestCase):
+    def test_remove_repair_reports_unsupported(self):
+        self.assertRaisesRegex(
+            ImpossibleDistributionException,
+            "does not support dynamic distribution repair after agent removal",
+            distribute_remove,
+            None,
+            None,
+            "a1",
+        )
+
+    def test_add_repair_reports_unsupported(self):
+        self.assertRaisesRegex(
+            ImpossibleDistributionException,
+            "does not support dynamic distribution repair after agent addition",
+            distribute_add,
+            None,
+            "a1",
+            None,
+        )
 
 
 def is_all_hosted(cg, dist):

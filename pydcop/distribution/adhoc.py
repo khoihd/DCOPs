@@ -184,13 +184,17 @@ def _distribute_try(computation_graph: ComputationGraph,
 
 
 def distribute_remove(secp, current_distribution, removed_device):
-    # TODO à implémenter !
-    # FIXME : only take neighbors agents as variable ?
-    raise NotImplementedError()
+    raise ImpossibleDistributionException(
+        "adhoc does not support dynamic distribution repair after "
+        "agent removal. Recompute a full distribution with distribute() "
+        "using the updated computation graph and agent set."
+    )
 
 
 def distribute_add(secp, new_device, current_distribution,
                    connected_models=None):
-    # TODO à implémenter !
-    # FIXME : only take neighbors agents as variable ?
-    raise NotImplementedError()
+    raise ImpossibleDistributionException(
+        "adhoc does not support dynamic distribution repair after "
+        "agent addition. Recompute a full distribution with distribute() "
+        "using the updated computation graph and agent set."
+    )
