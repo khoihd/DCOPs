@@ -260,6 +260,49 @@ def test_cost_for_binary_factor_includes_received_costs_in_max_mode():
     assert costs == {0: 9, 1: 10, 2: 11}
 
 
+def test_factor_costs_can_use_valid_assignments_in_min_mode():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+
+    @AsNAryFunctionRelation(x1, x2)
+    def cost(x1_, x2_):
+        return x1_ + x2_
+
+    valid_assignments = [{"x1": 0, "x2": 0}, {"x1": 1, "x2": 1}]
+
+    costs = factor_costs_for_var(
+        cost,
+        x1,
+        {"x2": {0: 10, 1: 0}},
+        "min",
+        valid_assignments=valid_assignments,
+    )
+
+    assert costs == {0: 10, 1: 2}
+    assert valid_assignments == [{"x1": 0, "x2": 0}, {"x1": 1, "x2": 1}]
+
+
+def test_factor_costs_can_use_valid_assignments_in_max_mode():
+    x1 = Variable("x1", [0, 1])
+    x2 = Variable("x2", [0, 1])
+
+    @AsNAryFunctionRelation(x1, x2)
+    def cost(x1_, x2_):
+        return x1_ + x2_
+
+    valid_assignments = [{"x1": 0, "x2": 0}, {"x1": 1, "x2": 1}]
+
+    costs = factor_costs_for_var(
+        cost,
+        x1,
+        {"x2": {0: 0, 1: 5}},
+        "max",
+        valid_assignments=valid_assignments,
+    )
+
+    assert costs == {0: 0, 1: 7}
+
+
 def test_approx_match_accepts_small_relative_variations():
     assert approx_match({0: 10.0, 1: 20.0}, {0: 10.4, 1: 19.5}, 0.1)
 

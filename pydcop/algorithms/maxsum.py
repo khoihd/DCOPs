@@ -418,7 +418,13 @@ class MaxSumFactorComputation(SynchronousComputationMixin, DcopComputation):
             self._auto_stop_notified = True
 
 
-def factor_costs_for_var(factor: Constraint, variable: Variable, recv_costs, mode: str):
+def factor_costs_for_var(
+    factor: Constraint,
+    variable: Variable,
+    recv_costs,
+    mode: str,
+    valid_assignments: list[dict[VarName, VarVal]] | None = None,
+):
     """
     Computes the marginals to be send by a factor to a variable
 
@@ -438,6 +444,9 @@ def factor_costs_for_var(factor: Constraint, variable: Variable, recv_costs, mod
         a dict containing the costs received from other variables
     mode: str
         "min" or "max"
+    valid_assignments: list of dict, optional
+        full assignments for this factor that should be considered when
+        computing marginals. When omitted, all assignments are generated.
 
     Returns
     -------
@@ -445,22 +454,37 @@ def factor_costs_for_var(factor: Constraint, variable: Variable, recv_costs, mod
         a dict that associates a cost to each value in the domain of `variable`
 
     """
-    # TODO: support passing list of valid assignment as param
     variable_name = variable.name
     costs = {
         d: float("inf") if mode == "min" else -float("inf")
         for d in variable.domain
     }
-    other_vars = factor.dimensions[:]
-    other_vars.remove(variable)
-    for assignment in generate_assignment_as_dict(other_vars):
+
+    other_vars = [v for v in factor.dimensions if v != variable]
+    if valid_assignments is None:
+        assignments = generate_assignment_as_dict(other_vars)
+    else:
+        assignments = valid_assignments
+
+    for assignment in assignments:
+        assignment = dict(assignment)
+        if variable_name in assignment:
+            domain_values = [assignment[variable_name]]
+        else:
+            domain_values = variable.domain
+
         sum_cost = 0
         # sum of the costs from all other variables
-        for another_var, var_value in assignment.items():
-            if another_var in recv_costs:
-                if var_value not in recv_costs[another_var]:
+        for another_var in other_vars:
+            if another_var.name in assignment:
+                var_value = assignment[another_var.name]
+            else:
+                continue
+
+            if another_var.name in recv_costs:
+                if var_value not in recv_costs[another_var.name]:
                     continue
-                sum_cost += recv_costs[another_var][var_value]
+                sum_cost += recv_costs[another_var.name][var_value]
             else:
                 # we have not received yet costs from variable v
                 pass
@@ -469,7 +493,7 @@ def factor_costs_for_var(factor: Constraint, variable: Variable, recv_costs, mod
         # where a is any assignment where v = d
         # cost (a) = f(a) + sum( costvar())
         # where costvar is the cost received from our other variables
-        for d in variable.domain:
+        for d in domain_values:
             assignment[variable_name] = d
             f_val = factor(**assignment)
 
