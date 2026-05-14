@@ -180,7 +180,8 @@ For each algorithm:
     constrained descendants, lower-bound delta propagation, subtree search,
     pruning, result selection, stop propagation, and targeted solve-level
     coverage. Max-mode NCBB is supported as a pyDcop extension by minimizing
-    the negated objective internally.
+    the negated objective internally. Objective direction is inferred from the
+    instance objective, not configured through `algo_params`.
 
 - SyncBB
   - Priority: 13
@@ -195,7 +196,9 @@ For each algorithm:
     `get_next_assignment()` was fixed so a candidate rejected after a later path
     element cannot leak through with only a prefix cost. Max-mode support now
     explicitly avoids pruning candidates from partial utility alone. SyncBB now
-    has explicit path-token memory and communication estimates.
+    has explicit path-token memory and communication estimates. Objective
+    direction is inferred from the instance objective, not configured through
+    `algo_params`.
 
 ## Cross-Cutting Checks
 

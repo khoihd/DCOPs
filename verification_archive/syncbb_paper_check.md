@@ -62,6 +62,9 @@
   local state and path-token payload instead of relying on pyDcop's generic
   default estimates. Communication is counted only along the fixed previous /
   next ordering links.
+- SyncBB exposes no objective algorithm parameter. The runtime supplies
+  `AlgorithmDef.mode` from the DCOP instance's `objective` field, matching the
+  existing MGM/DSA pattern.
 
 ## Resolved Gaps
 
@@ -90,6 +93,8 @@
   parameter.
 - `objective: max` is a pyDcop extension. The paper's SBB presentation is a
   minimization branch-and-bound algorithm.
+- Objective direction is not configured through `algo_params`; it is inferred
+  from the instance objective.
 - The implementation passes the known bound inside token messages instead of
   broadcasting a separate bound update.
 - The implementation has no SyncBB-specific algorithm parameters.

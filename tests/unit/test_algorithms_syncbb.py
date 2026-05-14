@@ -51,6 +51,7 @@ from pydcop.computations_graph.ordered_graph import build_computation_graph
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Domain, Variable, create_agents
 from pydcop.dcop.relations import constraint_from_str
+from pydcop.infrastructure.computations import ComputationException
 from pydcop.infrastructure.run import solve
 
 
@@ -138,6 +139,19 @@ def test_build_computation_returns_syncbb_instance(toy_pb_computation_graph):
 
     assert isinstance(comp, SyncBBComputation)
     assert comp.name == "vA"
+
+
+def test_syncbb_has_no_objective_algorithm_parameter():
+    assert syncbb.algo_params == []
+
+
+def test_syncbb_rejects_invalid_mode(toy_pb_computation_graph):
+    comp_node = toy_pb_computation_graph.computation("vA")
+    algo_def = AlgorithmDef("syncbb", {}, "optimize")
+    comp_def = ComputationDef(comp_node, algo_def)
+
+    with pytest.raises(ComputationException, match="requires mode"):
+        SyncBBComputation(comp_def)
 
 
 def test_memory_footprint_estimate_counts_path_token(toy_pb_computation_graph):

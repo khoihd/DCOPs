@@ -171,6 +171,10 @@ def test_build_computation_returns_ncbb_instance(single_variable_pb):
     assert comp.name == "x1"
 
 
+def test_ncbb_has_no_objective_algorithm_parameter():
+    assert ncbb.algo_params == []
+
+
 def test_create_computation_no_links(single_variable_pb):
     comp = get_computation_instance(single_variable_pb, "x1")
 

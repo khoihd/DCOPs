@@ -71,6 +71,9 @@
 - For `objective: max`, local costs are negated before entering the NCBB
   minimization machinery, so lower bounds, shifted costs, pruning, and result
   selection operate unchanged on the transformed objective.
+- NCBB exposes no objective algorithm parameter. The runtime supplies
+  `AlgorithmDef.mode` from the DCOP instance's `objective` field, matching the
+  existing MGM/DSA pattern.
 - Search-phase handling now implements `SEARCH`, value announcements,
   lower-bound delta reporting, per-value costs, unexplored child/value
   combinations, announced child values, pruning, root result selection, and
@@ -100,6 +103,8 @@
 - NCBB requires finite-domain variables and binary constraints. No
   NCBB-specific YAML item is required beyond the usual pyDcop problem
   definition, agents/distribution, and `objective: min` or `objective: max`.
+- Objective direction is not configured through `algo_params`; it is inferred
+  from the instance objective.
 
 ## Verdict
 

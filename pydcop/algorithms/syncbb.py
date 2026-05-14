@@ -105,6 +105,9 @@ Implementation
 * cycles reporting
 * no parameters
 * complete: terminates automatically (no need for ``timeout`` ``stop_cycle`` parameters.
+* objective direction is inferred from the DCOP instance objective
+  (``min`` or ``max``) through ``AlgorithmDef.mode``; there is no separate
+  objective algorithm parameter.
 
 
 **Notes**
@@ -155,9 +158,11 @@ from pydcop.infrastructure.computations import (
     VariableComputation,
     register,
     message_type,
+    ComputationException,
 )
 
 GRAPH_TYPE = "ordered_graph"
+algo_params = []
 
 INFINITY = float("inf")
 HEADER_SIZE = 0
@@ -215,6 +220,11 @@ class SyncBBComputation(VariableComputation):
         assert computation_definition.algo.algo == "syncbb"
         self.constraints = computation_definition.node.constraints
         self.mode = computation_definition.algo.mode
+        if self.mode not in {"min", "max"}:
+            raise ComputationException(
+                "SyncBB requires mode 'min' or 'max'; "
+                f"got mode {self.mode!r}."
+            )
 
         node = self.computation_def.node
 

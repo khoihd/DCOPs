@@ -55,6 +55,9 @@ The paper defines NCBB for minimization. This implementation also supports
 pyDcop maximization problems by minimizing the negated objective internally;
 the selected assignment is therefore optimal for the original max objective,
 but this is a pyDcop extension rather than a behavior described in the paper.
+The objective direction is inferred from the DCOP instance objective
+(`min` or `max`) through `AlgorithmDef.mode`; NCBB has no separate objective
+algorithm parameter.
 Unary variable costs, when present in pyDcop variables, are treated as local
 costs for the owning variable.
 
@@ -116,6 +119,7 @@ from pydcop.infrastructure.computations import (
 )
 
 GRAPH_TYPE = "pseudotree"
+algo_params = []
 
 HEADER_SIZE = 0
 UNIT_SIZE = 1

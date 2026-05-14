@@ -194,6 +194,8 @@
 - The paper is minimization-only, but this implementation supports
   `objective: max` as a pyDcop extension by minimizing the negated objective
   internally.
+- NCBB has no objective-specific `algo_params`; objective direction is inferred
+  from the DCOP instance objective via `AlgorithmDef.mode`.
 - NCBB requires finite-domain variables and binary constraints. It does not
   require NCBB-specific YAML fields beyond the usual problem definition,
   agents/distribution, and `objective: min|max`.
@@ -213,6 +215,8 @@
 - The paper's SBB solves DMCSPs by minimizing the max per-agent number of
   violated constraints; `pydcop/algorithms/syncbb.py` is a pyDcop adaptation
   for additive weighted DCOP objectives and supports both `min` and `max`.
+- SyncBB has no objective-specific `algo_params`; objective direction is
+  inferred from the DCOP instance objective via `AlgorithmDef.mode`.
 - Verification fixes:
   - forward-token handling now adopts better received bounds before local search
   - `get_next_assignment()` no longer returns a candidate that passed only a
