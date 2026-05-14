@@ -37,13 +37,22 @@ Algorithm Parameters
 ^^^^^^^^^^^^^^^^^^^^
 MGM supports two parameters:
 
-* break_mode
-* stop_cycle
+**break_mode**
+  Tie-breaking strategy when several neighboring variables have the same gain.
+  Accepted values are ``lexic`` and ``random``.
+
+**stop_cycle**
+  Optional fixed-cycle termination. A value of ``0`` means no fixed-cycle stop;
+  use a command timeout or another external stop condition.
 
 Example
 ^^^^^^^
+::
 
-TODO
+    pydcop -t 10 solve --algo mgm \
+      --algo_params stop_cycle:20 \
+      --algo_params break_mode:lexic \
+      --distribution oneagent graph_coloring.yaml
 
 """
 
@@ -69,11 +78,6 @@ UNIT_SIZE = 5
 BREAK_MODES = ["lexic", "random"]
 
 
-"""
-MGM supports two paramaters:
-* break_mode
-* stop_cycle
-"""
 algo_params = [
     AlgoParameterDef("break_mode", "str", ["lexic", "random"], "lexic"),
     AlgoParameterDef("stop_cycle", "int", None, 0),
