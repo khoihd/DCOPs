@@ -63,9 +63,6 @@ to "done_<batches_description_file>_<date>"  where <date> is the date and time o
 If you really want to re-run an interrupted batch from scratch, you must delete the `progress`
 file.
 
-TODO: in simulate, emit warning if some path / file overlap
-TODO: run in parallel
-
 """
 import datetime
 import glob
@@ -75,6 +72,7 @@ import re
 import os
 import signal
 import pathlib
+import sys
 
 from subprocess import (
     STDOUT,
@@ -91,6 +89,9 @@ import tqdm
 import yaml
 
 logger = logging.getLogger("pydcop.cli.batch")
+
+_SIMULATION_PATHS_KEY = "_simulation_paths"
+_SIMULATION_OUTPUT_OPTIONS = ("output", "run_metrics")
 
 
 def set_parser(subparsers):
@@ -145,6 +146,8 @@ global pbar
 def run_batches(batches_definition, simulate: bool, jobs=None):
     jobs = set() if not jobs else jobs
     context: dict[str, str] = {"jobs": jobs}
+    if simulate:
+        context[_SIMULATION_PATHS_KEY] = {}
     problems_sets = batches_definition["sets"]
     batches = batches_definition["batches"]
     global_options = (
@@ -446,6 +449,7 @@ def run_batch(
     simulate: bool = True,
 ):
     command = batch_definition["command"]
+    global_options = global_options.copy()
     global_options.update(batch_definition.get("global_options", {}))
 
     command_options = batch_definition["command_options"]
@@ -467,6 +471,13 @@ def run_batch(
         )
         pbar.update(1)
         if simulate:
+            warn_simulated_path_overlap(
+                context,
+                cli_command,
+                command_dir,
+                global_options,
+                command_option_combination,
+            )
             if command_dir:
                 print(f"cd {command_dir}")
             print(cli_command)
@@ -511,6 +522,61 @@ def log_cmd(cmd_str, command_dir):
             f.write(f"START: {now_time} \n")
             f.write(f"CD: {command_dir} \n")
             f.write(f"CMD: {cmd_str} \n")
+
+
+def warn_simulated_path_overlap(
+    context: dict,
+    cli_command: str,
+    command_dir: str,
+    global_options: dict,
+    command_options: dict,
+):
+    simulated_paths = context.setdefault(_SIMULATION_PATHS_KEY, {})
+    for option, path in simulated_output_paths(
+        context, command_dir, global_options, command_options
+    ):
+        previous = simulated_paths.get(path)
+        if previous is not None:
+            print(
+                "WARNING: simulated commands target the same "
+                f"--{option} path: {path}\n"
+                f"  first: {previous}\n"
+                f"  again: {cli_command}",
+                file=sys.stderr,
+            )
+        else:
+            simulated_paths[path] = cli_command
+
+
+def simulated_output_paths(
+    context: dict,
+    command_dir: str,
+    global_options: dict,
+    command_options: dict,
+) -> list[tuple[str, str]]:
+    command_context = context.copy()
+    command_context.update(global_options)
+    command_context.update(command_options)
+
+    output_paths = []
+    for options in (global_options, command_options):
+        for option in _SIMULATION_OUTPUT_OPTIONS:
+            if option not in options:
+                continue
+            raw_path = expand_variables(str(options[option]), command_context)
+            if raw_path:
+                output_paths.append(
+                    (option, normalize_output_path(raw_path, command_dir))
+                )
+    return output_paths
+
+
+def normalize_output_path(path: str, command_dir: str) -> str:
+    path = os.path.expanduser(path)
+    if not os.path.isabs(path):
+        base_dir = os.path.expanduser(command_dir) if command_dir else os.getcwd()
+        path = os.path.join(base_dir, path)
+    return os.path.normcase(os.path.abspath(path))
 
 
 def job_id(context: dict, combination: dict):

@@ -467,6 +467,53 @@ batches:
     )
 
 
+def test_simulate_warns_when_output_file_overlaps(capsys):
+    definition = """
+sets:
+ set1:
+   iterations: 2
+
+batches:
+  batch1:
+    command: generate ising
+    command_options:
+      row_count: 3
+      col_count: 3
+    global_options:
+      output: ising.yaml
+    """
+
+    batches_def = yaml.load(definition, Loader=yaml.FullLoader)
+    batch_module.run_batches(batches_def, simulate=True)
+
+    captured = capsys.readouterr()
+    assert "WARNING: simulated commands target the same --output path" in captured.err
+    assert "ising.yaml" in captured.err
+
+
+def test_simulate_does_not_warn_when_output_file_is_unique(capsys):
+    definition = """
+sets:
+ set1:
+   iterations: 2
+
+batches:
+  batch1:
+    command: generate ising
+    command_options:
+      row_count: 3
+      col_count: 3
+    global_options:
+      output: ising_{iteration}.yaml
+    """
+
+    batches_def = yaml.load(definition, Loader=yaml.FullLoader)
+    batch_module.run_batches(batches_def, simulate=True)
+
+    captured = capsys.readouterr()
+    assert "WARNING: simulated commands target the same" not in captured.err
+
+
 @mock.patch("pydcop.commands.batch.run_cli_command")
 def test_solve_variable_row_with_dir(run_mock, tmpdir):
     dir_path = str(tmpdir.realpath())
