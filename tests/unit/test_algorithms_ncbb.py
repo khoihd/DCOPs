@@ -33,11 +33,20 @@ import pytest
 
 from pydcop.algorithms import ComputationDef, AlgorithmDef
 from pydcop.algorithms import ncbb
-from pydcop.algorithms.ncbb import NcbbAlgo, ValueMessage, CostMessage, SearchMessage
+from pydcop.algorithms.ncbb import (
+    CostMessage,
+    NcbbAlgo,
+    SearchCostMessage,
+    SearchMessage,
+    SearchValueMessage,
+    ValueMessage,
+)
 from pydcop.computations_graph.pseudotree import build_computation_graph
-from pydcop.dcop.objects import Variable, Domain
-from pydcop.dcop.relations import constraint_from_str
+from pydcop.dcop.dcop import DCOP
+from pydcop.dcop.objects import Domain, Variable, create_agents
+from pydcop.dcop.relations import assignment_cost, constraint_from_str
 from pydcop.infrastructure.computations import ComputationException
+from pydcop.infrastructure.run import solve
 
 
 @pytest.fixture
@@ -229,6 +238,7 @@ def test_create_computations(toy_pb):
     assert comp_a._ancestors == []
     assert comp_a._ancestor_constraints == []
     assert set(comp_a._descendants) == {"D", "B", "C"}
+    assert comp_a._descendants_by_child == {"B": ["B", "D"], "C": ["C"]}
 
     comp_d = get_computation_instance(toy_pb, "D")
     assert not comp_d.is_root
@@ -248,10 +258,7 @@ def test_select_value_at_root_simple_variable(three_variables_pb):
     assert comp.current_value in ["R", "B"]
     assert comp._msg_sender.call_count == 2
 
-    # Warning, the messages that are sent contains the cycle_id, if we don't add them
-    # the calls will not match, which is quite inconvenient...
     msg = ValueMessage(comp.current_value)
-    msg.cycle_id = 0
     comp._msg_sender.assert_any_call("x1", "x2", msg, None, None)
     comp._msg_sender.assert_any_call("x1", "x3", msg, None, None)
 
@@ -268,9 +275,6 @@ def test_select_value_at_root(toy_pb):
     assert comp._msg_sender.call_count == 3
 
     msg = ValueMessage(comp.current_value)
-    # Warning, the messages that are sent contains the cycle_id, if we don't add them
-    # the calls will not match, which is quite inconvenient...
-    msg.cycle_id = 0
     comp._msg_sender.assert_any_call("A", "B", msg, None, None)
     comp._msg_sender.assert_any_call("A", "C", msg, None, None)
     comp._msg_sender.assert_any_call("A", "D", msg, None, None)
@@ -297,12 +301,9 @@ def test_select_value_in_dfs_only_one_ancestor(toy_pb):
     comp.value_phase("A", "R")
 
     assert comp.current_value == "B"
-    assert comp._upper_bound == 1
+    assert comp._upper_bound == 0
 
     msg = ValueMessage("B")
-    # Warning, the messages that are sent contains the cycle_id, if we don't add them
-    # the calls will not match, which is quite inconvenient...
-    msg.cycle_id = 0
     comp._msg_sender.assert_any_call("B", "D", msg, None, None)
 
 
@@ -341,13 +342,26 @@ def test_value_phase_rejects_non_ancestor_sender(toy_pb):
     assert "which is not an ancestor" in str(comp_exc.value)
 
 
-def test_value_phase_uses_algorithm_mode_for_greedy_selection(toy_pb):
+def test_value_phase_supports_max_mode_as_negated_minimization(toy_pb):
     comp = get_computation_instance(toy_pb, "B", mode="max")
 
     comp.value_phase("A", "R")
 
     assert comp.current_value == "R"
-    assert comp._upper_bound == 5
+    assert comp.agent_cost({"A": "R", "B": "R"}) == -5
+    assert comp._upper_bound == 0
+
+
+def test_communication_load(two_variables_pb):
+    comp_node = two_variables_pb.computation("x1")
+
+    assert ncbb.communication_load(comp_node, "x2") == ncbb.HEADER_SIZE + ncbb.UNIT_SIZE
+
+
+def test_memory_footprint_estimate(two_variables_pb):
+    comp_node = two_variables_pb.computation("x1")
+
+    assert ncbb.memory_footprint_estimate(comp_node) == 2 * ncbb.UNIT_SIZE
 
 
 def test_cost_msg_from_leaf(toy_pb):
@@ -358,10 +372,7 @@ def test_cost_msg_from_leaf(toy_pb):
 
     assert comp_c.current_value == "B"
 
-    msg = CostMessage(2)
-    # Warning, the messages that are sent contains the cycle_id, if we don't add them
-    # the calls will not match, which is quite inconvenient...
-    msg.cycle_id = 0
+    msg = CostMessage(0)
     comp_c._msg_sender.assert_any_call("C", "A", msg, None, None)
 
 
@@ -375,9 +386,6 @@ def test_cost_msg_from_subtree_d(toy_pb):
     assert comp_d._upper_bound == 2
 
     msg = CostMessage(2)
-    # Warning, the messages that are sent contains the cycle_id, if we don't add them
-    # the calls will not match, which is quite inconvenient...
-    msg.cycle_id = 0
     comp_d._msg_sender.assert_any_call("D", "B", msg, None, None)
 
 
@@ -390,9 +398,6 @@ def test_cost_msg_from_subtree_b(toy_pb):
     assert comp_b._upper_bound == 3
 
     msg = CostMessage(3)
-    # Warning, the messages that are sent contains the cycle_id, if we don't add them
-    # the calls will not match, which is quite inconvenient...
-    msg.cycle_id = 0
     comp_b._msg_sender.assert_any_call("B", "A", msg, None, None)
 
 
@@ -455,15 +460,15 @@ def test_on_new_cycle_dispatches_cost_message(toy_pb):
     comp_b.cost_phase.assert_called_once_with("D", 2)
 
 
-def test_on_new_cycle_rejects_mixed_message_types(toy_pb):
+def test_on_new_cycle_dispatches_mixed_init_messages(toy_pb):
     comp_b = get_computation_instance(toy_pb, "B")
 
-    with pytest.raises(ComputationException) as comp_exc:
-        comp_b.on_new_cycle(
-            {"A": (ValueMessage("R"), 0), "D": (CostMessage(2), 0)}, 1
-        )
+    comp_b.on_new_cycle(
+        {"A": (ValueMessage("R"), 0), "D": (CostMessage(2), 0)}, 1
+    )
 
-    assert "Several types of messages received" in str(comp_exc.value)
+    assert comp_b.current_value == "B"
+    assert comp_b._upper_bound == 2
 
 
 def test_on_new_cycle_rejects_init_messages_during_search(toy_pb):
@@ -499,6 +504,14 @@ def test_lower_bound_matches_paper_definition(toy_pb):
     assert comp_d.lower_bound({"A": "R", "B": "B"}, 2) == 4
 
 
+def test_lower_bound_supports_max_mode_as_negated_minimization(toy_pb):
+    comp_d = get_computation_instance(toy_pb, "D", mode="max")
+
+    assert comp_d.lower_bound({}, 0) == -14
+    assert comp_d.lower_bound({"A": "R"}, 1) == -14
+    assert comp_d.lower_bound({"A": "R", "B": "B"}, 2) == -5
+
+
 def test_lower_bound_rejects_missing_fixed_ancestor(toy_pb):
     comp_d = get_computation_instance(toy_pb, "D")
 
@@ -506,8 +519,80 @@ def test_lower_bound_rejects_missing_fixed_ancestor(toy_pb):
         comp_d.lower_bound({}, 1)
 
 
-def test_search_phase_is_not_implemented(toy_pb):
-    comp_a = get_computation_instance(toy_pb, "A")
+def test_search_value_sends_lower_bound_delta(toy_pb):
+    comp_d = get_computation_instance(toy_pb, "D")
+    comp_d.phase = "SEARCH"
 
-    with pytest.raises(NotImplementedError, match="search phase"):
-        comp_a.search()
+    comp_d.search_value_phase("A", "R")
+
+    assert comp_d._search_context == {"A": "R"}
+    comp_d._msg_sender.assert_called_once_with(
+        "D", "A", SearchCostMessage(1), None, None
+    )
+
+
+def test_leaf_search_returns_best_shifted_cost(toy_pb):
+    comp_c = get_computation_instance(toy_pb, "C")
+    comp_c.phase = "SEARCH"
+    comp_c._search_context = {"A": "R"}
+
+    comp_c.search_phase("A", 10)
+
+    assert comp_c.current_value == "B"
+    comp_c._msg_sender.assert_called_once_with(
+        "C", "A", SearchCostMessage(0), None, None
+    )
+
+
+def test_root_search_announces_value_to_child_branch_descendants(toy_pb):
+    comp_a = get_computation_instance(toy_pb, "A")
+    comp_a.phase = "SEARCH"
+    comp_a._upper_bound = 10
+
+    comp_a.search()
+
+    sent_args = [
+        call.args
+        for call in comp_a._msg_sender.call_args_list
+        if call.args[2].type == "search_value"
+    ]
+    assert ("A", "B", SearchValueMessage("R"), None, None) in sent_args
+    assert ("A", "D", SearchValueMessage("R"), None, None) in sent_args
+
+
+def test_solve_min_finds_optimal_assignment(three_variables_pb):
+    variables = {node.variable.name: node.variable for node in three_variables_pb.nodes}
+    constraints = {}
+    for node in three_variables_pb.nodes:
+        for constraint in node.constraints:
+            constraints[constraint.name] = constraint
+    dcop = DCOP(
+        name="three_variables",
+        variables=variables,
+        constraints=constraints,
+        objective="min",
+    )
+    dcop.add_agents(create_agents("a", [1, 2, 3]))
+
+    assignment = solve(dcop, "ncbb", "oneagent", timeout=2)
+
+    assert assignment_cost(assignment, constraints.values()) == 0
+
+
+def test_solve_max_finds_optimal_assignment(three_variables_pb):
+    variables = {node.variable.name: node.variable for node in three_variables_pb.nodes}
+    constraints = {}
+    for node in three_variables_pb.nodes:
+        for constraint in node.constraints:
+            constraints[constraint.name] = constraint
+    dcop = DCOP(
+        name="three_variables",
+        variables=variables,
+        constraints=constraints,
+        objective="max",
+    )
+    dcop.add_agents(create_agents("a", [1, 2, 3]))
+
+    assignment = solve(dcop, "ncbb", "oneagent", timeout=2)
+
+    assert assignment_cost(assignment, constraints.values()) == 2

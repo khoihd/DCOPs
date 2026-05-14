@@ -174,10 +174,13 @@ For each algorithm:
   - Implementation: `pydcop/algorithms/ncbb.py`
   - Paper / Source: `verification_archive/papers/ncbb.pdf`
   - Check File: `verification_archive/ncbb_paper_check.md`
-  - Status: Needs fix
-  - Notes: Initialization and the paper's `AgentCost` / `LB` helper definitions
-    are covered, but the main branch-and-bound search loop, subtree search,
-    pruning, result selection, and stop propagation are not implemented.
+  - Status: Done / Verified
+  - Notes: Verified for the paper's minimization, binary-constraint setting.
+    Implementation now includes shifted initialization bounds, child-specific
+    constrained descendants, lower-bound delta propagation, subtree search,
+    pruning, result selection, stop propagation, and targeted solve-level
+    coverage. Max-mode NCBB is supported as a pyDcop extension by minimizing
+    the negated objective internally.
 
 - SyncBB
   - Priority: 13

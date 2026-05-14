@@ -7,13 +7,15 @@
   Optimization"
 - Authors: Anton Chechetka and Katia Sycara
 - Implementation: `pydcop/algorithms/ncbb.py`
-- Status: Needs fix
+- Status: Done / Verified
 
 ## Review Scope
 
 - The paper presents NCBB as an optimal branch-and-bound DCOP algorithm for
   minimization with binary constraints, one variable per agent, and a DFS
   pseudo-tree ordering.
+- Maximization support is reviewed as a pyDcop extension that minimizes the
+  negated objective internally; it is not part of the paper contract.
 - The paper assumes constraints only between ancestor/descendant pairs in the
   pseudo-tree.
 - The check focuses on the paper's initialization phase, helper definitions
@@ -49,48 +51,79 @@
   pseudo-children from the pseudo-tree computation node.
 - The implementation rejects non-binary constraints, matching the paper's
   restricted binary-constraint presentation.
-- Initialization is partially implemented:
+- Initialization matches the paper's top-down value / bottom-up shifted-bound
+  structure:
   - the root chooses a value and sends `ValueMessage` to descendants;
   - non-root computations wait for all ancestor values;
-  - each non-root greedily chooses a value with `find_optimal()`;
-  - leaf costs are sent upward with `CostMessage`;
+  - each non-root greedily chooses a value minimizing local `AgentCost`;
+  - leaf shifted costs are sent upward with `CostMessage`;
   - internal nodes aggregate child costs and the root transitions to search
     after all children report.
+- The initial upper bound now uses the paper's shifted bound:
+  `sum(AgentCost(x, Bgreedy)) - sum(LB(x, empty, 0))`.
+- `PseudoTreeNode.branch_descendants` records child-specific constrained
+  descendants so `subtreeSearch` can implement the paper's
+  `descendants[child]` structure.
 - `agent_cost()` now implements the paper's `AgentCost` helper for constrained
-  ancestors.
+  ancestors, with pyDcop unary variable costs added as a local extension when
+  present.
 - `lower_bound()` now implements the paper's `LB(x, B, k)` minimization helper.
+- For `objective: max`, local costs are negated before entering the NCBB
+  minimization machinery, so lower bounds, shifted costs, pruning, and result
+  selection operate unchanged on the transformed objective.
+- Search-phase handling now implements `SEARCH`, value announcements,
+  lower-bound delta reporting, per-value costs, unexplored child/value
+  combinations, announced child values, pruning, root result selection, and
+  final `STOP` propagation.
+- `memory_footprint_estimate()` and `communication_load()` now provide
+  polynomial-space / constant-message-size estimates matching the paper's
+  asymptotic properties.
 
-## Gaps
+## Resolved Gaps
 
-- The main NCBB search loop is not implemented. `search()` raises
-  `NotImplementedError`.
+- The previous real-solve initialization crash is fixed: root initializes
+  `_upper_bound` before receiving child `CostMessage`s.
+- The main NCBB search loop no longer raises `NotImplementedError`.
 - Search-phase message handling for `search`, `search_value`, `search_cost`,
-  and `stop` is not implemented.
-- The implementation has no `subtreeSearch`, pruning logic, per-value `costs`,
-  `unexplored`, `anncdVals`, root result selection, or final `STOP` propagation.
-- `memory_footprint_estimate()` and `communication_load()` still raise
+  and `stop` is implemented.
+- `subtreeSearch`, pruning, per-value `costs`, `unexplored`, `anncdVals`, root
+  result selection, and final `STOP` propagation are implemented.
+- `memory_footprint_estimate()` and `communication_load()` no longer raise
   `NotImplementedError`.
-- The paper is minimization-only. The implementation accepts `mode="max"` for
-  the greedy initialization helper, but max-mode NCBB is not verified against
-  the paper.
-- There are no solve-level tests proving optimal NCBB results.
+- Solve-level coverage now proves an optimal NCBB result on a small
+  pseudo-tree instance.
+
+## Remaining Caveats
+
+- The paper is minimization-only. Max-mode NCBB is supported as a pyDcop
+  extension through objective negation, not as paper-verified behavior.
+- NCBB requires finite-domain variables and binary constraints. No
+  NCBB-specific YAML item is required beyond the usual pyDcop problem
+  definition, agents/distribution, and `objective: min` or `objective: max`.
 
 ## Verdict
 
-NCBB is not paper-correct yet. The implemented initialization behavior matches
-the broad top-down value / bottom-up cost shape from the paper, and the
-`AgentCost` / `LB` helpers now match the paper definitions for minimization.
-However, the defining branch-and-bound search phase from Figures 1 and 2 is
-absent, so the algorithm remains incomplete and should not be marked verified.
+NCBB is now paper-correct for the minimization, binary-constraint setting
+covered by Chechetka and Sycara. Initialization computes the shifted greedy
+upper bound, `AgentCost` and `LB` match the paper definitions, and the main
+branch-and-bound search from Figures 1 and 2 is implemented with lower-bound
+delta propagation, child/value exploration state, pruning, and stop
+propagation. Maximization instances are supported by minimizing the negated
+objective internally.
 
 ## Existing Coverage
 
 - `tests/unit/test_algorithms_ncbb.py` covers computation construction,
   binary-constraint validation, initialization value propagation, greedy value
   selection, cost propagation, phase validation, root transition into search,
-  `agent_cost()`, `lower_bound()`, and explicit search-phase incompleteness.
+  `agent_cost()`, `lower_bound()`, search value lower-bound deltas, leaf
+  search result reporting, branch-specific value announcements, footprint /
+  communication estimates, max-mode transformed lower bounds, and min/max
+  solve-level optimality.
+- `tests/unit/test_graph_pseudotree.py` covers the pseudo-tree graph behavior
+  after adding child-branch descendant metadata.
 
 ## Follow-Up
 
-- Implement the full search phase from Figures 1 and 2 before marking NCBB
-  verified.
+- If documenting paper fidelity elsewhere, describe `objective: max` support as
+  a pyDcop extension via objective negation.

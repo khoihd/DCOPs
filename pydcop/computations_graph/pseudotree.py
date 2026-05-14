@@ -142,11 +142,17 @@ class PseudoTreeNode(ComputationNode):
         constraints: Iterable[Constraint],
         links: Iterable[PseudoTreeLink],
         name: str = None,
+        branch_descendants: dict[str, list[str]] = None,
     ) -> None:
         name = name if name is not None else variable.name
         super().__init__(name, "PseudoTreeComputation", links=links)
         self._variable = variable
         self._constraints = tuple(constraints)
+        self._branch_descendants = (
+            {k: list(v) for k, v in branch_descendants.items()}
+            if branch_descendants is not None
+            else {}
+        )
 
     @property
     def variable(self) -> Variable:
@@ -155,6 +161,16 @@ class PseudoTreeNode(ComputationNode):
     @property
     def constraints(self) -> Iterable[RelationProtocol]:
         return self._constraints
+
+    @property
+    def branch_descendants(self) -> dict[str, list[str]]:
+        """Constrained descendants grouped by child branch.
+
+        For a node ``x`` and one of its DFS-tree children ``c``, this maps
+        ``c`` to the descendants in ``c``'s subtree that share a constraint
+        with ``x``. NCBB uses this as the paper's ``descendants[child]``.
+        """
+        return self._branch_descendants
 
     def __str__(self):
         return f"PseudoTreeNode({self._variable},{self._constraints})"
@@ -373,6 +389,10 @@ def _visit_tree(root):
         yield from _visit_tree(c)
 
 
+def _tree_node_names(root):
+    return {n.name for n in _visit_tree(root)}
+
+
 def tree_str_desc(root, indent_num=0):
     """
     Build a string representing a pseudo-tree
@@ -425,7 +445,23 @@ class ComputationPseudoTree(ComputationGraph):
                     )
 
             for n in _visit_tree(root):
-                _nodes[n.name] = PseudoTreeNode(n.variable, n.relations, links[n.name])
+                branch_descendants = {}
+                for child in n.children:
+                    subtree_names = _tree_node_names(child)
+                    branch_descendants[child.name] = [
+                        child.name,
+                        *[
+                            pseudo_child.name
+                            for pseudo_child in n.pseudo_children
+                            if pseudo_child.name in subtree_names
+                        ],
+                    ]
+                _nodes[n.name] = PseudoTreeNode(
+                    n.variable,
+                    n.relations,
+                    links[n.name],
+                    branch_descendants=branch_descendants,
+                )
 
         self.nodes = list(_nodes.values())
 
