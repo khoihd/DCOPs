@@ -83,11 +83,27 @@
     - `c6c208f` serializes meeting generator stdout as YAML documents.
     - `d88de73` stops the shared command metrics collector cleanly.
     - `4e1d05d` makes infrastructure run use symbolic infinity by default.
+    - `8db15ef` tracks repair computations explicitly instead of filtering
+      them by generated `B...` names.
+    - `33eb7e7` gates scenario events on explicit completion instead of a
+      fixed 20-second retry delay.
+    - `2fa1ee5` removes the stale commented in-process address hack from
+      communication.
+    - `7968194` updates `todo.md`, marking TODO/FIX cleanup done and adding
+      the multi-threading support follow-up.
   - Targeted checks used across this batch included the relevant unit/API
     tests, focused `ruff check` commands, and representative CLI help/solve
     invocations.
 - No active interrupted TODO/FIXME request is pending. The last completed
-  request was the `pydcop/infrastructure/run.py` FIXME cleanup in `4e1d05d`.
+  code cleanup request was the `pydcop/infrastructure/communication.py` FIXME
+  removal in `2fa1ee5`; `todo.md` was committed afterward in `7968194`.
+- Recent targeted checks:
+  - `pytest tests/unit/test_infra_agents.py`
+  - `ruff check pydcop/infrastructure/agents.py tests/unit/test_infra_agents.py`
+  - `pytest tests/unit/test_infra_orchestrator.py`
+  - `ruff check pydcop/infrastructure/orchestrator.py tests/unit/test_infra_orchestrator.py`
+  - `pytest tests/unit/test_infra_communication.py`
+  - `ruff check pydcop/infrastructure/communication.py`
 - Generated scratch files are currently untracked and intentionally not
   committed:
   - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`
