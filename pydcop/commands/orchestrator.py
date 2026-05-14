@@ -558,16 +558,21 @@ def _load_modules(dist, algo):
     if dist:
         try:
             dist_module = import_module(f"pydcop.distribution.{dist}")
-            # TODO check the imported module has the right methods ?
+            _ensure_callable(dist_module, "distribute", f"distribution method {dist}")
         except ImportError:
             _error(f"Could not find distribution method {dist}")
 
     try:
         algo_module = load_algorithm_module(algo)
-        # TODO check the imported module has the right methods ?
+        _ensure_attribute(algo_module, "GRAPH_TYPE", f"algorithm {algo}")
 
         graph_module = import_module(
             f"pydcop.computations_graph.{algo_module.GRAPH_TYPE}"
+        )
+        _ensure_callable(
+            graph_module,
+            "build_computation_graph",
+            f"computation graph type {algo_module.GRAPH_TYPE}",
         )
     except ImportError:
         _error(
@@ -575,6 +580,17 @@ def _load_modules(dist, algo):
         )
 
     return dist_module, algo_module, graph_module
+
+
+def _ensure_attribute(module, attr_name, module_description):
+    if not hasattr(module, attr_name):
+        _error(f"{module_description} does not expose required attribute {attr_name}")
+
+
+def _ensure_callable(module, method_name, module_description):
+    method = getattr(module, method_name, None)
+    if not callable(method):
+        _error(f"{module_description} does not expose required callable {method_name}")
 
 
 def _error(msg):
