@@ -249,9 +249,51 @@ def generate(args):
         random_generator=random_generator,
     )
 
-    graph = "factor_graph" if args.fg_dist else "constraints_graph"
     output_file = args.output if args.output else "NA"
-    dist_result = {
+    distribution_results = build_distribution_results(
+        output_file,
+        fg_mapping,
+        var_mapping,
+        fg_dist=args.fg_dist,
+        var_dist=args.var_dist,
+    )
+
+    if args.output:
+        with open(output_file, encoding="utf-8", mode="w") as fo:
+            fo.write(dcop_yaml(dcop))
+        path, ext = splitext(output_file)
+        for suffix, dist_result in distribution_results:
+            dist_output_file = f"{path}_{suffix}{ext}"
+            with open(dist_output_file, encoding="utf-8", mode="w") as fo:
+                fo.write(yaml.dump(dist_result))
+
+    else:
+        print(dcop_yaml(dcop))
+        for _, dist_result in distribution_results:
+            print(yaml.dump(dist_result))
+
+
+def build_distribution_results(output_file, fg_mapping, var_mapping, fg_dist, var_dist):
+    results = []
+    if fg_dist:
+        results.append(
+            (
+                "fgdist",
+                distribution_result(output_file, "factor_graph", fg_mapping),
+            )
+        )
+    if var_dist:
+        results.append(
+            (
+                "vardist",
+                distribution_result(output_file, "constraints_graph", var_mapping),
+            )
+        )
+    return results
+
+
+def distribution_result(output_file, graph, distribution):
+    return {
         "inputs": {
             "dist_algo": "NA",
             "dcop": output_file,
@@ -259,32 +301,8 @@ def generate(args):
             "algo": "NA",
         },
         "cost": None,
+        "distribution": distribution,
     }
-
-    # TODO: generate and output distribution
-    if args.output:
-        with open(output_file, encoding="utf-8", mode="w") as fo:
-            fo.write(dcop_yaml(dcop))
-        path, ext = splitext(output_file)
-        if args.fg_dist:
-            dist_result["distribution"] = fg_mapping
-            dist_output_file = f"{path}_fgdist{ext}"
-            with open(dist_output_file, encoding="utf-8", mode="w") as fo:
-                fo.write(yaml.dump(dist_result))
-        if args.var_dist:
-            dist_result["distribution"] = var_mapping
-            dist_output_file = f"{path}_vardist{ext}"
-            with open(dist_output_file, encoding="utf-8", mode="w") as fo:
-                fo.write(yaml.dump(dist_result))
-
-    else:
-        print(dcop_yaml(dcop))
-        if args.fg_dist:
-            dist_result["distribution"] = fg_mapping
-            print(yaml.dump(dist_result))
-        if args.var_dist:
-            dist_result["distribution"] = fg_mapping
-            print(yaml.dump(dist_result))
 
 
 def generate_ising(

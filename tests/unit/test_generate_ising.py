@@ -3,6 +3,7 @@ from random import Random
 import networkx as nx
 
 from pydcop.commands.generators.ising import (
+    build_distribution_results,
     generate_binary_constraints,
     generate_binary_extensive_constraint,
     generate_binary_intentional_constraint,
@@ -126,6 +127,26 @@ def test_seed_makes_ising_generation_reproducible():
     assert dcop_yaml(dcop1) == dcop_yaml(dcop2)
     assert var_mapping1 == var_mapping2
     assert fg_mapping1 == fg_mapping2
+
+
+def test_distribution_results_use_the_requested_mapping_and_graph():
+    fg_mapping = {"a_0_0": ["v_0_0", "cu_v_0_0", "cb_v_0_0_v_0_1"]}
+    var_mapping = {"a_0_0": ["v_0_0"]}
+
+    results = dict(
+        build_distribution_results(
+            "ising.yaml",
+            fg_mapping,
+            var_mapping,
+            fg_dist=True,
+            var_dist=True,
+        )
+    )
+
+    assert results["fgdist"]["inputs"]["graph"] == "factor_graph"
+    assert results["fgdist"]["distribution"] == fg_mapping
+    assert results["vardist"]["inputs"]["graph"] == "constraints_graph"
+    assert results["vardist"]["distribution"] == var_mapping
 
 
 def check_binary_constraint(constraint, bin_range):
