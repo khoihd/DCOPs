@@ -80,7 +80,16 @@ Example
       --algo_param stop_cycle:30 \\
      -d adhoc graph_coloring_csp.yaml
 
-FIXME: add results
+    {
+      "assignment": {
+        "v1": "R",
+        "v2": "G",
+        "v3": "R"
+      },
+      "cost": 0,
+      "status": "FINISHED",
+      "violation": 0
+    }
 
 See Also
 ^^^^^^^^
