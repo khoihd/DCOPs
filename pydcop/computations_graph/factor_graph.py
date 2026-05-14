@@ -35,7 +35,7 @@ from collections.abc import Iterable
 from pydcop.computations_graph.objects import ComputationNode, Link,\
     ComputationGraph
 from pydcop.dcop.dcop import DCOP
-from pydcop.dcop.objects import Variable
+from pydcop.dcop.objects import Variable, ExternalVariable
 from pydcop.dcop.relations import Constraint, find_dependent_relations
 from pydcop.utils.simple_repr import SimpleRepr, simple_repr, from_repr
 
@@ -255,7 +255,6 @@ def build_computation_graph(dcop: DCOP,
 
     """
 
-    # TODO : external variables computation ?
     if dcop is not None:
         if constraints or variables is not None:
             raise ValueError('Cannot use both dcop and constraints / '
@@ -265,6 +264,9 @@ def build_computation_graph(dcop: DCOP,
     elif constraints is None or variables is None:
             raise ValueError('Constraints AND variables parameters must be '
                              'provided wgen not building the graph from a dcop')
+
+    variables = [v for v in variables if not isinstance(v, ExternalVariable)]
+    constraints = _slice_external_variables(constraints)
 
     var_nodes = []
     for v in variables:
@@ -279,3 +281,20 @@ def build_computation_graph(dcop: DCOP,
 
     fg = ComputationsFactorGraph(var_nodes, factor_nodes)
     return fg
+
+
+def _slice_external_variables(
+    constraints: Iterable[Constraint],
+) -> list[Constraint]:
+    sliced_constraints = []
+    for constraint in constraints:
+        external_assignment = {
+            v.name: v.value
+            for v in constraint.dimensions
+            if isinstance(v, ExternalVariable)
+        }
+        if external_assignment:
+            constraint = constraint.slice(external_assignment)
+        if constraint.dimensions:
+            sliced_constraints.append(constraint)
+    return sliced_constraints

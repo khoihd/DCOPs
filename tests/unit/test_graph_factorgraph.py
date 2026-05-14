@@ -35,7 +35,7 @@ import unittest
 from pydcop.computations_graph.factor_graph import ComputationsFactorGraph, \
     VariableComputationNode, FactorComputationNode, FactorGraphLink
 from pydcop.computations_graph.factor_graph import build_computation_graph
-from pydcop.dcop.objects import Variable, Domain
+from pydcop.dcop.objects import Variable, Domain, ExternalVariable
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.relations import constraint_from_str
 from pydcop.utils.simple_repr import simple_repr, from_repr
@@ -76,6 +76,26 @@ def test_density_two_var_one_factor():
     g = build_computation_graph(dcop)
 
     assert g.density() == 4/6
+
+
+def test_build_graph_slices_external_variables():
+    dcop = DCOP('test', 'min')
+    d1 = Domain('d1', '--', [0, 1])
+    v1 = Variable('v1', d1)
+    e1 = ExternalVariable('e1', d1, value=1)
+    c1 = constraint_from_str('c1', 'v1 + e1', [v1, e1])
+    external_only = constraint_from_str('external_only', 'e1 * 2', [e1])
+    dcop.variables = {v1.name: v1}
+    dcop.external_variables = {e1.name: e1}
+    dcop._constraints = {c1.name: c1, external_only.name: external_only}
+
+    g = build_computation_graph(dcop)
+
+    assert g.node_names() == ['v1', 'c1']
+    assert g.links == {FactorGraphLink('c1', 'v1')}
+    assert g.computation('v1').constraints_names == ['c1']
+    assert g.computation('c1').variables == [v1]
+    assert g.computation('c1').factor(v1=0) == 1
 
 
 class TestFactorGraphComputation(unittest.TestCase):
