@@ -42,7 +42,9 @@ Synopsis
 
 ::
 
-  pydcop orchestrator
+  pydcop replica_dist --replication <method> --ktarget <k>
+                      --algo <algorithm> --distribution <distribution_file>
+                      <dcop_files>
 
 
 Description
@@ -68,7 +70,26 @@ To distribute computations' replicas, one need :
 Options
 -------
 
-TODO
+``--ktarget <k>`` / ``-k <k>``
+  Requested resiliency level.
+
+``--replication <method>`` / ``-r <method>``
+  Replication distribution method, one of ``dist_ucs`` or
+  ``dist_ucs_hostingcosts``.
+
+``--distribution <distribution_file>`` / ``-d <distribution_file>``
+  YAML file containing the initial computation distribution on agents.
+
+``--algo <algorithm>`` / ``-a <algorithm>``
+  DCOP algorithm used to estimate computation footprint and message load.
+
+``--mode <thread|process>`` / ``-m <thread|process>``
+  Run local agents as threads or processes. Defaults to ``thread``.
+
+The command outputs YAML containing the input summary, replication metrics,
+and the computed ``replica_dist`` mapping from computation name to replica
+host agents. Use the global ``--output <file>`` option to write this result
+to a file.
 
 
 Examples
@@ -212,49 +233,59 @@ def run_cmd(args, timer: Timer = None, timeout= None):
         orchestrator.start_replication(args.ktarget)
         orchestrator.wait_ready()
         # print(f" Replication Metrics {orchestrator.replication_metrics()}")
-        metrics = orchestrator.replication_metrics()
-        msg_count, msg_size = 0,0
-        for a in metrics:
-            msg_count +=  metrics[a]["count_ext_msg"]
-            msg_size +=  metrics[a]["size_ext_msg"]
-        # print(f" Count: {msg_count} - Size {msg_size}")
+        msg_count, msg_size = aggregate_replication_metrics(
+            orchestrator.replication_metrics()
+        )
         duration = time.time() - start_t
         if timer:
             timer.cancel()
-        rep_dist = {
-            c: list(hosts) for c, hosts in orchestrator.mgt.replica_hosts.items()
-        }
+        rep_dist = format_replica_distribution(orchestrator.mgt.replica_hosts)
         orchestrator.stop_agents(5)
         orchestrator.stop()
-        result = {
-            "inputs": {
-                "dcop": args.dcop_files,
-                "algo": args.algo,
-                "replication": args.replication,
-                "k": args.ktarget,
-            },
-            "metrics": {
-                "duration": duration,
-                "msg_size": msg_size,
-                "msg_count": msg_count,
-            },
-            "replica_dist": rep_dist,
-        }
-        result["inputs"]["distribution"] = args.distribution
+        result = build_result(args, duration, msg_count, msg_size, rep_dist)
         if args.output is not None:
             with open(args.output, encoding="utf-8", mode="w") as fo:
                 fo.write(yaml.dump(result))
         else:
             print(yaml.dump(result))
         sys.exit(0)
-
-        # TODO : retrieve and display replica distribution
-        # Each agent should send back to the orchestrator the agents hosting
-        # the replicas for each of it's computations
     except Exception as e:
         orchestrator.stop_agents(5)
         orchestrator.stop()
         _error("ERROR", e)
+
+
+def aggregate_replication_metrics(metrics):
+    msg_count, msg_size = 0, 0
+    for agent_metrics in metrics.values():
+        msg_count += agent_metrics.get("count_ext_msg", 0)
+        msg_size += agent_metrics.get("size_ext_msg", 0)
+    return msg_count, msg_size
+
+
+def format_replica_distribution(replica_hosts):
+    return {
+        computation: sorted(hosts)
+        for computation, hosts in sorted(replica_hosts.items())
+    }
+
+
+def build_result(args, duration, msg_count, msg_size, replica_dist):
+    return {
+        "inputs": {
+            "dcop": args.dcop_files,
+            "algo": args.algo,
+            "replication": args.replication,
+            "k": args.ktarget,
+            "distribution": args.distribution,
+        },
+        "metrics": {
+            "duration": duration,
+            "msg_size": msg_size,
+            "msg_count": msg_count,
+        },
+        "replica_dist": replica_dist,
+    }
 
 
 def on_timeout():
