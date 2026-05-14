@@ -50,6 +50,7 @@ Synopsis
           --max_resources_event <max_resources_event>
           [--max_length_event <max_length_event>]
           [--max_resource_value <max_resource_value>]
+          [--model <model>]
           [--seed <seed>]
           [--no_agents]
           [--routes_default <routes_default>]
@@ -61,11 +62,12 @@ Description
 -----------
 
 This command generates a meeting scheduling problem, based on
-:cite:`maheswaran_taking_2004` with the *Private Event As Variable* (PEAV) model.
+:cite:`maheswaran_taking_2004` with the *Private Event As Variable* (PEAV) model
+by default.
 
-Note that this command generates both a DCOP and a distribution, as the PEAV model
-also specifies the list of agents (one for each resource) and where each variable
-is hosted.
+Note that this command generates both a DCOP and a distribution, as the selected
+model also specifies the list of agents (one for each resource) and where each
+variable is hosted.
 
 
 **Note:** the generated DCOP and distribution are both written to the standard output.
@@ -100,8 +102,12 @@ Options
 ``--seed <seed>``
   Seed for random problem generation. Optional.
 
+``--model <model>``
+  Model used for the meeting scheduling problem: ``peav`` (default),
+  ``eav`` (Events As Variables), or ``tsav`` (Time Slots As Variables).
+
 ``--no_agents``
-  Do not generate agents or the PEAV distribution.
+  Do not generate agents or the model distribution.
 
 ``--intentional``
   Generate constraints as intentional functions instead of extensional matrices.
@@ -218,14 +224,15 @@ def init_cli_parser(parent_parser):
         "--capacity", type=int, required=False, help="Capacity of agents"
     )
 
-    # TODO: add support for 'Time Slot As Variable' and 'Events As Variables'
-    # parser.add_argument(
-    #     "--model",
-    #     choices=["eav", "peav", "easv"],
-    #     help="Model used for the meeting sheduling problem:"
-    #     " 'eav' (Events As Variables),"
-    #     " 'peav' (Private Events As Variables) or"
-    # )
+    parser.add_argument(
+        "--model",
+        choices=["peav", "eav", "tsav"],
+        default="peav",
+        help="Model used for the meeting scheduling problem: "
+        "'peav' (Private Events As Variables), "
+        "'eav' (Events As Variables), or "
+        "'tsav' (Time Slots As Variables)",
+    )
 
     parser.add_argument(
         "--intentional",
@@ -249,8 +256,9 @@ def generate(args):
     )
 
     penalty = args.max_resource_value * args.slots_count * args.resources_count
-    variables, constraints, agents = peav_model(
-        slots, events, resources, penalty, args.intentional
+    model = getattr(args, "model", "peav")
+    variables, constraints, agents = meeting_scheduling_model(
+        model, slots, events, resources, penalty, args.intentional
     )
 
     domains = {variable.domain.name: variable.domain for variable in variables.values()}
@@ -295,7 +303,7 @@ def generate(args):
         if not args.no_agents:
             dist_result = {
                 "inputs": {
-                    "dist_algo": "peav",
+                    "dist_algo": model,
                     "dcop": output_file,
                     "graph": "constraints_graph",
                     "algo": "NA",
@@ -314,7 +322,7 @@ def generate(args):
         if not args.no_agents:
             dist_result = {
                 "inputs": {
-                    "dist_algo": "peav",
+                    "dist_algo": model,
                     "dcop": "NA",
                     "graph": "constraints_graph",
                     "algo": "NA",
@@ -345,6 +353,27 @@ class Event(NamedTuple):
 class Resource(NamedTuple):
     id: RESOURCE
     value_free: dict[SLOT, VALUE]
+
+
+def meeting_scheduling_model(
+    model: str,
+    slots: list[SLOT],
+    events: dict[EVT, Event],
+    resources: dict[RESOURCE, Resource],
+    penalty,
+    intentional: bool = False,
+) -> tuple[
+    dict[object, Variable],
+    dict[str, Constraint],
+    dict[str, list[Variable]],
+]:
+    if model == "peav":
+        return peav_model(slots, events, resources, penalty, intentional)
+    if model == "eav":
+        return eav_model(slots, events, resources, penalty, intentional)
+    if model == "tsav":
+        return tsav_model(slots, events, resources, penalty, intentional)
+    raise ValueError(f"Unknown meeting scheduling model {model}")
 
 
 def peav_model(
@@ -405,6 +434,280 @@ def peav_model(
             all_constraints[constraint.name] = constraint
 
     return all_variables, all_constraints, all_agents
+
+
+def eav_model(
+    slots: list[SLOT],
+    events: dict[EVT, Event],
+    resources: dict[RESOURCE, Resource],
+    penalty,
+    intentional: bool = False,
+) -> tuple[dict[EVT, Variable], dict[str, Constraint], dict[str, list[Variable]]]:
+    all_variables = eav_variables(events, len(slots))
+    all_constraints: dict[str, Constraint] = {}
+    all_agents: dict[str, list[Variable]] = {
+        f"a_{resource.id}": [] for resource in resources.values()
+    }
+
+    for event in events.values():
+        variable = all_variables[event.id]
+        host_resource = sorted(event.resources)[0]
+        all_agents[f"a_{host_resource}"].append(variable)
+        if intentional:
+            constraint = eav_event_utility_intentional_constraint(
+                event, resources, variable
+            )
+        else:
+            constraint = eav_event_utility_extensive_constraint(
+                event, resources, variable
+            )
+        all_constraints[constraint.name] = constraint
+
+    for event1, event2 in itertools.combinations(events.values(), 2):
+        shared_resources = set(event1.resources).intersection(event2.resources)
+        if not shared_resources:
+            continue
+        var1 = all_variables[event1.id]
+        var2 = all_variables[event2.id]
+        if intentional:
+            constraint = eav_conflict_intentional_constraint(
+                event1, var1, event2, var2, penalty, len(shared_resources)
+            )
+        else:
+            constraint = eav_conflict_extensive_constraint(
+                event1, var1, event2, var2, penalty, len(shared_resources)
+            )
+        all_constraints[constraint.name] = constraint
+
+    return all_variables, all_constraints, all_agents
+
+
+def tsav_model(
+    slots: list[SLOT],
+    events: dict[EVT, Event],
+    resources: dict[RESOURCE, Resource],
+    penalty,
+    intentional: bool = False,
+) -> tuple[
+    dict[tuple[RESOURCE, SLOT], Variable],
+    dict[str, Constraint],
+    dict[str, list[Variable]],
+]:
+    all_variables: dict[tuple[RESOURCE, SLOT], Variable] = {}
+    all_constraints: dict[str, Constraint] = {}
+    all_agents: dict[str, list[Variable]] = {}
+
+    for resource in resources.values():
+        variables = tsav_variables_for_resource(resource, events, slots)
+        all_variables.update(variables)
+        all_agents[f"a_{resource.id}"] = list(variables.values())
+
+    # TSAV event constraints can have a large arity, so they are represented
+    # intentionally even when the rest of the generator defaults to matrices.
+    for event in events.values():
+        constraint = tsav_event_intentional_constraint(
+            event, resources, all_variables, slots, penalty
+        )
+        all_constraints[constraint.name] = constraint
+
+    return all_variables, all_constraints, all_agents
+
+
+def eav_variables(
+    events: dict[EVT, Event], slots_count: int
+) -> dict[EVT, Variable]:
+    variables: dict[EVT, Variable] = {}
+    for event in events.values():
+        name = f"v_{event.id:02d}"
+        # The domain represents the start time (as slot) for this event.
+        # Time slots start at 1, the value 0 represents an unscheduled event.
+        domain = Domain(
+            f"d_{name}",
+            "time_slot",
+            values=range(0, slots_count - event.length + 2),
+        )
+        variables[event.id] = Variable(name, domain)
+    return variables
+
+
+def eav_event_utility_extensive_constraint(
+    event: Event, resources: dict[RESOURCE, Resource], variable: Variable
+) -> Constraint:
+    constraint = NAryMatrixRelation([variable], name=f"cu_{variable.name}")
+    for t in variable.domain:
+        value = eav_event_utility(event, resources, t)
+        constraint = constraint.set_value_for_assignment({variable.name: t}, value)
+    return constraint
+
+
+def eav_event_utility_intentional_constraint(
+    event: Event, resources: dict[RESOURCE, Resource], variable: Variable
+) -> Constraint:
+    values = {t: eav_event_utility(event, resources, t) for t in variable.domain}
+    expression = f"{values!r}[{variable.name}]"
+    return NAryFunctionRelation(
+        ExpressionFunction(expression),
+        [variable],
+        name=f"cu_{variable.name}",
+        f_kwargs=True,
+    )
+
+
+def eav_event_utility(
+    event: Event, resources: dict[RESOURCE, Resource], t: SLOT
+) -> float:
+    return sum(
+        resource_value_for_event(resources[resource_id], event, t)
+        for resource_id in event.resources
+    )
+
+
+def eav_conflict_extensive_constraint(
+    event1: Event,
+    var1: Variable,
+    event2: Event,
+    var2: Variable,
+    penalty: int,
+    shared_resources_count: int,
+) -> Constraint:
+    constraint = NAryMatrixRelation([var1, var2], name=f"cc_{var1.name}_{var2.name}")
+    for t1 in var1.domain:
+        for t2 in var2.domain:
+            value = eav_conflict_value(
+                event1, event2, penalty, shared_resources_count, t1, t2
+            )
+            constraint = constraint.set_value_for_assignment(
+                {var1.name: t1, var2.name: t2}, value
+            )
+    return constraint
+
+
+def eav_conflict_intentional_constraint(
+    event1: Event,
+    var1: Variable,
+    event2: Event,
+    var2: Variable,
+    penalty: int,
+    shared_resources_count: int,
+) -> Constraint:
+    penalty_value = penalty * shared_resources_count
+    expression = (
+        f"if {var1.name} != 0 and {var2.name} != 0:\n"
+        f"    if {var1.name} <= {var2.name} <= "
+        f"{var1.name} + {event1.length - 1}:\n"
+        f"        return -{penalty_value}\n"
+        f"    if {var2.name} <= {var1.name} <= "
+        f"{var2.name} + {event2.length - 1}:\n"
+        f"        return -{penalty_value}\n"
+        "return 0"
+    )
+    return NAryFunctionRelation(
+        ExpressionFunction(expression),
+        [var1, var2],
+        name=f"cc_{var1.name}_{var2.name}",
+        f_kwargs=True,
+    )
+
+
+def eav_conflict_value(
+    event1: Event,
+    event2: Event,
+    penalty: int,
+    shared_resources_count: int,
+    t1: SLOT,
+    t2: SLOT,
+) -> float:
+    if events_overlap(event1, t1, event2, t2):
+        return -penalty * shared_resources_count
+    return 0
+
+
+def tsav_event_token(event: Event) -> int:
+    return event.id + 1
+
+
+def tsav_variables_for_resource(
+    resource: Resource, events: dict[EVT, Event], slots: list[SLOT]
+) -> dict[tuple[RESOURCE, SLOT], Variable]:
+    variables: dict[tuple[RESOURCE, SLOT], Variable] = {}
+    domain_values = [0] + [
+        tsav_event_token(event)
+        for event in events.values()
+        if resource.id in event.resources
+    ]
+    for slot in slots:
+        name = f"t_{resource.id:02d}_{slot:02d}"
+        # Domain values are event tokens; 0 means the resource is free.
+        domain = Domain(f"d_{name}", "event", values=domain_values)
+        variables[resource.id, slot] = Variable(name, domain)
+    return variables
+
+
+def tsav_event_intentional_constraint(
+    event: Event,
+    resources: dict[RESOURCE, Resource],
+    variables: dict[tuple[RESOURCE, SLOT], Variable],
+    slots: list[SLOT],
+    penalty,
+) -> Constraint:
+    dimensions = []
+    assigned_expressions = []
+    token = tsav_event_token(event)
+
+    for resource_id in sorted(event.resources):
+        resource_variables = [(slot, variables[resource_id, slot]) for slot in slots]
+        dimensions.extend(variable for _, variable in resource_variables)
+        slot_assignments = ", ".join(
+            f"({slot}, {variable.name})" for slot, variable in resource_variables
+        )
+        assigned_expressions.append(
+            f"[slot for slot, value in [{slot_assignments}] if value == {token}]"
+        )
+
+    start_values = {
+        t: eav_event_utility(event, resources, t)
+        for t in range(1, len(slots) - event.length + 2)
+    }
+    expression = (
+        f"assigned = [{', '.join(assigned_expressions)}]\n"
+        "starts = []\n"
+        "for resource_slots in assigned:\n"
+        "    if not resource_slots:\n"
+        "        starts.append(0)\n"
+        "        continue\n"
+        f"    if len(resource_slots) != {event.length}:\n"
+        f"        return -{penalty}\n"
+        "    start = min(resource_slots)\n"
+        f"    if resource_slots != list(range(start, start + {event.length})):\n"
+        f"        return -{penalty}\n"
+        f"    if start not in {start_values!r}:\n"
+        f"        return -{penalty}\n"
+        "    starts.append(start)\n"
+        "if all(start == 0 for start in starts):\n"
+        "    return 0\n"
+        "if any(start == 0 for start in starts):\n"
+        f"    return -{penalty}\n"
+        "if len(set(starts)) != 1:\n"
+        f"    return -{penalty}\n"
+        f"return {start_values!r}[starts[0]]"
+    )
+    return NAryFunctionRelation(
+        ExpressionFunction(expression),
+        dimensions,
+        name=f"ct_{event.id:02d}",
+        f_kwargs=True,
+    )
+
+
+def events_overlap(event1: Event, t1: SLOT, event2: Event, t2: SLOT) -> bool:
+    return (
+        t1 != 0
+        and t2 != 0
+        and (
+            t1 <= t2 <= t1 + event1.length - 1
+            or t2 <= t1 <= t2 + event2.length - 1
+        )
+    )
 
 
 def generate_problem_definition(

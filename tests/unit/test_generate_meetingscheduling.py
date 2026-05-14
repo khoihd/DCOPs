@@ -5,12 +5,14 @@ from random import Random
 from pydcop.commands.generators.meetingscheduling import (
     Event,
     Resource,
+    eav_model,
     generate_resources,
     generate_events,
     generate_problem_definition,
     init_cli_parser,
     peav_model,
     peav_variables_for_resource,
+    tsav_model,
 )
 from pydcop.dcop.relations import NAryFunctionRelation
 
@@ -109,6 +111,31 @@ def test_cli_parser_accepts_intentional():
     )
 
     assert args.intentional
+    assert args.model == "peav"
+
+
+def test_cli_parser_accepts_model():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    init_cli_parser(subparsers)
+
+    args = parser.parse_args(
+        [
+            "meetings",
+            "--slots_count",
+            "3",
+            "--events_count",
+            "2",
+            "--resources_count",
+            "2",
+            "--max_resources_event",
+            "2",
+            "--model",
+            "tsav",
+        ]
+    )
+
+    assert args.model == "tsav"
 
 
 def test_peav_intentional_constraints_match_extensive_constraints():
@@ -128,6 +155,97 @@ def test_peav_intentional_constraints_match_extensive_constraints():
         slots, events, resources, penalty, intentional=True
     )
 
+    _assert_intentional_constraints_match_extensive(
+        intentional_constraints, extensive_constraints
+    )
+
+
+def test_eav_intentional_constraints_match_extensive_constraints():
+    slots = [1, 2, 3]
+    resources = {
+        0: Resource(0, {1: 1, 2: 2, 3: 3}),
+        1: Resource(1, {1: 3, 2: 2, 3: 1}),
+    }
+    events = {
+        0: Event(0, {0: 5, 1: 4}, 1),
+        1: Event(1, {0: 3}, 2),
+    }
+    penalty = 20
+
+    _, extensive_constraints, _ = eav_model(slots, events, resources, penalty)
+    _, intentional_constraints, _ = eav_model(
+        slots, events, resources, penalty, intentional=True
+    )
+
+    _assert_intentional_constraints_match_extensive(
+        intentional_constraints, extensive_constraints
+    )
+
+
+def test_eav_and_tsav_models_have_same_best_value_as_peav():
+    slots = [1, 2]
+    resources = {
+        0: Resource(0, {1: 0, 2: 0}),
+        1: Resource(1, {1: 0, 2: 0}),
+    }
+    events = {
+        0: Event(0, {0: 5, 1: 4}, 1),
+        1: Event(1, {0: 3}, 1),
+    }
+    penalty = 20
+
+    peav_variables, peav_constraints, _ = peav_model(
+        slots, events, resources, penalty
+    )
+    eav_variables, eav_constraints, _ = eav_model(slots, events, resources, penalty)
+    tsav_variables, tsav_constraints, _ = tsav_model(
+        slots, events, resources, penalty
+    )
+
+    assert _best_value(eav_variables, eav_constraints) == _best_value(
+        peav_variables, peav_constraints
+    )
+    assert _best_value(tsav_variables, tsav_constraints) == _best_value(
+        peav_variables, peav_constraints
+    )
+
+
+def test_tsav_event_constraint_requires_contiguous_matching_resource_slots():
+    slots = [1, 2, 3]
+    resources = {
+        0: Resource(0, {1: 0, 2: 0, 3: 0}),
+        1: Resource(1, {1: 0, 2: 0, 3: 0}),
+    }
+    events = {0: Event(0, {0: 5, 1: 4}, 2)}
+    penalty = 20
+
+    _, constraints, _ = tsav_model(slots, events, resources, penalty)
+    constraint = constraints["ct_00"]
+    assignment = {variable.name: 0 for variable in constraint.dimensions}
+
+    scheduled = assignment | {
+        "t_00_01": 1,
+        "t_00_02": 1,
+        "t_01_01": 1,
+        "t_01_02": 1,
+    }
+    partial = assignment | {"t_00_01": 1, "t_00_02": 1}
+    non_contiguous = assignment | {
+        "t_00_01": 1,
+        "t_00_03": 1,
+        "t_01_01": 1,
+        "t_01_03": 1,
+    }
+
+    assert constraint(**assignment) == 0
+    assert constraint(**scheduled) == 18
+    assert constraint(**partial) == -penalty
+    assert constraint(**non_contiguous) == -penalty
+
+
+def _assert_intentional_constraints_match_extensive(
+    intentional_constraints, extensive_constraints
+):
     assert intentional_constraints.keys() == extensive_constraints.keys()
     assert all(
         isinstance(constraint, NAryFunctionRelation)
@@ -141,3 +259,22 @@ def test_peav_intentional_constraints_match_extensive_constraints():
         for values in product(*domains):
             assignment = dict(zip(variables, values))
             assert intentional(**assignment) == extensive(**assignment)
+
+
+def _best_value(variables, constraints):
+    variable_list = list(variables.values())
+    best = None
+    for values in product(*[variable.domain for variable in variable_list]):
+        assignment = {
+            variable.name: value for variable, value in zip(variable_list, values)
+        }
+        value = 0
+        for constraint in constraints.values():
+            constraint_assignment = {
+                variable.name: assignment[variable.name]
+                for variable in constraint.dimensions
+            }
+            value += constraint(**constraint_assignment)
+        if best is None or value > best:
+            best = value
+    return best
