@@ -181,6 +181,7 @@ from pydcop.commands._utils import (
     _load_modules,
     build_algo_def,
     collect_tread,
+    stop_collect_thread,
     add_csvline,
 )
 from pydcop.dcop.dcop import filter_dcop
@@ -384,10 +385,13 @@ def run_cmd(args, timer=None, timeout=None):
     try:
         orchestrator.deploy_computations()
         orchestrator.start_replication(args.ktarget)
-        if orchestrator.wait_ready():
+        ready = orchestrator.wait_ready()
+        if ready:
             orchestrator.run(scenario, timeout=timeout)
             if timer:
                 timer.cancel()
+        stop_collect_thread(collector_queue, collect_t)
+        if ready:
             if not timeout_stopped:
                 if orchestrator.status == "TIMEOUT":
                     _results("TIMEOUT")
@@ -398,6 +402,7 @@ def run_cmd(args, timer=None, timeout=None):
 
     except Exception as e:
         logger.error(e, exc_info=1)
+        stop_collect_thread(collector_queue, collect_t)
         print(e)
         for th in threading.enumerate():
             print(th)

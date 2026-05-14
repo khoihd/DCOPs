@@ -35,11 +35,14 @@ from functools import partial
 from importlib import import_module
 
 import sys
-from queue import Queue, Empty
+from queue import Queue
+from threading import Thread
 
 from pydcop.algorithms import AlgorithmDef, prepare_algo_params, load_algorithm_module
 
 logger = logging.getLogger("pydcop")
+
+METRICS_COLLECTOR_STOP = object()
 
 
 def build_algo_def(algo_module, algo_name: str, objective, cli_params: list[str]):
@@ -229,12 +232,16 @@ def _ensure_callable(module, method_name, module_description):
 
 def collect_tread(collect_queue: Queue, csv_cb):
     while True:
-        try:
-            t, metrics = collect_queue.get()
+        item = collect_queue.get()
+        if item is METRICS_COLLECTOR_STOP:
+            return
 
-            if csv_cb is not None:
-                csv_cb(metrics)
+        _, metrics = item
 
-        except Empty:
-            pass
-        # FIXME : end of run ?
+        if csv_cb is not None:
+            csv_cb(metrics)
+
+
+def stop_collect_thread(collect_queue: Queue, collect_t: Thread):
+    collect_queue.put(METRICS_COLLECTOR_STOP)
+    collect_t.join(timeout=1)

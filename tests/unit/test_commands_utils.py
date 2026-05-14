@@ -1,8 +1,48 @@
+from queue import Queue
+from threading import Thread
 from types import SimpleNamespace
 
 import pytest
 
 import pydcop.commands._utils as utils
+
+
+def test_collect_thread_stops_on_sentinel():
+    metrics_queue = Queue()
+    collected = []
+    thread = Thread(
+        target=utils.collect_tread,
+        args=[metrics_queue, collected.append],
+    )
+
+    thread.start()
+    metrics_queue.put((0, {"cost": 0}))
+    metrics_queue.put(utils.METRICS_COLLECTOR_STOP)
+    thread.join(timeout=1)
+
+    assert not thread.is_alive()
+    assert collected == [{"cost": 0}]
+
+
+def test_stop_collect_thread_sends_sentinel_and_joins():
+    class FakeQueue:
+        def __init__(self):
+            self.items = []
+
+        def put(self, item):
+            self.items.append(item)
+
+    class FakeThread:
+        def join(self, timeout=None):
+            self.joined_timeout = timeout
+
+    queue = FakeQueue()
+    thread = FakeThread()
+
+    utils.stop_collect_thread(queue, thread)
+
+    assert queue.items == [utils.METRICS_COLLECTOR_STOP]
+    assert thread.joined_timeout == 1
 
 
 def test_load_modules_validates_distribution_module(monkeypatch, capsys):
