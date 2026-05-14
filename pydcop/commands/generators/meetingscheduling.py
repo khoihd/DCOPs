@@ -103,6 +103,9 @@ Options
 ``--no_agents``
   Do not generate agents or the PEAV distribution.
 
+``--intentional``
+  Generate constraints as intentional functions instead of extensional matrices.
+
 ``--routes_default <routes_default>``
   Default route cost for generated agents. Optional.
 
@@ -139,9 +142,10 @@ import yaml
 
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Variable, Domain, AgentDef
-from pydcop.dcop.relations import NAryMatrixRelation, Constraint
+from pydcop.dcop.relations import Constraint, NAryFunctionRelation, NAryMatrixRelation
 from pydcop.dcop.yamldcop import dcop_yaml
 from pydcop.distribution.objects import Distribution
+from pydcop.utils.expressionfunction import ExpressionFunction
 
 
 def init_cli_parser(parent_parser):
@@ -223,14 +227,13 @@ def init_cli_parser(parent_parser):
     #     " 'peav' (Private Events As Variables) or"
     # )
 
-    # TODO: add support for intentional constraints
-    # parser.add_argument(
-    #     "--intentional",
-    #     default=False,
-    #     required=False,
-    #     action="store_true",
-    #     help="generate the problem in intentional form (default is extensive form)",
-    # )
+    parser.add_argument(
+        "--intentional",
+        default=False,
+        required=False,
+        action="store_true",
+        help="generate the problem in intentional form (default is extensive form)",
+    )
 
 
 def generate(args):
@@ -246,7 +249,9 @@ def generate(args):
     )
 
     penalty = args.max_resource_value * args.slots_count * args.resources_count
-    variables, constraints, agents = peav_model(slots, events, resources, penalty)
+    variables, constraints, agents = peav_model(
+        slots, events, resources, penalty, args.intentional
+    )
 
     domains = {variable.domain.name: variable.domain for variable in variables.values()}
     variables = {variable.name: variable for variable in variables.values()}
@@ -347,6 +352,7 @@ def peav_model(
     events: dict[EVT, Event],
     resources: dict[RESOURCE, Resource],
     penalty,
+    intentional: bool = False,
 ) -> tuple[
     dict[tuple[RESOURCE, EVT], Variable],
     dict[str, Constraint],
@@ -376,9 +382,14 @@ def peav_model(
         all_variables.update(variables)
         all_agents[f"a_{resource.id}"] = list(variables.values())
 
-        constraints = peav_intra_extensive_constraints(
-            resource, events, variables, penalty
-        )
+        if intentional:
+            constraints = peav_intra_intentional_constraints(
+                resource, events, variables, penalty
+            )
+        else:
+            constraints = peav_intra_extensive_constraints(
+                resource, events, variables, penalty
+            )
         all_constraints.update(constraints)
 
     # Generate inter-agent constraints: we have such constraint between any two
@@ -387,7 +398,10 @@ def peav_model(
         for resource_id1, resource_id2 in itertools.combinations(event.resources, 2):
             var1 = all_variables[(resource_id1, event.id)]
             var2 = all_variables[(resource_id2, event.id)]
-            constraint = peav_inter_extensive_constraint(var1, var2, penalty)
+            if intentional:
+                constraint = peav_inter_intentional_constraint(var1, var2, penalty)
+            else:
+                constraint = peav_inter_extensive_constraint(var1, var2, penalty)
             all_constraints[constraint.name] = constraint
 
     return all_variables, all_constraints, all_agents
@@ -543,6 +557,40 @@ def peav_intra_extensive_constraints(
     return constraints
 
 
+def peav_intra_intentional_constraints(
+    resource: Resource,
+    events: dict[EVT, Event],
+    variables: dict[tuple[RESOURCE, EVT], Variable],
+    penalty,
+):
+    resource_events_count = len(variables)
+    constraints = {}
+    for (resource_id1, event_id1), (resource_id2, event_id2) in itertools.combinations(
+        variables, 2
+    ):
+        # As we are generating intra-agent constraint and agents map to resources in
+        # the peav model, all resources must be the same
+        assert resource.id == resource_id1 == resource_id2
+        constraint = peav_intra_intentional_constraint(
+            resource,
+            events[event_id1],
+            variables[(resource.id, event_id1)],
+            events[event_id2],
+            variables[resource.id, event_id2],
+            penalty,
+            resource_events_count,
+        )
+        constraints[constraint.name] = constraint
+
+    if len(variables) == 1:
+        (_, event_id), variable = next(iter(variables.items()))
+        event = events[event_id]
+        constraint = peav_unary_intentional_constraint(resource, event, variable)
+        constraints[constraint.name] = constraint
+
+    return constraints
+
+
 def peav_intra_extensive_constraint(
     resource: Resource,
     event1: Event,
@@ -565,6 +613,50 @@ def peav_intra_extensive_constraint(
                 {var1.name: t1, var2.name: t2}, value
             )
     return constraint
+
+
+def peav_unary_intentional_constraint(
+    resource: Resource, event: Event, variable: Variable
+) -> Constraint:
+    values = {t: resource_value_for_event(resource, event, t) for t in variable.domain}
+    expression = f"{values!r}[{variable.name}]"
+    return NAryFunctionRelation(
+        ExpressionFunction(expression),
+        [variable],
+        name=f"cu_{variable.name}",
+        f_kwargs=True,
+    )
+
+
+def peav_intra_intentional_constraint(
+    resource: Resource,
+    event1: Event,
+    var1: Variable,
+    event2: Event,
+    var2: Variable,
+    penalty: int,
+    resource_events_count: int,
+) -> Constraint:
+    values1 = {t: resource_value_for_event(resource, event1, t) for t in var1.domain}
+    values2 = {t: resource_value_for_event(resource, event2, t) for t in var2.domain}
+    factor = 1 / (resource_events_count - 1)
+    expression = (
+        f"if {var1.name} != 0 and {var2.name} != 0:\n"
+        f"    if {var1.name} <= {var2.name} <= "
+        f"{var1.name} + {event1.length - 1}:\n"
+        f"        return -{penalty}\n"
+        f"    if {var2.name} <= {var1.name} <= "
+        f"{var2.name} + {event2.length - 1}:\n"
+        f"        return -{penalty}\n"
+        f"return {factor!r} * "
+        f"({values1!r}[{var1.name}] + {values2!r}[{var2.name}])"
+    )
+    return NAryFunctionRelation(
+        ExpressionFunction(expression),
+        [var1, var2],
+        name=f"ci_{var1.name}_{var2.name}",
+        f_kwargs=True,
+    )
 
 
 def peav_intra_extensive_constraint_value(
@@ -639,6 +731,16 @@ def peav_inter_extensive_constraint(var1, var2, penalty):
                     {var1.name: t1, var2.name: t2}, -penalty
                 )
     return constraint
+
+
+def peav_inter_intentional_constraint(var1, var2, penalty):
+    expression = f"-{penalty} if {var1.name} != {var2.name} else 0"
+    return NAryFunctionRelation(
+        ExpressionFunction(expression),
+        [var1, var2],
+        name=f"ce_{var1.name}_{var2.name}",
+        f_kwargs=True,
+    )
 
 
 def resource_value_for_event(resource: Resource, event: Event, t: SLOT) -> float:

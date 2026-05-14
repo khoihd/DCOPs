@@ -1,11 +1,18 @@
+import argparse
+from itertools import product
 from random import Random
 
 from pydcop.commands.generators.meetingscheduling import (
+    Event,
+    Resource,
     generate_resources,
     generate_events,
     generate_problem_definition,
+    init_cli_parser,
+    peav_model,
     peav_variables_for_resource,
 )
+from pydcop.dcop.relations import NAryFunctionRelation
 
 
 def test_generate_resources():
@@ -79,3 +86,58 @@ def test_seed_makes_problem_definition_reproducible():
     )
 
     assert problem1 == problem2
+
+
+def test_cli_parser_accepts_intentional():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    init_cli_parser(subparsers)
+
+    args = parser.parse_args(
+        [
+            "meetings",
+            "--slots_count",
+            "3",
+            "--events_count",
+            "2",
+            "--resources_count",
+            "2",
+            "--max_resources_event",
+            "2",
+            "--intentional",
+        ]
+    )
+
+    assert args.intentional
+
+
+def test_peav_intentional_constraints_match_extensive_constraints():
+    slots = [1, 2, 3]
+    resources = {
+        0: Resource(0, {1: 1, 2: 2, 3: 3}),
+        1: Resource(1, {1: 3, 2: 2, 3: 1}),
+    }
+    events = {
+        0: Event(0, {0: 5, 1: 4}, 1),
+        1: Event(1, {0: 3}, 2),
+    }
+    penalty = 20
+
+    _, extensive_constraints, _ = peav_model(slots, events, resources, penalty)
+    _, intentional_constraints, _ = peav_model(
+        slots, events, resources, penalty, intentional=True
+    )
+
+    assert intentional_constraints.keys() == extensive_constraints.keys()
+    assert all(
+        isinstance(constraint, NAryFunctionRelation)
+        for constraint in intentional_constraints.values()
+    )
+
+    for name, intentional in intentional_constraints.items():
+        extensive = extensive_constraints[name]
+        variables = [variable.name for variable in intentional.dimensions]
+        domains = [variable.domain for variable in intentional.dimensions]
+        for values in product(*domains):
+            assignment = dict(zip(variables, values))
+            assert intentional(**assignment) == extensive(**assignment)
