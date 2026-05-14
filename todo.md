@@ -11,7 +11,9 @@
   - NCBB
   - SyncBB
 
-- (WIP) Fix TODO and FIX
+- (DONE) Fix TODO and FIX
+
+- Add multi-threading support for all algorithms:
 
 - Require a parameter for termination mechanism to all iterative algorithms
 
@@ -24,8 +26,6 @@
 - Optimize commonly used files with overheads
 
 - Optimize instance generator
-
-- Check how the algorithm supports multi-threading
 
 - Investigate optional multicore PuLP solving with a CBC backend and a
   `threads` parameter; current `GLPK_CMD` path is effectively single-core.
