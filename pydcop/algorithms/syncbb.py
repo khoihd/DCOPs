@@ -255,6 +255,10 @@ class SyncBBComputation(VariableComputation):
             f"Receiving forward message at {self.variable.name} from {sender}: "
             f"path: {current_path}, bound: {ub} at {t}"
         )
+        if self.mode == "min" and ub < self.upper_bound:
+            self.upper_bound = ub
+        elif self.mode == "max" and ub > self.upper_bound:
+            self.upper_bound = ub
 
         # Find a new assignment for our variable:
         next_value = get_next_assignment(
@@ -461,7 +465,7 @@ def get_next_assignment(
         # Check if assigning candidate value to the variable would cause the global
         # cost to exceed the upper-bound.
         candidate_cost = 0
-        found = None
+        valid_candidate = True
         for var, val, elt_cost, var_constraints in path_constraints:
             # This only works for binary constraints, we could extend it to n-ary constraints
             ass_cost = _path_assignment_cost(
@@ -471,14 +475,11 @@ def get_next_assignment(
             if mode == "min" and (
                 candidate_cost >= upper_bound or ass_cost + elt_cost >= upper_bound
             ):
+                valid_candidate = False
                 break  # Try next value in domain.
-            else:
-                found = candidate, candidate_cost  # Check for next elt in path.
-        if mode == "max" and candidate_cost > upper_bound:
-            found = candidate, candidate_cost
 
-        if found:
-            return found
+        if mode == "max" or valid_candidate:
+            return candidate, candidate_cost
 
     return None
 

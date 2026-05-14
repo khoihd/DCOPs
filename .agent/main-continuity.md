@@ -203,6 +203,24 @@
   - `python -m pydcop.dcop_cli -t 10 solve -a ncbb -d oneagent tests/instances/graph_coloring1.yaml`
   - `python -m pydcop.dcop_cli -t 10 solve -a ncbb -d oneagent tests/instances/graph_coloring_tuto_max.yaml`
 
+## SyncBB
+
+- SyncBB has been checked against `verification_archive/papers/syncbb.pdf`,
+  documented in `verification_archive/syncbb_paper_check.md`, and marked
+  `Done / Verified with documented pyDcop extensions` in the tracker.
+- The paper is "Distributed Partial Constraint Satisfaction Problem" by
+  Katsutoshi Hirayama and Makoto Yokoo.
+- The paper's SBB solves DMCSPs by minimizing the max per-agent number of
+  violated constraints; `pydcop/algorithms/syncbb.py` is a pyDcop adaptation
+  for additive weighted DCOP objectives and supports both `min` and `max`.
+- Verification fixes:
+  - forward-token handling now adopts better received bounds before local search
+  - `get_next_assignment()` no longer returns a candidate that passed only a
+    prefix of the path before a later bound check failed
+- Relevant checks used recently:
+  - `pytest tests/unit/test_algorithms_syncbb.py`
+  - `ruff check pydcop/algorithms/syncbb.py tests/unit/test_algorithms_syncbb.py`
+
 ## Generator And Docs Notes
 
 - Generate YAML DCOP instances with

@@ -243,6 +243,37 @@ def test_get_next_assignment_skips_current_value(toy_pb):
     assert obtained == ("G", 8)
 
 
+def test_get_next_assignment_rejects_candidate_pruned_after_partial_path():
+    v0 = Variable("v0", [0, 1, 2])
+    v1 = Variable("v1", [0, 1, 2])
+    v2 = Variable("v2", [0, 1, 2])
+    c0_2 = constraint_from_str(
+        "c0_2",
+        "{(0, 0): 5, (0, 1): 9, (0, 2): 3, "
+        "(1, 0): 8, (1, 1): 2, (1, 2): 4, "
+        "(2, 0): 2, (2, 1): 1, (2, 2): 9}[(v0, v2)]",
+        [v0, v2],
+    )
+    c1_2 = constraint_from_str(
+        "c1_2",
+        "{(0, 0): 4, (0, 1): 8, (0, 2): 9, "
+        "(1, 0): 2, (1, 1): 4, (1, 2): 1, "
+        "(2, 0): 1, (2, 1): 5, (2, 2): 7}[(v1, v2)]",
+        [v1, v2],
+    )
+
+    obtained = get_next_assignment(
+        v2,
+        0,
+        [c0_2, c1_2],
+        [("v0", 0, 0), ("v1", 2, 0)],
+        10,
+        "min",
+    )
+
+    assert obtained is None
+
+
 def test_computations_message_at_start(toy_pb_computation_graph):
     # A is the first var in the ordering, it should start selecting a value:
     comp_a = get_computation_instance(toy_pb_computation_graph, "vA")
@@ -422,3 +453,41 @@ def test_solve_max(toy_pb):
 
     # Note: this is supposed to be exactly the same pb as bellow
     assert assignment == {"vA": "G", "vB": "R", "vC": "R", "vD": "G"}
+
+
+def test_solve_min_with_candidate_pruned_after_partial_path():
+    variables = [Variable(f"v{i}", [0, 1, 2]) for i in range(3)]
+    v0, v1, v2 = variables
+    c0_1 = constraint_from_str(
+        "c0_1",
+        "{(0, 0): 6, (0, 1): 6, (0, 2): 0, "
+        "(1, 0): 4, (1, 1): 8, (1, 2): 7, "
+        "(2, 0): 6, (2, 1): 4, (2, 2): 7}[(v0, v1)]",
+        [v0, v1],
+    )
+    c0_2 = constraint_from_str(
+        "c0_2",
+        "{(0, 0): 5, (0, 1): 9, (0, 2): 3, "
+        "(1, 0): 8, (1, 1): 2, (1, 2): 4, "
+        "(2, 0): 2, (2, 1): 1, (2, 2): 9}[(v0, v2)]",
+        [v0, v2],
+    )
+    c1_2 = constraint_from_str(
+        "c1_2",
+        "{(0, 0): 4, (0, 1): 8, (0, 2): 9, "
+        "(1, 0): 2, (1, 1): 4, (1, 2): 1, "
+        "(2, 0): 1, (2, 1): 5, (2, 2): 7}[(v1, v2)]",
+        [v1, v2],
+    )
+    constraints = [c0_1, c0_2, c1_2]
+    dcop = DCOP(
+        name="regression",
+        variables={v.name: v for v in variables},
+        constraints={c.name: c for c in constraints},
+        objective="min"
+    )
+    dcop.add_agents(create_agents("a", [1, 2, 3]))
+
+    assignment = solve(dcop, "syncbb", "oneagent")
+
+    assert assignment == {"v0": 0, "v1": 2, "v2": 0}

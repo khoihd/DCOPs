@@ -185,10 +185,15 @@ For each algorithm:
 - SyncBB
   - Priority: 13
   - Implementation: `pydcop/algorithms/syncbb.py`
-  - Paper / Source: TBD
+  - Paper / Source: `verification_archive/papers/syncbb.pdf`
   - Check File: `verification_archive/syncbb_paper_check.md`
-  - Status: Not started
-  - Notes:
+  - Status: Done / Verified with documented pyDcop extensions
+  - Notes: Verified against Hirayama and Yokoo's SBB token flow for fixed-order
+    binary problems. pyDcop adapts the paper's DMCSP max-violation objective to
+    additive weighted DCOP min/max objectives. During verification, forward
+    tokens were updated to adopt better received bounds and
+    `get_next_assignment()` was fixed so a candidate rejected after a later path
+    element cannot leak through with only a prefix cost.
 
 ## Cross-Cutting Checks
 
