@@ -445,9 +445,11 @@ class DynamicFactorVariableComputation(MaxSumVariableComputation):
             self.logger.error(msg)
             raise ValueError(msg)
 
-        if factor_name in self._costs:
-            del self._costs[factor_name]
-            # FIXME : is it necessary to forget all previously sent messages ?
+        removed_costs = self._costs.pop(factor_name, None)
+        self._prev_messages.pop(factor_name, None)
+        if removed_costs is not None:
+            # Retained factors need fresh messages without damping or similarity
+            # checks against messages that still included the removed factor.
             self._prev_messages.clear()
 
         # Select a new value.

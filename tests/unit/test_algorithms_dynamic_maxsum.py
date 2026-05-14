@@ -36,7 +36,7 @@ from unittest.mock import MagicMock, call
 import pytest
 
 from pydcop.algorithms import AlgorithmDef, ComputationDef
-from pydcop.algorithms.maxsum import MaxSumMessage
+from pydcop.algorithms.maxsum import MaxSumMessage, SAME_COUNT
 from pydcop.algorithms.maxsum_dynamic import DynamicFunctionFactorComputation
 from pydcop.algorithms.maxsum_dynamic import (
     DynamicFactorComputation,
@@ -335,6 +335,31 @@ def test_dynamic_variable_removes_factor_and_recomputes_remaining_messages():
     message_sender.assert_called_once_with(
         "x", "old_factor", MaxSumMessage({0: 0.0, 1: 0.0}), None, None
     )
+
+
+def test_dynamic_variable_remove_forgets_removed_factor_previous_message():
+    variable = Variable("x", [0, 1])
+    computation = DynamicFactorVariableComputation(
+        variable, ["old_factor", "removed_factor"]
+    )
+    message_sender = MagicMock()
+    computation.message_sender = message_sender
+    computation._costs["old_factor"] = {0: 3, 1: 0}
+    computation._prev_messages["old_factor"] = ({0: 0.0, 1: 0.0}, SAME_COUNT)
+    computation._prev_messages["removed_factor"] = ({0: 5, 1: -5}, 1)
+
+    msg_count, msg_size = computation._on_remove_msg(
+        "removed_factor", Message("REMOVE", None), None
+    )
+
+    assert computation.factors == ["old_factor"]
+    assert computation._costs == {"old_factor": {0: 3, 1: 0}}
+    assert dict(computation._prev_messages) == {
+        "old_factor": ({0: 0.0, 1: 0.0}, SAME_COUNT)
+    }
+    assert msg_count == 0
+    assert msg_size == 0
+    message_sender.assert_not_called()
 
 
 def test_change_function_wrong_dimensions_var():
