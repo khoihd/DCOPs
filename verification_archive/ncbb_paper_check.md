@@ -125,5 +125,4 @@ objective internally.
 
 ## Follow-Up
 
-- If documenting paper fidelity elsewhere, describe `objective: max` support as
-  a pyDcop extension via objective negation.
+- None currently identified.
