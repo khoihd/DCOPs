@@ -162,76 +162,71 @@ def ilp_cgdp(
 ):
     start_t = time.time()
 
-    agt_names = [a.name for a in agentsdef]
+    agents = list(agentsdef)
+    agt_names = [a.name for a in agents]
+    comp_names = cg.node_names()
+    fixed_assignments = _fixed_assignments(comp_names, agents, hosting_cost)
+    comps_to_host = [c for c in comp_names if c not in fixed_assignments]
+    fixed_footprints = {
+        a: sum(
+            footprint(c)
+            for c, fixed_agent in fixed_assignments.items()
+            if fixed_agent == a
+        )
+        for a in agt_names
+    }
+    for agent, fixed_footprint in fixed_footprints.items():
+        if fixed_footprint > capacity(agent):
+            raise ImpossibleDistributionException(
+                f"Not enough capacity on {agent} for fixed computations"
+            )
     pb = LpProblem("oilp_cgdp", LpMinimize)
 
+    # One binary variable xij for each non-fixed (variable, agent) couple.
+    xs = _build_xs_binvars(comps_to_host, agt_names)
 
-    # One binary variable xij for each (variable, agent) couple
-    xs = LpVariable.dict("x", (cg.node_names(), agt_names), cat=LpBinary)
-
-    # TODO: Do not create var for computation that are already assigned to an agent with hosting = 0 ?
-    # Force computation with hosting cost of 0 to be hosted on that agent.
-    # This makes the work much easier for glpk !
-    x_fixed_to_0 = []
-    x_fixed_to_1 = []
-    for agent in agentsdef:
-        for comp in cg.node_names():
-            assigned_agent = None
-            if agent.hosting_cost(comp) == 0:
-                pb += xs[(comp, agent.name)] == 1
-                x_fixed_to_1.append((comp, agent.name))
-                assigned_agent = agent.name
-                for other_agent in agentsdef:
-                    if other_agent.name == assigned_agent:
-                        continue
-                    pb += xs[(comp, other_agent.name)] == 0
-                    x_fixed_to_0.append((comp, other_agent.name))
-                logger.debug(f"Setting binary varaibles to fixed computation {comp}")
+    if fixed_assignments:
+        logger.debug("Fixed computations from zero hosting costs: %s", fixed_assignments)
 
     # One binary variable for computations c1 and c2, and agent a1 and a2
-    betas = {}
-    count = 0
+    comm_terms = []
+    processed_pairs = set()
     for a1, a2 in combinations(agt_names, 2):
         # Only create variables for couple c1, c2 if there is an edge in the
         # graph between these two computations.
         for link in cg.links:
             # As we support hypergraph, we may have more than 2 ends to a link
             for c1, c2 in combinations(link.nodes, 2):
-                if (c1, a1, c2, a2) in betas:
+                pair = frozenset((c1, c2))
+                if (pair, a1, a2) in processed_pairs:
                     continue
-                count += 2
-                b = LpVariable(f"b_{c1}_{a1}_{c2}_{a2}", cat=LpBinary)
-                betas[(c1, a1, c2, a2)] = b
-                # Linearization constraints :
-                # a_ijmn <= x_im
-                # a_ijmn <= x_jn
-                if (c1, a1) in x_fixed_to_0 or (c2, a2) in x_fixed_to_0:
-                    pb += b == 0
-                elif (c1, a1) in x_fixed_to_1:
-                    pb += b == xs[(c2, a2)]
-                elif (c2, a2) in x_fixed_to_1:
-                    pb += b == xs[(c1, a1)]
-                else:
-                    pb += b <= xs[(c1, a1)]
-                    pb += b <= xs[(c2, a2)]
-                    pb += b >= xs[(c2, a2)] + xs[(c1, a1)] - 1
+                processed_pairs.add((pair, a1, a2))
 
-                b = LpVariable(f"b_{c1}_{a2}_{c2}_{a1}", cat=LpBinary)
-                if (c1, a2) in x_fixed_to_0 or (c2, a1) in x_fixed_to_0:
-                    pb += b == 0
-                elif (c1, a2) in x_fixed_to_1:
-                    pb += b == xs[(c2, a1)]
-                elif (c2, a1) in x_fixed_to_1:
-                    pb += b == xs[(c1, a2)]
-                else:
-                    betas[(c1, a2, c2, a1)] = b
-                    pb += b <= xs[(c2, a1)]
-                    pb += b <= xs[(c1, a2)]
-                    pb += b >= xs[(c1, a2)] + xs[(c2, a1)] - 1
+                c1_on_a1 = _assignment_expr(c1, a1, xs, fixed_assignments)
+                c2_on_a2 = _assignment_expr(c2, a2, xs, fixed_assignments)
+                _add_comm_term(
+                    pb,
+                    comm_terms,
+                    c1_on_a1,
+                    c2_on_a2,
+                    route(a1, a2) * msg_load(c1, c2),
+                    f"b_{c1}_{a1}_{c2}_{a2}",
+                )
+
+                c1_on_a2 = _assignment_expr(c1, a2, xs, fixed_assignments)
+                c2_on_a1 = _assignment_expr(c2, a1, xs, fixed_assignments)
+                _add_comm_term(
+                    pb,
+                    comm_terms,
+                    c1_on_a2,
+                    c2_on_a1,
+                    route(a2, a1) * msg_load(c1, c2),
+                    f"b_{c1}_{a2}_{c2}_{a1}",
+                )
 
     # Set objective: communication + hosting_cost
     pb += (
-        _objective(xs, betas, route, msg_load, hosting_cost),
+        _objective(xs, comm_terms, hosting_cost),
         "Communication costs and prefs",
     )
 
@@ -239,16 +234,24 @@ def ilp_cgdp(
     # Constraints: Memory capacity for all agents.
     for a in agt_names:
         pb += (
-            lpSum([footprint(i) * xs[i, a] for i in cg.node_names()]) <= capacity(a),
+            lpSum([footprint(i) * xs[i, a] for i in comps_to_host])
+            + fixed_footprints[a]
+            <= capacity(a),
             f"Agent {a} capacity",
         )
 
     # Constraints: all computations must be hosted.
-    for c in cg.node_names():
+    for c in comps_to_host:
         pb += (
             lpSum([xs[c, a] for a in agt_names]) == 1,
             f"Computation {c} hosted",
         )
+
+    if not comps_to_host:
+        mapping = {a: [] for a in agt_names}
+        for comp, agent in fixed_assignments.items():
+            mapping[agent].append(comp)
+        return mapping
 
     # the timeout for the solver must be minored by the time spent to build the pb:
     remaining_time = round(timeout - (time.time() - start_t)) -2
@@ -268,6 +271,9 @@ def ilp_cgdp(
     mapping = {}
     for k in agt_names:
         agt_computations = [
+            c for c, agent in fixed_assignments.items() if agent == k
+        ]
+        agt_computations += [
             i for i, ka in xs if ka == k and pulp.value(xs[(i, ka)]) == 1
         ]
         # print(k, ' -> ', agt_computations)
@@ -275,13 +281,67 @@ def ilp_cgdp(
     return mapping
 
 
-def _objective(xs, betas, route, msg_load, hosting_cost):
+def _build_xs_binvars(comps_to_host, agt_names):
+    if not comps_to_host:
+        return {}
+    return LpVariable.dict("x", (comps_to_host, agt_names), cat=LpBinary)
+
+
+def _fixed_assignments(comp_names, agents, hosting_cost):
+    fixed = {}
+    for comp in comp_names:
+        explicit_zero_cost_agents = [
+            agent.name for agent in agents if agent.hosting_costs.get(comp) == 0
+        ]
+        if len(explicit_zero_cost_agents) == 1:
+            fixed[comp] = explicit_zero_cost_agents[0]
+            continue
+        if len(explicit_zero_cost_agents) > 1:
+            continue
+
+        zero_cost_agents = [
+            agent.name for agent in agents if hosting_cost(agent.name, comp) == 0
+        ]
+        if len(zero_cost_agents) == 1:
+            fixed[comp] = zero_cost_agents[0]
+    return fixed
+
+
+def _assignment_expr(comp, agent, xs, fixed_assignments):
+    if comp in fixed_assignments:
+        return 1 if fixed_assignments[comp] == agent else 0
+    return xs[(comp, agent)]
+
+
+def _add_comm_term(pb, comm_terms, first_hosted, second_hosted, cost, name):
+    if _is_zero(first_hosted) or _is_zero(second_hosted):
+        return
+    if _is_constant(first_hosted) and _is_constant(second_hosted):
+        comm_terms.append(cost)
+    elif _is_constant(first_hosted):
+        comm_terms.append(cost * second_hosted)
+    elif _is_constant(second_hosted):
+        comm_terms.append(cost * first_hosted)
+    else:
+        beta = LpVariable(name, cat=LpBinary)
+        pb += beta <= first_hosted
+        pb += beta <= second_hosted
+        pb += beta >= first_hosted + second_hosted - 1
+        comm_terms.append(cost * beta)
+
+
+def _is_constant(value):
+    return isinstance(value, int)
+
+
+def _is_zero(value):
+    return _is_constant(value) and value == 0
+
+
+def _objective(xs, comm_terms, hosting_cost):
     # We want to minimize communication and hosting costs
     # Objective is the communication + hosting costs
-    comm = LpAffineExpression()
-    for c1, a1, c2, a2 in betas:
-        comm += route(a1, a2) * msg_load(c1, c2) * betas[(c1, a1, c2, a2)]
-
+    comm = lpSum(comm_terms) if comm_terms else LpAffineExpression()
     costs = lpSum([hosting_cost(a, c) * xs[(c, a)] for c, a in xs])
 
     return lpSum([RATIO_HOST_COMM * comm, (1 - RATIO_HOST_COMM) * costs])
