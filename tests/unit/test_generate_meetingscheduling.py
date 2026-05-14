@@ -1,11 +1,15 @@
 import argparse
 from itertools import product
 from random import Random
+from types import SimpleNamespace
+
+import yaml
 
 from pydcop.commands.generators.meetingscheduling import (
     Event,
     Resource,
     eav_model,
+    generate,
     generate_resources,
     generate_events,
     generate_problem_definition,
@@ -136,6 +140,34 @@ def test_cli_parser_accepts_model():
     )
 
     assert args.model == "tsav"
+
+
+def test_generate_stdout_serializes_dcop_and_distribution_as_yaml_documents(capsys):
+    args = SimpleNamespace(
+        slots_count=2,
+        events_count=1,
+        resources_count=2,
+        max_resources_event=2,
+        max_length_event=1,
+        max_resource_value=5,
+        seed=3,
+        no_agents=False,
+        routes_default=None,
+        hosting_default=None,
+        capacity=None,
+        model="peav",
+        intentional=False,
+        output=None,
+    )
+
+    generate(args)
+
+    documents = list(yaml.safe_load_all(capsys.readouterr().out))
+    assert len(documents) == 2
+    assert documents[0]["name"] == "MeetingSceduling"
+    assert documents[1]["inputs"]["dist_algo"] == "peav"
+    assert documents[1]["inputs"]["dcop"] == "NA"
+    assert "distribution" in documents[1]
 
 
 def test_peav_intentional_constraints_match_extensive_constraints():

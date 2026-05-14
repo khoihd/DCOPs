@@ -70,8 +70,8 @@ model also specifies the list of agents (one for each resource) and where each
 variable is hosted.
 
 
-**Note:** the generated DCOP and distribution are both written to the standard output.
-To write in files, you can use the ``--output <file>``
+**Note:** the generated DCOP and distribution are both written to the standard output
+as separate YAML documents. To write in files, you can use the ``--output <file>``
 :ref:`global option<usage_cli_ref_options>`.
 
 Options
@@ -301,37 +301,41 @@ def generate(args):
             fo.write(dcop_yaml(dcop))
 
         if not args.no_agents:
-            dist_result = {
-                "inputs": {
-                    "dist_algo": model,
-                    "dcop": output_file,
-                    "graph": "constraints_graph",
-                    "algo": "NA",
-                },
-                "distribution": distribution.mapping(),
-                "cost": None,
-            }
+            dist_result = meeting_distribution_result(
+                model, output_file, distribution.mapping()
+            )
             path, ext = splitext(output_file)
             dist_output_file = f"{path}_dist{ext}"
             with open(dist_output_file, encoding="utf-8", mode="w") as fo:
-                fo.write(yaml.dump(dist_result))
+                fo.write(yaml.dump(dist_result, default_flow_style=False))
 
     else:
-        print(dcop_yaml(dcop))
-
+        dist_result = None
         if not args.no_agents:
-            dist_result = {
-                "inputs": {
-                    "dist_algo": model,
-                    "dcop": "NA",
-                    "graph": "constraints_graph",
-                    "algo": "NA",
-                },
-                "distribution": distribution.mapping(),
-                "cost": None,
-            }
-            # FIXME proper serialization of the distribution:
-            print(yaml.dump(dist_result))
+            dist_result = meeting_distribution_result(
+                model, "NA", distribution.mapping()
+            )
+        print(generated_meetings_yaml(dcop, dist_result), end="")
+
+
+def meeting_distribution_result(model, dcop_file, distribution_mapping):
+    return {
+        "inputs": {
+            "dist_algo": model,
+            "dcop": dcop_file,
+            "graph": "constraints_graph",
+            "algo": "NA",
+        },
+        "distribution": distribution_mapping,
+        "cost": None,
+    }
+
+
+def generated_meetings_yaml(dcop, dist_result=None):
+    documents = [dcop_yaml(dcop).rstrip()]
+    if dist_result is not None:
+        documents.append(yaml.dump(dist_result, default_flow_style=False).rstrip())
+    return "\n---\n".join(documents) + "\n"
 
 
 # Semantic type definitions:
