@@ -1,16 +1,17 @@
 - (DONE) Add print out when agent sends and receive messages for debugging
   - pydcop -v 3 # debugging mode
 
-- (WIP) Verify the correctness of the implementation with the provided paper
-  - (DONE) DPOP
-  - (DONE) MGM / MGM2
-  - (DONE) DBA / DSA / ADSA
-  - (DONE) Maxsum / AMaxsum
-  - (DONE) Maxsum Dynamic
-  - (DONE) DSAAuto
-  - (DONE) GDBA
+- (DONE) Verify the correctness of the implementation with the provided paper
+  - DPOP
+  - MGM / MGM2
+  - DBA / DSA / ADSA
+  - Maxsum / AMaxsum
+  - Maxsum Dynamic
+  - GDBA
   - NCBB
   - SyncBB
+
+- (WIP) Fix TODO and FIX
 
 - Require a parameter for termination mechanism to all iterative algorithms
 
