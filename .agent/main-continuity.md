@@ -50,6 +50,24 @@
     references do not create dangling factor links.
   - `pydcop/algorithms/mgm.py` has updated parameter documentation and a CLI
     example for running MGM with `stop_cycle` and `break_mode`.
+  - MaxSum `factor_costs_for_var` now supports optional `valid_assignments`
+    filtering for caller-provided valid tuples (`e2005f0`).
+  - Exact `-float("inf")` occurrences were changed to explicit
+    `float("-inf")` literals (`cbcea82`).
+  - `ilp_fgdp` and `adhoc` repair hooks now clearly raise
+    `ImpossibleDistributionException` instead of carrying TODO stubs because
+    dynamic repair is unsupported for those methods (`be5c615`, `f3c009b`).
+  - `gh_cgdp` tracks remaining capacity explicitly during greedy/backtracking
+    distribution, including fixed placements and backtracking resets
+    (`ef8db77`).
+  - `oilp_cgdp` handles unique zero-hosting-cost fixed computations outside
+    ILP variables, supports fixed-only distributions without GLPK, and rejects
+    fixed capacity overrun (`3d5e38b`).
+  - `pydcop commands run` no longer exposes command-level `--infinity`;
+    local thread/process runners own the default `float("inf")`
+    (`9aa370d`).
+  - Targeted checks used across this batch included the relevant unit tests,
+    focused `ruff check` commands, and `python -m pydcop.dcop_cli run -h`.
 - Generated scratch files are currently untracked and intentionally not
   committed:
   - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`
