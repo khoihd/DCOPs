@@ -53,6 +53,12 @@ Outputs some metrics for a graph model for a DCOP:
 * density
 * edges_count
 * nodes_count
+* is_connected
+* components_count
+* diameter
+* cycles_count
+* max_degree
+* average_degree
 
 
 Options
@@ -95,6 +101,8 @@ Example output::
 
 """
 
+from collections import Counter, deque
+from itertools import combinations
 import logging
 from importlib import import_module
 import sys
@@ -107,12 +115,6 @@ from pydcop.utils.graphs import (
 )
 
 logger = logging.getLogger("pydcop.cli.graph")
-
-
-# TODO : ass more graph metrics:
-# * number of cycles
-# * is connected ?
-# * number of sub-graph (if not connected)
 
 
 def set_parser(subparsers):
@@ -161,20 +163,12 @@ def run_cmd(args):
 
 
 def graph_stats(dcop, graph_module):
-    # Build factor-graph computation graph
     logger.info(f"Building computation graph for dcop {dcop.name}")
     cg = graph_module.build_computation_graph(dcop)
 
     edges_count = len(list(cg.links))
     nodes_count = len(list(cg.nodes))
     density = cg.density()
-
-    # TODO: add other graph metrics :
-    # branching factor
-    # diameter
-    # number or loops
-    # root (when it's a tree)
-    # # variables and # factors, when it's a factor graph
 
     # Note : when using variables with integrated costs, the costs factors
     # are not accounted for in the metrics.
@@ -187,7 +181,106 @@ def graph_stats(dcop, graph_module):
         "edges_count": edges_count,
         "density": density,
     }
+    result.update(projected_graph_metrics(cg))
+    result.update(computation_graph_specific_metrics(cg))
     print(yaml.dump(result, default_flow_style=False))
+
+
+def projected_graph_metrics(computation_graph):
+    adjacency = projected_adjacency(computation_graph)
+    components = connected_components(adjacency)
+    component_count = len(components)
+    projected_edges_count = sum(len(neighbors) for neighbors in adjacency.values()) // 2
+    nodes_count = len(adjacency)
+
+    component_diameters = [component_diameter(adjacency, c) for c in components]
+    degrees = [len(neighbors) for neighbors in adjacency.values()]
+
+    return {
+        "is_connected": component_count == 1 if nodes_count else True,
+        "components_count": component_count,
+        "component_sizes": [len(c) for c in components],
+        "projected_edges_count": projected_edges_count,
+        "diameter": max(component_diameters, default=0),
+        "cycles_count": projected_edges_count - nodes_count + component_count,
+        "max_degree": max(degrees, default=0),
+        "average_degree": (
+            2 * projected_edges_count / nodes_count if nodes_count else 0
+        ),
+    }
+
+
+def projected_adjacency(computation_graph):
+    adjacency = {node.name: set() for node in computation_graph.nodes}
+    for link in computation_graph.links:
+        link_nodes = sorted(set(link.nodes))
+        for node in link_nodes:
+            adjacency.setdefault(node, set())
+        for left, right in combinations(link_nodes, 2):
+            adjacency[left].add(right)
+            adjacency[right].add(left)
+    return adjacency
+
+
+def connected_components(adjacency):
+    remaining = set(adjacency)
+    components = []
+    while remaining:
+        start = min(remaining)
+        component = set()
+        queue = deque([start])
+        remaining.remove(start)
+        while queue:
+            node = queue.popleft()
+            component.add(node)
+            for neighbor in sorted(adjacency[node]):
+                if neighbor in remaining:
+                    remaining.remove(neighbor)
+                    queue.append(neighbor)
+        components.append(sorted(component))
+    return components
+
+
+def component_diameter(adjacency, component):
+    diameter = 0
+    for node in component:
+        distances = shortest_distances(adjacency, node)
+        diameter = max(diameter, max(distances[n] for n in component))
+    return diameter
+
+
+def shortest_distances(adjacency, start):
+    distances = {start: 0}
+    queue = deque([start])
+    while queue:
+        node = queue.popleft()
+        for neighbor in adjacency[node]:
+            if neighbor not in distances:
+                distances[neighbor] = distances[node] + 1
+                queue.append(neighbor)
+    return distances
+
+
+def computation_graph_specific_metrics(computation_graph):
+    result = {}
+    node_type_counts = Counter(
+        node.type for node in computation_graph.nodes if node.type is not None
+    )
+    if node_type_counts:
+        result["node_type_counts"] = dict(sorted(node_type_counts.items()))
+
+    if hasattr(computation_graph, "roots"):
+        roots = sorted(root.name for root in computation_graph.roots)
+        result["roots"] = roots
+        result["roots_count"] = len(roots)
+        child_counts = Counter(
+            link.source
+            for link in computation_graph.links
+            if link.type == "children" and hasattr(link, "source")
+        )
+        result["max_branching_factor"] = max(child_counts.values(), default=0)
+
+    return result
 
 
 def _error(msg):

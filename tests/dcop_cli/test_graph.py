@@ -44,6 +44,12 @@ class GraphColoring1(unittest.TestCase):
         self.assertEqual(result['nodes_count'], 3)
         self.assertEqual(result['edges_count'], 4)
         self.assertEqual(result['density'], 4/(3*2))
+        self.assertTrue(result['is_connected'])
+        self.assertEqual(result['components_count'], 1)
+        self.assertEqual(result['cycles_count'], 0)
+        self.assertEqual(result['diameter'], 2)
+        self.assertEqual(result['roots_count'], 1)
+        self.assertEqual(result['max_branching_factor'], 2)
 
     def test_factor_graph(self):
         result = run_graph('graph_coloring1.yaml', 'factor_graph')
@@ -51,6 +57,15 @@ class GraphColoring1(unittest.TestCase):
         self.assertEqual(result['nodes_count'], 5)
         self.assertEqual(result['edges_count'], 4)
         self.assertEqual(result['density'], 0.4)
+        self.assertTrue(result['is_connected'])
+        self.assertEqual(result['components_count'], 1)
+        self.assertEqual(result['cycles_count'], 0)
+        self.assertEqual(result['diameter'], 4)
+        self.assertEqual(result['projected_edges_count'], 4)
+        self.assertEqual(
+            result['node_type_counts'],
+            {'FactorComputation': 2, 'VariableComputation': 3},
+        )
 
     def test_constraints_hypergraph(self):
         result = run_graph('graph_coloring1.yaml', 'constraints_hypergraph')
@@ -58,6 +73,11 @@ class GraphColoring1(unittest.TestCase):
         self.assertEqual(result['nodes_count'], 3)
         self.assertEqual(result['edges_count'], 2)
         self.assertEqual(result['density'], 2/3)
+        self.assertTrue(result['is_connected'])
+        self.assertEqual(result['components_count'], 1)
+        self.assertEqual(result['cycles_count'], 0)
+        self.assertEqual(result['diameter'], 2)
+        self.assertEqual(result['projected_edges_count'], 2)
 
 
 class SecpSimple1(unittest.TestCase):
