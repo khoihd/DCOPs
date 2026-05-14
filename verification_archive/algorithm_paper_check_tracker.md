@@ -193,7 +193,8 @@ For each algorithm:
     additive weighted DCOP min/max objectives. During verification, forward
     tokens were updated to adopt better received bounds and
     `get_next_assignment()` was fixed so a candidate rejected after a later path
-    element cannot leak through with only a prefix cost.
+    element cannot leak through with only a prefix cost. Max-mode support now
+    explicitly avoids pruning candidates from partial utility alone.
 
 ## Cross-Cutting Checks
 

@@ -66,9 +66,13 @@
 - `get_next_assignment()` no longer returns a candidate after a later path
   element fails the bound check. The previous behavior could accept only the
   prefix cost of a weighted candidate and produce a non-optimal solve result.
+- Maximization support is explicit: SyncBB does not prune max-mode candidates
+  from their current partial utility alone, because later variables may add
+  enough utility to beat the incumbent.
 - Regression coverage now includes both the helper-level stale-prefix case and
   a solve-level weighted binary DCOP where the previous implementation returned
-  cost `10` instead of the optimal cost `6`.
+  cost `10` instead of the optimal cost `6`, plus a max-mode case where a low
+  partial utility later becomes the optimal assignment.
 
 ## Documented Deviations
 
@@ -100,8 +104,8 @@ adaptation.
 - `tests/unit/test_algorithms_syncbb.py` covers computation construction,
   termination messages, value-ordering helpers, exact variable-name constraint
   lookup, forward extension, backward search, pruning, termination propagation,
-  min/max solve-level outcomes, and the weighted regression case fixed during
-  this check.
+  min/max solve-level outcomes, max-mode non-pruning of partial utilities, and
+  the weighted regression case fixed during this check.
 
 ## Follow-Up
 

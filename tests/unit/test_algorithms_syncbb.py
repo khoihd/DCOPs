@@ -455,6 +455,43 @@ def test_solve_max(toy_pb):
     assert assignment == {"vA": "G", "vB": "R", "vC": "R", "vD": "G"}
 
 
+def test_solve_max_does_not_prune_low_partial_utility():
+    v0 = Variable("v0", [0, 1])
+    v1 = Variable("v1", [0, 1])
+    v2 = Variable("v2", [0, 1])
+    c0_1 = constraint_from_str(
+        "c0_1",
+        "{(0, 0): 10, (0, 1): 0, "
+        "(1, 0): 0, (1, 1): 0}[(v0, v1)]",
+        [v0, v1],
+    )
+    c0_2 = constraint_from_str(
+        "c0_2",
+        "{(0, 0): 0, (0, 1): 0, "
+        "(1, 0): 100, (1, 1): 0}[(v0, v2)]",
+        [v0, v2],
+    )
+    variables = [v0, v1, v2]
+    constraints = [c0_1, c0_2]
+    dcop = DCOP(
+        name="max_regression",
+        variables={v.name: v for v in variables},
+        constraints={c.name: c for c in constraints},
+        objective="max"
+    )
+    dcop.add_agents(create_agents("a", [1, 2, 3]))
+
+    assignment = solve(dcop, "syncbb", "oneagent")
+    cost = sum(
+        c(**{v.name: assignment[v.name] for v in c.dimensions})
+        for c in constraints
+    )
+
+    assert assignment["v0"] == 1
+    assert assignment["v2"] == 0
+    assert cost == 100
+
+
 def test_solve_min_with_candidate_pruned_after_partial_path():
     variables = [Variable(f"v{i}", [0, 1, 2]) for i in range(3)]
     v0, v1, v2 = variables

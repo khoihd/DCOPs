@@ -472,16 +472,32 @@ def get_next_assignment(
                 variable_name, candidate, var, val, var_constraints
             )
             candidate_cost += ass_cost
-            if mode == "min" and (
-                candidate_cost >= upper_bound or ass_cost + elt_cost >= upper_bound
+            if not _candidate_respects_bound(
+                mode, candidate_cost, ass_cost, elt_cost, upper_bound
             ):
                 valid_candidate = False
                 break  # Try next value in domain.
 
-        if mode == "max" or valid_candidate:
+        if valid_candidate:
             return candidate, candidate_cost
 
     return None
+
+
+def _candidate_respects_bound(
+    mode: str,
+    candidate_cost: Cost,
+    assignment_cost: Cost,
+    path_element_cost: Cost,
+    bound: Cost,
+) -> bool:
+    if mode == "max":
+        # A partial utility below the incumbent can still become optimal once
+        # later variables add their own contributions, so local pruning is not
+        # safe for maximization here.
+        return True
+
+    return candidate_cost < bound and assignment_cost + path_element_cost < bound
 
 
 def constraints_for_variable(
