@@ -44,8 +44,8 @@ from pydcop.infrastructure.orchestrator import Orchestrator
 
 
 
-# FIXME : need better infinity management
-INFINITY = 10000
+DEFAULT_INFINITY = float('inf')
+INFINITY = DEFAULT_INFINITY
 
 
 def solve(dcop: DCOP,
@@ -119,8 +119,7 @@ def solve(dcop: DCOP,
             memory_footprint_estimate=algo_module.memory_footprint_estimate,
             communication_load=algo_module.communication_load)
 
-    orchestrator = run_local_thread_dcop(algo_def, graph, distribution, dcop,
-                                         INFINITY)
+    orchestrator = run_local_thread_dcop(algo_def, graph, distribution, dcop)
 
     try:
         print('Deploy')
@@ -144,7 +143,7 @@ def run_local_thread_dcop(algo: AlgorithmDef,
                           cg: ComputationGraph,
                           distribution: Distribution,
                           dcop: DCOP,
-                          infinity=float('inf'),
+                          infinity=DEFAULT_INFINITY,
                           collector: Queue=None,
                           collect_moment: str='value_change',
                           period=None,
@@ -166,7 +165,8 @@ def run_local_thread_dcop(algo: AlgorithmDef,
     dcop: DCOP
         The DCOP instance to solve
     infinity:
-        FIXME : remove this!
+        Value used to evaluate hard-constraint violations in solution metrics.
+        Defaults to symbolic infinity.
     collector: queue
         optionnal queue, used to collect metrics
     collect_moment: str
@@ -222,7 +222,7 @@ def run_local_thread_dcop(algo: AlgorithmDef,
 
 def run_local_process_dcop(algo: AlgorithmDef, cg: ComputationGraph,
                            distribution: Distribution, dcop: DCOP,
-                           infinity=float('inf'),
+                           infinity=DEFAULT_INFINITY,
                            collector: Queue=None,
                            collect_moment: str='value_change',
                            period=None,
