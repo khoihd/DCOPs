@@ -43,6 +43,7 @@ Synopsis
 ::
 
   pydcop replica_dist --replication <method> --ktarget <k>
+                      [--algo_params <params>]
                       --algo <algorithm> --distribution <distribution_file>
                       <dcop_files>
 
@@ -83,6 +84,10 @@ Options
 ``--algo <algorithm>`` / ``-a <algorithm>``
   DCOP algorithm used to estimate computation footprint and message load.
 
+``--algo_params <params>`` / ``-p <params>``
+  Optional parameters for the DCOP algorithm, given as ``name:value``. Use this
+  option several times to set several parameters.
+
 ``--mode <thread|process>`` / ``-m <thread|process>``
   Run local agents as threads or processes. Defaults to ``thread``.
 
@@ -98,6 +103,7 @@ Examples
 Passing the computation distribution::
 
   pydcop replica_dist -r dist_ucs -k 3
+                      -p stop_cycle:30
                       -a dsa --distribution dist_graphcoloring.yml
                       graph_coloring_10_4_15_0.1.yml
 
@@ -164,6 +170,15 @@ def set_parser(subparsers):
         "know the footprint of computation when "
         "distributing replicas on agents",
     )
+    parser.add_argument(
+        "-p",
+        "--algo_params",
+        type=str,
+        action="append",
+        help="Optional parameters for the algorithm, given as "
+        "name:value. Use this option several times "
+        "to set several parameters.",
+    )
 
     parser.add_argument(
         "-m",
@@ -188,8 +203,8 @@ def run_cmd(args, timer: Timer = None, timeout= None):
     try:
         algo_module = load_algorithm_module(args.algo)
         algo = build_algo_def(
-            algo_module, args.algo, dcop.objective, []
-        )  # FIXME : algo params needed?
+            algo_module, args.algo, dcop.objective, args.algo_params
+        )
 
         graph_module = import_module(
             f"pydcop.computations_graph.{algo_module.GRAPH_TYPE}"
@@ -207,12 +222,10 @@ def run_cmd(args, timer: Timer = None, timeout= None):
     logger.info(f"loading distribution from {args.distribution}")
     distribution = load_dist_from_file(args.distribution)
 
-    INFINITY = 10000  # FIXME should not be mandatory
-
     global orchestrator
     if args.mode == "thread":
         orchestrator = run_local_thread_dcop(
-            algo, cg, distribution, dcop, INFINITY, replication=args.replication
+            algo, cg, distribution, dcop, replication=args.replication
         )
     elif args.mode == "process":
 
@@ -224,7 +237,7 @@ def run_cmd(args, timer: Timer = None, timeout= None):
         # processes do not work (why ?)
         multiprocessing.set_start_method("spawn")
         orchestrator = run_local_process_dcop(
-            algo, cg, distribution, dcop, INFINITY, replication=args.replication
+            algo, cg, distribution, dcop, replication=args.replication
         )
 
     try:
@@ -275,6 +288,7 @@ def build_result(args, duration, msg_count, msg_size, replica_dist):
         "inputs": {
             "dcop": args.dcop_files,
             "algo": args.algo,
+            "algo_params": args.algo_params,
             "replication": args.replication,
             "k": args.ktarget,
             "distribution": args.distribution,
