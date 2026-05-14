@@ -34,10 +34,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from pydcop.algorithms import AlgorithmDef, ComputationDef
+from pydcop.computations_graph.constraints_hypergraph import \
+    VariableComputationNode
+from pydcop.dcop.objects import AgentDef, Variable
 from pydcop.infrastructure.computations import MessagePassingComputation, \
     message_type
 from pydcop.infrastructure.communication import InProcessCommunicationLayer
-from pydcop.infrastructure.agents import Agent, AgentException
+from pydcop.infrastructure.agents import Agent, AgentException, ResilientAgent
 from pydcop.infrastructure.discovery import Directory, UnknownComputation
 
 
@@ -101,6 +105,14 @@ class PingComputation(MessagePassingComputation):
 def wait_run():
     # Small wait, just to give some slack for other threads to run.
     sleep(0.1)
+
+
+def computation_with_def(name: str, footprint: float=1):
+    computation = PingComputation(name)
+    node = VariableComputationNode(Variable(name, [0, 1]), [])
+    computation.computation_def = ComputationDef(node, AlgorithmDef("dsa", {}))
+    computation.footprint = MagicMock(return_value=footprint)
+    return computation
 
 
 def test_create():
@@ -237,6 +249,34 @@ def test_remove_running_computation(agent):
     assert not ping1.is_running
     # p1 was running, it must be stopped:
     ping1.on_stop.assert_called_once_with()
+
+
+def test_resilient_agent_replicates_regular_computation_starting_with_b():
+    agent_def = AgentDef('agt1')
+    agent = ResilientAgent(
+        'agt1', InProcessCommunicationLayer(), agent_def, replication=None)
+    agent.replication_comp = MagicMock()
+    computation = computation_with_def('Bregular', footprint=3)
+
+    agent.add_computation(computation)
+
+    agent.replication_comp.add_computation.assert_called_once_with(
+        computation.computation_def, 3)
+
+
+def test_resilient_agent_does_not_replicate_repair_computations():
+    agent_def = AgentDef('agt1')
+    agent = ResilientAgent(
+        'agt1', InProcessCommunicationLayer(), agent_def, replication=None)
+    agent.replication_comp = MagicMock()
+    computation = computation_with_def('repair_choice', footprint=3)
+    agent._repair_computations[computation.name] = MagicMock()
+
+    agent.add_computation(computation)
+    agent.remove_computation(computation.name)
+
+    agent.replication_comp.add_computation.assert_not_called()
+    agent.replication_comp.remove_computation.assert_not_called()
 
 
 def test_pause_computation(agent):

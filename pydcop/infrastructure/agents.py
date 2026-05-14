@@ -951,6 +951,7 @@ class ResilientAgent(Agent):
                  delay: float=None):
         super().__init__(name, comm, agent_def, ui_port=ui_port, delay=delay)
         self.replication_comp = None
+        self._repair_computations: dict[str, RepairComputationRegistration] = {}
         if replication is not None:
             self.logger.debug('deploying replication computation %s',
                               replication)
@@ -964,7 +965,6 @@ class ResilientAgent(Agent):
             # self.add_computation(self.replication_comp)
             # Do not start the computation yet, the agent is not event started
 
-            self._repair_computations: dict[str, RepairComputationRegistration] = {}
             # the replication level will be set by the when requested to
             # replicate, by the ReplicateComputationsMessage
             self._replication_level = None
@@ -1019,18 +1019,18 @@ class ResilientAgent(Agent):
         -------
 
         """
+        registered_name = computation.name if comp_name is None else comp_name
         super().add_computation(computation, comp_name, publish)
         if self.replication_comp is not None \
-                and not computation.name.startswith('_')\
-                and not computation.name.startswith('B'):
-            # FIXME : find a better way to filter out repair computation than
-            # looking at the first character (B).
+                and not registered_name.startswith('_')\
+                and registered_name not in self._repair_computations:
             self.replication_comp.add_computation(computation.computation_def,
                                                   computation.footprint())
 
     def remove_computation(self, computation: str):
         if self.replication_comp is not None \
-                and not computation.startswith('_'):
+                and not computation.startswith('_') \
+                and computation not in self._repair_computations:
             self.replication_comp.remove_computation(computation)
         super().remove_computation(computation)
 
@@ -1224,9 +1224,13 @@ class ResilientAgent(Agent):
                           candidate_var, computation)
 
             # add the computation on this agents and register the neighbors
-            self.add_computation(computation, publish=True)
             self._repair_computations[computation.name] = \
                 RepairComputationRegistration(computation, 'ready', comp)
+            try:
+                self.add_computation(computation, publish=True)
+            except Exception:
+                self._repair_computations.pop(computation.name, None)
+                raise
             for neighbor_comp in node.neighbors:
                 neighbor_agt = agt_hosting_binvar[neighbor_comp]
                 try:
