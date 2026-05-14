@@ -958,9 +958,11 @@ class AgentsMgt(MessagePassingComputation):
 
         evt = msg.content
         leaving_agents = []
+        arrived_agents = []
         for a in evt.actions:
             if a.type == 'add_agent':
                 self.logger.info('Event action: Adding agent %s', a)
+                arrived_agents.append(a.args['agent'])
 
             elif a.type == 'remove_agent':
                 self.logger.info('Event action: Removing agent %s', a)
@@ -971,7 +973,12 @@ class AgentsMgt(MessagePassingComputation):
                 self.logger.error('Unknown event action %s ', a)
                 raise ValueError('Unknown event action ' + str(a))
 
-        self._agents_removal(leaving_agents)
+        if arrived_agents:
+            self._agents_arrival(arrived_agents)
+        if leaving_agents:
+            self._agents_removal(leaving_agents)
+        elif not self._orchestrator.repair_only:
+            self._request_resume()
 
     def _agents_removal(self, leaving_agents: list[str]):
         # Now inform other agents of the list of agents that left the system
@@ -1024,11 +1031,21 @@ class AgentsMgt(MessagePassingComputation):
             self._agts_state[candidate] = 'repair_setup'
 
     def _agents_arrival(self, arrived_agents: list[str]):
-        # TODO
-        # For arrival,
-        #  * agents that are 'near' the newly arrived agent(s)
-        #    this definition of 'near' depends on ??? FIXME
-        pass
+        registered_agents = set(self.discovery.agents())
+        for agent in arrived_agents:
+            if agent in registered_agents:
+                self.logger.info(
+                    'Agent %s arrival event ignored: dynamic redistribution '
+                    'on agent arrival is not supported',
+                    agent,
+                )
+                self._agts_state.setdefault(agent, 'running')
+            else:
+                self.logger.warning(
+                    'Agent %s arrival event ignored: agent is not registered '
+                    'and dynamic agent startup is not supported',
+                    agent,
+                )
 
     def _on_repair_ready(self, sender_name: str, msg: RepairReadyMessage, _):
         # Call when receiving a repair_ready msg from an orchestrated agent

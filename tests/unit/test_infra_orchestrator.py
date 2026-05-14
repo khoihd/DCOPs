@@ -2,6 +2,8 @@ import json
 from collections import defaultdict
 from unittest.mock import Mock
 
+from pydcop.dcop.scenario import DcopEvent, EventAction
+from pydcop.infrastructure.computations import Message
 from pydcop.infrastructure.orchestrator import (
     AgentsMgt,
     ComputationFinishedMessage,
@@ -84,3 +86,58 @@ def test_computation_running_status_resets_finished_state():
 
     assert mgt._computation_status == {"c1": "finished", "c2": "running"}
     mgt._orchestrator_stop_agents.assert_not_called()
+
+
+def _scenario_manager(repair_only=False):
+    mgt = object.__new__(AgentsMgt)
+    mgt.logger = Mock()
+    mgt._orchestrator = Mock(repair_only=repair_only)
+    mgt._request_pause = Mock()
+    mgt._request_resume = Mock()
+    mgt._agents_arrival = Mock()
+    mgt._agents_removal = Mock()
+    mgt._send_mgt_msg = Mock()
+    return mgt
+
+
+def test_add_agent_event_uses_arrival_path_without_removal_repair():
+    mgt = _scenario_manager()
+    event = DcopEvent("e1", actions=[EventAction("add_agent", agent="a_new")])
+
+    mgt._orchestrator_scenario_event(Message("scenario_event", event), 0)
+
+    mgt._request_pause.assert_called_once_with()
+    mgt._agents_arrival.assert_called_once_with(["a_new"])
+    mgt._agents_removal.assert_not_called()
+    mgt._request_resume.assert_called_once_with()
+
+
+def test_event_with_add_and_remove_runs_removal_repair_once():
+    mgt = _scenario_manager()
+    event = DcopEvent(
+        "e1",
+        actions=[
+            EventAction("add_agent", agent="a_new"),
+            EventAction("remove_agent", agent="a_old"),
+        ],
+    )
+
+    mgt._orchestrator_scenario_event(Message("scenario_event", event), 0)
+
+    mgt._agents_arrival.assert_called_once_with(["a_new"])
+    mgt._agents_removal.assert_called_once_with(["a_old"])
+    mgt._request_resume.assert_not_called()
+
+
+def test_agents_arrival_records_registered_agent_state():
+    mgt = object.__new__(AgentsMgt)
+    mgt.logger = Mock()
+    mgt.discovery = Mock()
+    mgt.discovery.agents.return_value = ["a1"]
+    mgt._agts_state = {}
+
+    mgt._agents_arrival(["a1", "a2"])
+
+    assert mgt._agts_state == {"a1": "running"}
+    mgt.logger.info.assert_called_once()
+    mgt.logger.warning.assert_called_once()
