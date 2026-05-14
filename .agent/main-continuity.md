@@ -66,8 +66,26 @@
   - `pydcop commands run` no longer exposes command-level `--infinity`;
     local thread/process runners own the default `float("inf")`
     (`9aa370d`).
+  - CLI/generator TODO cleanup commits currently on `main` and pending push:
+    - `ee54fe5` implements extensive mixed-problem generation in
+      `pydcop/commands/generate.py`.
+    - `0672780` warns on overlapping batch simulation outputs in
+      `pydcop/commands/batch.py`.
+    - `90d6b49` adds graph topology metrics in
+      `pydcop/commands/graph.py`.
+    - `99fa539` documents and formats replica distribution output in
+      `pydcop/commands/replica_dist.py`.
+    - `fa76618` validates orchestrator command modules in
+      `pydcop/commands/orchestrator.py`.
+    - `b6ca2c0` fixes Ising distribution output in
+      `pydcop/commands/generators/ising.py`.
   - Targeted checks used across this batch included the relevant unit tests,
     focused `ruff check` commands, and `python -m pydcop.dcop_cli run -h`.
+- The next interrupted TODO request was
+  `pydcop/commands/generators/meetingscheduling.py`; no edits had been made
+  yet. The likely narrow implementation is support for intentional PEAV
+  constraints (`--intentional`) plus focused tests in
+  `tests/unit/test_generate_meetingscheduling.py`.
 - Generated scratch files are currently untracked and intentionally not
   committed:
   - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`
