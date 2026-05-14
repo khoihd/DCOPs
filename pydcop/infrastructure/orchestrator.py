@@ -140,6 +140,7 @@ class Orchestrator:
         # For scenario execution
         self._events_iterator = None
         self._event_timer: threading.Timer | None = None
+        self._scenario_event_processing = False
         self._timeout_timer = None
 
         self._stopping = threading.Event()
@@ -337,14 +338,9 @@ class Orchestrator:
         return self._own_agt.is_running and not self._stopping.is_set()
 
     def _process_event(self):
-        # FIXME: hack too avoid overlapping events
-        waited = [a for a, state in self.mgt._agts_state.items()
-                  if state != 'running']
-        if waited:
-            self.logger.warning(f"Event while agents {waited} are still processing"
-                                f" previous event, wait 20 s ")
-            self._event_timer = threading.Timer(20, self._process_event)
-            self._event_timer.start()
+        if self._scenario_event_processing:
+            self.logger.debug(
+                "Scenario event still being processed; next event will wait")
             return
 
         try:
@@ -352,16 +348,28 @@ class Orchestrator:
         except StopIteration:
             self.logger.info("All events processed for scenario")
             self._events_iterator = None
+            self._event_timer = None
             return
 
         if evt.is_delay:
             self.logger.info('Delay: wait %s s for next event', evt.delay)
-            self._event_timer = threading.Timer(evt.delay, self._process_event)
-            self._event_timer.start()
+            self._schedule_event_processing(evt.delay)
 
         else:
             self.logger.info('posting event to mgt %s', evt)
+            self._scenario_event_processing = True
             self._mgt_method('_orchestrator_scenario_event', evt)
+
+    def _schedule_event_processing(self, delay: float):
+        if self._event_timer is not None:
+            self._event_timer.cancel()
+        self._event_timer = threading.Timer(delay, self._process_event)
+        self._event_timer.daemon = True
+        self._event_timer.start()
+
+    def _on_scenario_event_completed(self):
+        self._scenario_event_processing = False
+        if self._events_iterator is not None and not self._stopping.is_set():
             self._process_event()
 
     def _mgt_method(self, method: str, arg: Any):
@@ -976,11 +984,15 @@ class AgentsMgt(MessagePassingComputation):
         if arrived_agents:
             self._agents_arrival(arrived_agents)
         if leaving_agents:
-            self._agents_removal(leaving_agents)
-        elif not self._orchestrator.repair_only:
-            self._request_resume()
+            repair_started = self._agents_removal(leaving_agents)
+            if not repair_started:
+                self._orchestrator._on_scenario_event_completed()
+        else:
+            if not self._orchestrator.repair_only:
+                self._request_resume()
+            self._orchestrator._on_scenario_event_completed()
 
-    def _agents_removal(self, leaving_agents: list[str]):
+    def _agents_removal(self, leaving_agents: list[str]) -> bool:
         # Now inform other agents of the list of agents that left the system
         # This replace a proper discovery mechanism
         candidates_agents = _removal_candidate_agents(
@@ -1005,7 +1017,7 @@ class AgentsMgt(MessagePassingComputation):
                 self._request_resume()
             self.dist_count += 1
             self.repair_metrics.clear()
-            return
+            return False
 
         orphaned_replicas = {o: self.discovery.replica_agents(o) for o in
                              orphaned}
@@ -1029,6 +1041,7 @@ class AgentsMgt(MessagePassingComputation):
             msg = SetupRepairMessage(info)
             self._send_mgt_msg(candidate, msg)
             self._agts_state[candidate] = 'repair_setup'
+        return bool(candidates_agents)
 
     def _agents_arrival(self, arrived_agents: list[str]):
         registered_agents = set(self.discovery.agents())
@@ -1132,6 +1145,7 @@ class AgentsMgt(MessagePassingComputation):
                     self._request_resume()
                 self.dist_count += 1
                 self.repair_metrics.clear()
+                self._orchestrator._on_scenario_event_completed()
 
     def _dump_repair_metrics(self, repair_status, repair_duration ):
         # Dump current distribution

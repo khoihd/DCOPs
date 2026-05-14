@@ -7,6 +7,7 @@ from pydcop.infrastructure.computations import Message
 from pydcop.infrastructure.orchestrator import (
     AgentsMgt,
     ComputationFinishedMessage,
+    Orchestrator,
     RepairReadyMessage,
 )
 from pydcop.utils.simple_repr import simple_repr
@@ -88,6 +89,36 @@ def test_computation_running_status_resets_finished_state():
     mgt._orchestrator_stop_agents.assert_not_called()
 
 
+def _scenario_orchestrator(events):
+    orchestrator = object.__new__(Orchestrator)
+    orchestrator.logger = Mock()
+    orchestrator._events_iterator = iter(events)
+    orchestrator._event_timer = None
+    orchestrator._scenario_event_processing = False
+    orchestrator._stopping = Mock()
+    orchestrator._stopping.is_set.return_value = False
+    orchestrator._mgt_method = Mock()
+    return orchestrator
+
+
+def test_process_event_waits_for_current_event_completion():
+    first = DcopEvent("e1", actions=[])
+    second = DcopEvent("e2", actions=[])
+    orchestrator = _scenario_orchestrator([first, second])
+
+    orchestrator._process_event()
+    orchestrator._process_event()
+
+    orchestrator._mgt_method.assert_called_once_with(
+        "_orchestrator_scenario_event", first)
+
+    orchestrator._on_scenario_event_completed()
+
+    assert orchestrator._mgt_method.call_count == 2
+    orchestrator._mgt_method.assert_called_with(
+        "_orchestrator_scenario_event", second)
+
+
 def _scenario_manager(repair_only=False):
     mgt = object.__new__(AgentsMgt)
     mgt.logger = Mock()
@@ -110,6 +141,7 @@ def test_add_agent_event_uses_arrival_path_without_removal_repair():
     mgt._agents_arrival.assert_called_once_with(["a_new"])
     mgt._agents_removal.assert_not_called()
     mgt._request_resume.assert_called_once_with()
+    mgt._orchestrator._on_scenario_event_completed.assert_called_once_with()
 
 
 def test_event_with_add_and_remove_runs_removal_repair_once():
@@ -127,6 +159,7 @@ def test_event_with_add_and_remove_runs_removal_repair_once():
     mgt._agents_arrival.assert_called_once_with(["a_new"])
     mgt._agents_removal.assert_called_once_with(["a_old"])
     mgt._request_resume.assert_not_called()
+    mgt._orchestrator._on_scenario_event_completed.assert_not_called()
 
 
 def test_agents_arrival_records_registered_agent_state():
