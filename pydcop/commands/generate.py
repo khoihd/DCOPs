@@ -74,7 +74,7 @@ Planned
 #   https://stackoverflow.com/questions/20171901/how-to-generate-random-graphs
 #   http://networkx.readthedocs.io/en/networkx-1.11/reference/generators.html
 #
-# TODO : other type of problems that we could/should implement
+# Other types of problems that we could/should implement:
 #
 # * meeting scheduling
 # * sensor networks (from http://teamcore.usc.edu/DCOP/ADOPT-AAMAS04-data.tar.gz
@@ -94,7 +94,11 @@ from pydcop.commands.generators import graphcoloring, meetingscheduling, ising, 
 from pydcop.commands.generators.smallworld import generate_small_world
 from pydcop.dcop.objects import VariableDomain, Variable, AgentDef
 from pydcop.dcop.dcop import DCOP
-from pydcop.dcop.relations import relation_from_str
+from pydcop.dcop.relations import (
+    NAryMatrixRelation,
+    generate_assignment_as_dict,
+    relation_from_str,
+)
 from pydcop.dcop.yamldcop import dcop_yaml
 
 logger = logging.getLogger("pydcop.cli.generate")
@@ -226,12 +230,13 @@ def parser_mixed_problem(subparsers):
         default=0,
         help="Capacity of the agents.",
     )
-    # TODO : intensional vs extensive form
     parser.add_argument(
         "-e",
         "--extensive",
+        action="store_true",
+        default=False,
         help="generate the problem in extensive form (default "
-        "is intentional form) : NOT IMPLEMENTED YET",
+        "is intentional form)",
     )
 
 
@@ -287,13 +292,12 @@ def parser_graph_coloring(subparsers):
         "by default we generate problem with a single "
         "connected graph",
     )
-    # TODO : intentionnal vs extensive form
     parser.add_argument(
         "-e",
         "--extensive",
         action="store_true",
         help="generate the problem in extensive form (default "
-        "is intentional form) : NOT IMPLEMENTED YET",
+        "is intentional form)",
     )
     parser.add_argument(
         "-g",
@@ -348,7 +352,7 @@ def generate_graph_coloring(args):
     d = VariableDomain("colors", "color", range(color_count))
     variables = {}
     agents = {}
-    for i, node in enumerate(graph.nodes_iter()):
+    for i, node in enumerate(graph.nodes):
         logger.debug("node %s - %s", node, i)
         name = "v" + str(i)
         variables[name] = Variable(name, d)
@@ -362,12 +366,14 @@ def generate_graph_coloring(args):
             agents[a_name] = AgentDef(a_name, capacity)
 
     constraints = {}
-    for i, edge in enumerate(graph.edges_iter()):
+    for i, edge in enumerate(graph.edges):
         logger.debug("edge %s - %s", edge, i)
         name = "c" + str(i)
         u, v = edge
         expression = f"1000 if v{u} == v{v} else 0"
-        constraints[name] = relation_from_str(name, expression, variables.values())
+        constraints[name] = _relation_from_expression(
+            name, expression, variables.values(), args.extensive
+        )
         logger.debug(repr(constraints[name]))
 
     dcop = DCOP(
@@ -490,7 +496,9 @@ def generate_mixed_problem(args):
 
             v = Variable("v" + str(n), d)
             variables["v" + str(n)] = v
-            constraints[c[0]] = relation_from_str(c[0], expression, [v])
+            constraints[c[0]] = _relation_from_expression(
+                c[0], expression, [v], args.extensive
+            )
 
             if auto_agents:
                 a_name = "a" + str(n)
@@ -525,7 +533,7 @@ def generate_mixed_problem(args):
             / 2
         )
 
-        for i, node in enumerate(graph.nodes_iter()):
+        for i, node in enumerate(graph.nodes):
             logger.debug("node %s - %s", node, i)
             name = "v" + str(i)
             variables[name] = Variable(name, d)
@@ -539,7 +547,7 @@ def generate_mixed_problem(args):
                 agents[a_name] = AgentDef(a_name, capacity)
 
         constraints = {}
-        for i, edge in enumerate(graph.edges_iter()):
+        for i, edge in enumerate(graph.edges):
             logger.debug("edge %s - %s", edge, i)
             name = "c" + str(i)
             u, v = edge
@@ -553,7 +561,9 @@ def generate_mixed_problem(args):
                 max_val = (weights[0] + weights[1]) * domain_range
                 expression = f"abs(v{u} + v{v} - {round(random.uniform(0, max_val), 2)})"
 
-            constraints[name] = relation_from_str(name, expression, variables.values())
+            constraints[name] = _relation_from_expression(
+                name, expression, variables.values(), args.extensive
+            )
             logger.debug(repr(constraints[name]))
 
     else:
@@ -666,7 +676,9 @@ def generate_mixed_problem(args):
                 else:
                     expression = addition_string
 
-            constraints[name] = relation_from_str(name, expression, c_variables)
+            constraints[name] = _relation_from_expression(
+                name, expression, c_variables, args.extensive
+            )
             logger.debug(repr(constraints[name]))
 
     dcop = DCOP(
@@ -705,6 +717,19 @@ def choose_in_available_edges(available_edges, n=None):
         c = random.choice(available_constraints)
 
     return (node, c)
+
+
+def _relation_from_expression(name, expression, variables, extensive):
+    relation = relation_from_str(name, expression, variables)
+    if not extensive:
+        return relation
+
+    matrix_relation = NAryMatrixRelation(relation.dimensions, name=name)
+    for assignment in generate_assignment_as_dict(relation.dimensions):
+        matrix_relation = matrix_relation.set_value_for_assignment(
+            assignment, relation(**assignment)
+        )
+    return matrix_relation
 
 
 def choose_weight() -> float:
