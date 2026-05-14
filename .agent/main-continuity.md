@@ -31,7 +31,7 @@
   `verification_archive/algorithm_paper_check_tracker.md`; detailed notes live
   in `verification_archive/*_paper_check.md`.
 - Verified/done paper checks include DPOP, MGM, MGM2, DBA, GDBA, DSA, ADSA,
-  MixedDSA, MaxSum, AMaxSum, Dynamic MaxSum, and NCBB.
+  MixedDSA, MaxSum, AMaxSum, Dynamic MaxSum, NCBB, and SyncBB.
 - Dynamic MaxSum is marked `Done / No Separate Paper Source`, documented in
   `verification_archive/maxsum_dynamic_paper_check.md`, and treated as a
   pyDcop-specific dynamic factor-graph extension around AMaxSum/MaxSum.
@@ -39,9 +39,17 @@
   `verification_archive/ncbb_paper_check.md`, with
   `verification_archive/papers/ncbb.pdf` committed as the source paper.
   Commit `3dfa63d` implemented NCBB search and max support.
-- SyncBB is the next tracker item that is still not started. A local
-  `verification_archive/papers/syncbb.pdf` is currently untracked.
+- SyncBB verification and follow-up implementation are committed. The
+  implementation supports both `objective: min` and `objective: max` by
+  inferring objective direction from the DCOP instance, not from algorithm
+  parameters.
 - `todo.md` verification status edits have been committed.
+- Recent TODO cleanups:
+  - `pydcop/computations_graph/factor_graph.py` slices external variables out
+    of factor constraints before graph construction, so external variable
+    references do not create dangling factor links.
+  - `pydcop/algorithms/mgm.py` has updated parameter documentation and a CLI
+    example for running MGM with `stop_cycle` and `break_mode`.
 - Generated scratch files are currently untracked and intentionally not
   committed:
   - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`
@@ -49,8 +57,6 @@
   - `mgm2_max_metrics.csv`, `mgm2_min_metrics.csv`
   - `maxsum_max_metrics.csv`
   - `random.yaml`
-  - `verification_archive/.DS_Store`
-  - `verification_archive/papers/syncbb.pdf`
 
 ## PuLP/CBC
 
