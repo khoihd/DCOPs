@@ -66,26 +66,28 @@
   - `pydcop commands run` no longer exposes command-level `--infinity`;
     local thread/process runners own the default `float("inf")`
     (`9aa370d`).
-  - CLI/generator TODO cleanup commits currently on `main` and pending push:
-    - `ee54fe5` implements extensive mixed-problem generation in
-      `pydcop/commands/generate.py`.
-    - `0672780` warns on overlapping batch simulation outputs in
-      `pydcop/commands/batch.py`.
-    - `90d6b49` adds graph topology metrics in
-      `pydcop/commands/graph.py`.
-    - `99fa539` documents and formats replica distribution output in
-      `pydcop/commands/replica_dist.py`.
-    - `fa76618` validates orchestrator command modules in
-      `pydcop/commands/orchestrator.py`.
-    - `b6ca2c0` fixes Ising distribution output in
-      `pydcop/commands/generators/ising.py`.
-  - Targeted checks used across this batch included the relevant unit tests,
-    focused `ruff check` commands, and `python -m pydcop.dcop_cli run -h`.
-- The next interrupted TODO request was
-  `pydcop/commands/generators/meetingscheduling.py`; no edits had been made
-  yet. The likely narrow implementation is support for intentional PEAV
-  constraints (`--intentional`) plus focused tests in
-  `tests/unit/test_generate_meetingscheduling.py`.
+  - Recent CLI/generator/runtime TODO/FIXME cleanup commits on `main`:
+    - `43a867b` adds intentional PEAV meeting constraints.
+    - `32939f1` validates command module loading.
+    - `d424b91` exposes hosted replicas in UI agent data.
+    - `500c105` handles add-agent scenario events explicitly.
+    - `76ae24e` adds meeting scheduling model variants.
+    - `a93f3e0` documents AMaxSum example results.
+    - `6bb63bd` clarifies dynamic MaxSum factor removal state.
+    - `24a2662` documents MaxSum example results.
+    - `0efb3a9` fixes comhost backtracking candidates.
+    - `73ca0be` uses replica distribution algo params and default infinity.
+    - `a34653c` uses orchestrator default infinity and stops the metrics
+      collector.
+    - `59881a5` stops the solve metrics collector cleanly.
+    - `c6c208f` serializes meeting generator stdout as YAML documents.
+    - `d88de73` stops the shared command metrics collector cleanly.
+    - `4e1d05d` makes infrastructure run use symbolic infinity by default.
+  - Targeted checks used across this batch included the relevant unit/API
+    tests, focused `ruff check` commands, and representative CLI help/solve
+    invocations.
+- No active interrupted TODO/FIXME request is pending. The last completed
+  request was the `pydcop/infrastructure/run.py` FIXME cleanup in `4e1d05d`.
 - Generated scratch files are currently untracked and intentionally not
   committed:
   - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`
