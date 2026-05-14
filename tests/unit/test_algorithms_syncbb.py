@@ -331,7 +331,7 @@ def test_computation_start_uses_max_initial_bound(toy_pb_computation_graph):
     comp_a.start()
 
     comp_a._msg_sender.assert_any_call(
-        "vA", "vB", SyncBBForwardMessage([("vA", "R", 0)], -float("inf")), None, None
+        "vA", "vB", SyncBBForwardMessage([("vA", "R", 0)], float("-inf")), None, None
     )
 
 

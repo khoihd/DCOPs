@@ -1672,7 +1672,7 @@ def find_optimal(
     """
     arg_best, best_cost = None, float("inf")
     if mode == "max":
-        arg_best, best_cost = None, -float("inf")
+        arg_best, best_cost = None, float("-inf")
     for value in variable.domain:
         assignment[variable.name] = value
         cost = assignment_cost(assignment, constraints)

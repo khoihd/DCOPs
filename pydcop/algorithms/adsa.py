@@ -385,7 +385,7 @@ class ADsaComputation(VariableComputation):
         """
         arg_best, best_cost = None, float("inf")
         if self.mode == "max":
-            arg_best, best_cost = None, -float("inf")
+            arg_best, best_cost = None, float("-inf")
 
         variable_name = self.variable.name
         previous_value = assignment.get(variable_name, None)

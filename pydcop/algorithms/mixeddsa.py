@@ -234,7 +234,7 @@ class MixedDsaComputation(VariableComputation):
                         boundary = rel_val
                     elif self.mode == 'min' and rel_val < boundary:
                         boundary = rel_val
-                    if rel_val == float("inf") or rel_val == -float("inf"):
+                    if rel_val == float("inf") or rel_val == float("-inf"):
                         hard = True
             self.__optimum_dict__[c.name] = boundary
             if hard:

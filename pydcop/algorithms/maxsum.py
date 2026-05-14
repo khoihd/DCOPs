@@ -456,7 +456,7 @@ def factor_costs_for_var(
     """
     variable_name = variable.name
     costs = {
-        d: float("inf") if mode == "min" else -float("inf")
+        d: float("inf") if mode == "min" else float("-inf")
         for d in variable.domain
     }
 
