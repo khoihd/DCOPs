@@ -120,21 +120,28 @@ def distribute(
         logger.debug("Candidates for computation %s : %s", computation.name, candidates)
 
         if not candidates:
+            computations[i] = footprint, computation, None
             if i == 0:
                 raise ValueError("Impossible Distribution !")
 
             # no candidate : backtrack !
             i -= 1
+            _, prev_computation, _ = computations[i]
             logger.info(
                 "No candidate for %s, backtrack placement "
                 "of computation %s (was on %s",
                 computation.name,
-                computations[i][1].name,
-                current_mapping[computations[i][1].name],
+                prev_computation.name,
+                current_mapping[prev_computation.name],
             )
-            current_mapping.pop(computations[i][1].name)
+            current_mapping.pop(prev_computation.name)
 
-            # FIXME : eliminate selected agent for previous computation
+            # Keep previous computation's remaining candidates: the selected agent
+            # was already removed with pop(). Later candidate lists were computed
+            # from the abandoned mapping and must be rebuilt.
+            for reset_i in range(i + 1, len(computations)):
+                reset_footprint, reset_computation, _ = computations[reset_i]
+                computations[reset_i] = reset_footprint, reset_computation, None
         else:
             _, selected = candidates.pop()
             current_mapping[computation.name] = selected.name
