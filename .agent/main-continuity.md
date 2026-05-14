@@ -31,15 +31,16 @@
   `verification_archive/algorithm_paper_check_tracker.md`; detailed notes live
   in `verification_archive/*_paper_check.md`.
 - Verified/done paper checks include DPOP, MGM, MGM2, DBA, GDBA, DSA, ADSA,
-  MixedDSA, MaxSum, AMaxSum, and Dynamic MaxSum.
+  MixedDSA, MaxSum, AMaxSum, Dynamic MaxSum, and NCBB.
 - Dynamic MaxSum is marked `Done / No Separate Paper Source`, documented in
   `verification_archive/maxsum_dynamic_paper_check.md`, and treated as a
   pyDcop-specific dynamic factor-graph extension around AMaxSum/MaxSum.
-- NCBB is marked `Needs fix`, documented in
+- NCBB is marked `Done / Verified`, documented in
   `verification_archive/ncbb_paper_check.md`, with
   `verification_archive/papers/ncbb.pdf` committed as the source paper.
-- No next paper-verification target has been selected yet. SyncBB is the next
-  tracker item that is still not started.
+  Commit `3dfa63d` implemented NCBB search and max support.
+- SyncBB is the next tracker item that is still not started. A local
+  `verification_archive/papers/syncbb.pdf` is currently untracked.
 - `todo.md` verification status edits have been committed.
 - Generated scratch files are currently untracked and intentionally not
   committed:
@@ -49,6 +50,7 @@
   - `maxsum_max_metrics.csv`
   - `random.yaml`
   - `verification_archive/.DS_Store`
+  - `verification_archive/papers/syncbb.pdf`
 
 ## PuLP/CBC
 
@@ -177,22 +179,29 @@
 
 - NCBB has been checked against `verification_archive/papers/ncbb.pdf`,
   documented in `verification_archive/ncbb_paper_check.md`, and marked
-  `Needs fix` in the tracker.
+  `Done / Verified` in the tracker.
 - The paper is "No-Commitment Branch and Bound Search for Distributed
   Constraint Optimization" by Anton Chechetka and Katia Sycara.
-- `pydcop/algorithms/ncbb.py` is incomplete: initialization and the paper's
-  `AgentCost` / `LB` helper definitions are implemented, but the defining
-  branch-and-bound search loop is not implemented.
-- `search()` now raises `NotImplementedError` explicitly. Search-phase message
-  handling, subtree search, pruning, result selection, and STOP propagation are
-  still missing.
-- `memory_footprint_estimate()` and `communication_load()` still raise
-  `NotImplementedError`.
-- The implementation rejects non-binary constraints, matching the paper's
-  restricted binary-constraint presentation.
+- `pydcop/algorithms/ncbb.py` now implements initialization and the main
+  branch-and-bound search loop from Figures 1 and 2, including
+  child-specific constrained descendants, lower-bound delta propagation,
+  subtree search, pruning, result selection, and STOP propagation.
+- `PseudoTreeNode.branch_descendants` in
+  `pydcop/computations_graph/pseudotree.py` records the paper's
+  `descendants[child]` structure for NCBB.
+- `memory_footprint_estimate()` and `communication_load()` are implemented
+  with polynomial-space / constant-message-size estimates.
+- The paper is minimization-only, but this implementation supports
+  `objective: max` as a pyDcop extension by minimizing the negated objective
+  internally.
+- NCBB requires finite-domain variables and binary constraints. It does not
+  require NCBB-specific YAML fields beyond the usual problem definition,
+  agents/distribution, and `objective: min|max`.
 - Relevant checks used recently:
-  - `pytest tests/unit/test_algorithms_ncbb.py`
+  - `pytest tests/unit/test_algorithms_ncbb.py tests/unit/test_graph_pseudotree.py`
   - `ruff check pydcop/algorithms/ncbb.py tests/unit/test_algorithms_ncbb.py`
+  - `python -m pydcop.dcop_cli -t 10 solve -a ncbb -d oneagent tests/instances/graph_coloring1.yaml`
+  - `python -m pydcop.dcop_cli -t 10 solve -a ncbb -d oneagent tests/instances/graph_coloring_tuto_max.yaml`
 
 ## Generator And Docs Notes
 
@@ -226,10 +235,6 @@
   extraction can affect intermediate UTIL dimensions, memory, and tie
   behavior. Use `profiling/profile_dpop_utils.py --case generated --strategy all`
   before future DPOP join/projection changes.
-- NCBB search-phase stubs remain incomplete. Existing tests cover implemented
-  initialization behavior, message dispatch, phase validation, root transition
-  into search, `agent_cost()`, `lower_bound()`, and explicit search-phase
-  incompleteness, but not a real search implementation.
 - SyncBB behavior tests cover direct message flow, pruning, termination, and
   solve-level min/max outcomes.
 - MGM and DSA do not currently implement a global convergence stop such as
