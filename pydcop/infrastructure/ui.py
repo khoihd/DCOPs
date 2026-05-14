@@ -138,13 +138,28 @@ class UiServer(MessagePassingComputation):
             'name' : agent.name,
             'extra': agent.agent_def.extra_attr(),
             'computations': self._computations(),
-            'replicas': [],  # TODO !!
+            'replicas': self._replicas(agent),
             'address': str(agent.address),
             'is_orchestrator': agent.name == 'orchestrator'
         }
         if agent.agent_def:
             agt.update(agent.agent_def.extra_attr())
         return agt
+
+    def _replicas(self, agent):
+        replication_comp = getattr(agent, 'replication_comp', None)
+        if replication_comp is None:
+            return []
+
+        return [
+            {
+                'name': computation,
+                'origin': origin,
+                'footprint': footprint,
+            }
+            for computation, (origin, footprint)
+            in sorted(replication_comp.hosted_replicas.items())
+        ]
 
     def _computations(self):
         computations = []
