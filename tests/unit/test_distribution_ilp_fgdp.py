@@ -39,8 +39,9 @@ from pydcop.computations_graph.factor_graph import ComputationsFactorGraph, \
     VariableComputationNode, FactorComputationNode
 from pydcop.dcop.objects import Variable, VariableDomain, AgentDef
 from pydcop.dcop.relations import relation_from_str
-from pydcop.distribution.ilp_fgdp import distribute, _build_alphaijk_binvars, \
-    _objective_function, _memory_footprint_estimate_in_cg
+from pydcop.distribution.ilp_fgdp import distribute, distribute_add, \
+    distribute_remove, _build_alphaijk_binvars, _objective_function, \
+    _memory_footprint_estimate_in_cg
 from pydcop.distribution.objects import ImpossibleDistributionException
 
 Agent = namedtuple('Agent', ['name'])
@@ -267,6 +268,28 @@ class ILPFGDP(unittest.TestCase):
         # must go on a2 
         self.assertEqual(agent_mapping.agent_for('f1'), 'a2')
         self.assertEqual(agent_mapping.agent_for('v3'), 'a2')
+
+
+class DynamicDistributionRepair(unittest.TestCase):
+    def test_remove_repair_reports_unsupported(self):
+        self.assertRaisesRegex(
+            ImpossibleDistributionException,
+            "does not support dynamic distribution repair after agent removal",
+            distribute_remove,
+            None,
+            None,
+            "a1",
+        )
+
+    def test_add_repair_reports_unsupported(self):
+        self.assertRaisesRegex(
+            ImpossibleDistributionException,
+            "does not support dynamic distribution repair after agent addition",
+            distribute_add,
+            None,
+            "a1",
+            None,
+        )
 
 
 class UtilityFunctions(unittest.TestCase):
