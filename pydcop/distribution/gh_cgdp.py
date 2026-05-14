@@ -95,17 +95,30 @@ def distribute(
 
     """
 
+    agents = list(agentsdef)
+    remaining_capacity = {a.name: a.capacity for a in agents}
+
     # Place computations with hosting costs == 0
     # For SECP, this assign actuators var and factor to the right device.
     fixed_mapping = {}
     for comp in computation_graph.node_names():
-        for agent in agentsdef:
+        for agent in agents:
             if agent.hosting_cost(comp) == 0:
+                footprint = memory_footprint_estimate(
+                    computation_graph.computation(comp)
+                )
                 fixed_mapping[comp] = (
                     agent.name,
-                    memory_footprint_estimate(computation_graph.computation(comp)),
+                    footprint,
                 )
+                remaining_capacity[agent.name] -= footprint
+                if remaining_capacity[agent.name] < 0:
+                    raise ImpossibleDistributionException(
+                        f"Not enough capacity on {agent.name} to host fixed "
+                        f"computation {comp}: {remaining_capacity[agent.name]}"
+                    )
                 break
+    fixed_agent_mapping = {c: a for c, (a, _) in fixed_mapping.items()}
 
     # Sort computation by footprint, but add a random element to avoid sorting on names
     computations = [
@@ -126,22 +139,21 @@ def distribute(
             computation.name,
             footprint,
         )
-        # look for cancidiate agents for computation c
-        # TODO: keep a list of remaining capacities for agents ?
+        # Look for candidate agents for computation c.
         if candidates is None:
             candidates = candidate_hosts(
                 computation,
                 footprint,
-                computations,
-                agentsdef,
+                agents,
                 communication_load,
-                current_mapping,
-                fixed_mapping,
+                {**fixed_agent_mapping, **current_mapping},
+                remaining_capacity,
             )
             computations[i] = footprint, computation, candidates
         logger.debug("Candidates for computation %s : %s", computation.name, candidates)
 
         if not candidates:
+            computations[i] = footprint, computation, None
             if i == 0:
                 logger.error(
                     f"Cannot find a distribution, no candidate for computation {computation}\n"
@@ -153,19 +165,24 @@ def distribute(
 
             # no candidate : backtrack !
             i -= 1
+            prev_footprint, prev_computation, _ = computations[i]
             logger.info(
                 "No candidate for %s, backtrack placement "
                 "of computation %s (was on %s",
                 computation.name,
-                computations[i][1].name,
-                current_mapping[computations[i][1].name],
+                prev_computation.name,
+                current_mapping[prev_computation.name],
             )
-            current_mapping.pop(computations[i][1].name)
+            previous_agent = current_mapping.pop(prev_computation.name)
+            remaining_capacity[previous_agent] += prev_footprint
 
-            # FIXME : eliminate selected agent for previous computation
+            for reset_i in range(i + 1, len(computations)):
+                reset_footprint, reset_computation, _ = computations[reset_i]
+                computations[reset_i] = reset_footprint, reset_computation, None
         else:
             _, selected = candidates.pop()
             current_mapping[computation.name] = selected.name
+            remaining_capacity[selected.name] -= footprint
             computations[i] = footprint, computation, candidates
             logger.debug(
                 "Place computation %s on agent %s", computation.name, selected.name
@@ -202,11 +219,10 @@ def distribution_cost(
 def candidate_hosts(
     computation: ComputationNode,
     footprint: float,
-    computations: list[tuple],
     agents: Iterable[AgentDef],
     communication_load: Callable[[ComputationNode, str], float],
     mapping: dict[str, str],
-    fixed_mapping: dict[str, tuple[str, float]],
+    remaining_capacity: dict[str, float],
 ):
     """
     Build a list of candidate agents for a computation.
@@ -223,10 +239,10 @@ def candidate_hosts(
     ----------
     computation
     footprint
-    computations
     agents
     communication_load
     mapping
+    remaining_capacity
 
     Returns
     -------
@@ -234,18 +250,7 @@ def candidate_hosts(
     """
     candidates = []
     for agt in agents:
-        # Compute remaining capacity for agt, to check if it as enough place
-        # left. Only keep agents that have enough capacity.
-        capa = agt.capacity
-        for c, a in mapping.items():
-            if a == agt.name:
-                c_footprint = next(f for f, comp, _ in computations if comp.name == c)
-                capa -= c_footprint
-        for c, (a, f) in fixed_mapping.items():
-            if a == agt.name:
-                capa -= f
-
-        if capa < footprint:
+        if remaining_capacity[agt.name] < footprint:
             continue
 
         # compute cost of assigning computation to agt
