@@ -292,13 +292,6 @@ class InProcessCommunicationLayer(CommunicationLayer):
         # message passing is implemented as simple function calls.
         pass
 
-    # def force_get_address(self, agt_name: str):
-    #     # FIXME : horrible hack until We implment a proper discovery method
-    #     # This only works for in-process communication and it only works
-    #     # because the InProcessCommLayer is used as the address.
-    #     return self.discovery.agent_address('orchestrator')\
-    #         .discovery.agent_address(agt_name)
-
     def __str__(self):
         return f"InProcessCommunicationLayer({self.messaging})"
 
