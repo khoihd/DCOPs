@@ -140,6 +140,25 @@ def test_build_computation_returns_syncbb_instance(toy_pb_computation_graph):
     assert comp.name == "vA"
 
 
+def test_memory_footprint_estimate_counts_path_token(toy_pb_computation_graph):
+    comp_node = toy_pb_computation_graph.computation("vB")
+
+    assert syncbb.memory_footprint_estimate(comp_node) == (
+        syncbb.LOCAL_STATE_SIZE
+        + syncbb.BOUND_SIZE
+        + 4 * syncbb.PATH_ELEMENT_SIZE
+    )
+
+
+def test_communication_load_only_uses_order_links(toy_pb_computation_graph):
+    comp_node = toy_pb_computation_graph.computation("vA")
+
+    assert syncbb.communication_load(comp_node, "vB") == (
+        syncbb.HEADER_SIZE + syncbb.BOUND_SIZE + 3 * syncbb.PATH_ELEMENT_SIZE
+    )
+    assert syncbb.communication_load(comp_node, "vC") == 0
+
+
 def test_terminate_message_has_no_payload():
     message = SyncBBTerminateMessage()
 

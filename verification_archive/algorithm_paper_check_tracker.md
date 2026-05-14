@@ -194,7 +194,8 @@ For each algorithm:
     tokens were updated to adopt better received bounds and
     `get_next_assignment()` was fixed so a candidate rejected after a later path
     element cannot leak through with only a prefix cost. Max-mode support now
-    explicitly avoids pruning candidates from partial utility alone.
+    explicitly avoids pruning candidates from partial utility alone. SyncBB now
+    has explicit path-token memory and communication estimates.
 
 ## Cross-Cutting Checks
 

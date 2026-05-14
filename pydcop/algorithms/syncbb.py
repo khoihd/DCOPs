@@ -160,6 +160,11 @@ from pydcop.infrastructure.computations import (
 GRAPH_TYPE = "ordered_graph"
 
 INFINITY = float("inf")
+HEADER_SIZE = 0
+UNIT_SIZE = 1
+PATH_ELEMENT_SIZE = 3 * UNIT_SIZE
+BOUND_SIZE = UNIT_SIZE
+LOCAL_STATE_SIZE = 3 * UNIT_SIZE
 
 # Some types definition for the content of messages
 VarName = str
@@ -175,6 +180,27 @@ SyncBBTerminateMessage = message_type("terminate", [])
 
 def build_computation(comp_def: ComputationDef):
     return SyncBBComputation(comp_def)
+
+
+def memory_footprint_estimate(computation) -> float:
+    """Return a SyncBB computation memory estimate.
+
+    A SyncBB computation mostly stores the local selected value/cost, the current
+    bound, and the current path token while it is being processed.
+    """
+    return LOCAL_STATE_SIZE + _path_token_size(_max_observable_path(computation))
+
+
+def communication_load(src, target: str) -> float:
+    """Return the estimated SyncBB communication load from ``src`` to ``target``.
+
+    SyncBB only sends token messages along the fixed ordering. Constraint links
+    in the ordered graph are not direct communication channels for this
+    algorithm.
+    """
+    if target not in {src.get_previous(), src.get_next()}:
+        return 0
+    return HEADER_SIZE + _path_token_size(_max_observable_path(src))
 
 
 class SyncBBComputation(VariableComputation):
@@ -482,6 +508,17 @@ def get_next_assignment(
             return candidate, candidate_cost
 
     return None
+
+
+def _path_token_size(path_length: int) -> float:
+    return BOUND_SIZE + path_length * PATH_ELEMENT_SIZE
+
+
+def _max_observable_path(computation) -> int:
+    variable_names = {computation.name}
+    for link in computation.links:
+        variable_names.update(link.nodes)
+    return max(1, len(variable_names))
 
 
 def _candidate_respects_bound(

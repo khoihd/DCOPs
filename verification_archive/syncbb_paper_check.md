@@ -58,6 +58,10 @@
 - `get_next_assignment()` implements the value-ordering and bound-check helper.
   It now rejects a candidate if any prefix/path consistency check fails, rather
   than keeping a partially valid candidate.
+- `memory_footprint_estimate()` and `communication_load()` estimate SyncBB's
+  local state and path-token payload instead of relying on pyDcop's generic
+  default estimates. Communication is counted only along the fixed previous /
+  next ordering links.
 
 ## Resolved Gaps
 
@@ -69,6 +73,8 @@
 - Maximization support is explicit: SyncBB does not prune max-mode candidates
   from their current partial utility alone, because later variables may add
   enough utility to beat the incumbent.
+- Path-token memory and communication planning estimates are now implemented
+  explicitly for SyncBB.
 - Regression coverage now includes both the helper-level stale-prefix case and
   a solve-level weighted binary DCOP where the previous implementation returned
   cost `10` instead of the optimal cost `6`, plus a max-mode case where a low
@@ -87,8 +93,10 @@
 - The implementation passes the known bound inside token messages instead of
   broadcasting a separate bound update.
 - The implementation has no SyncBB-specific algorithm parameters.
-- `memory_footprint_estimate()` and `communication_load()` are not specialized
-  in `syncbb.py`; pyDcop's algorithm loader supplies default estimates.
+- The path-token estimates are conservative local planning estimates. The
+  estimate hooks receive a computation node, not the full ordered chain, so the
+  implementation counts the variables visible from that node's order and
+  constraint links.
 
 ## Verdict
 
@@ -105,10 +113,9 @@ adaptation.
   termination messages, value-ordering helpers, exact variable-name constraint
   lookup, forward extension, backward search, pruning, termination propagation,
   min/max solve-level outcomes, max-mode non-pruning of partial utilities, and
-  the weighted regression case fixed during this check.
+  the weighted regression case fixed during this check. It also covers the
+  explicit memory and communication estimates.
 
 ## Follow-Up
 
-- If SyncBB is used for distribution/memory planning, add explicit
-  `memory_footprint_estimate()` and `communication_load()` estimates for path
-  token size instead of relying on the generic defaults.
+- None currently identified.

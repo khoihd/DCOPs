@@ -219,6 +219,8 @@
     prefix of the path before a later bound check failed
   - max-mode support explicitly avoids pruning a candidate from partial utility
     alone, because later variables may make that branch optimal
+  - explicit `memory_footprint_estimate()` and `communication_load()` estimates
+    now account for SyncBB path-token payloads and fixed-order communication
 - Relevant checks used recently:
   - `pytest tests/unit/test_algorithms_syncbb.py`
   - `ruff check pydcop/algorithms/syncbb.py tests/unit/test_algorithms_syncbb.py`
