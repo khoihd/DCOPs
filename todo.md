@@ -13,16 +13,21 @@
 
 - (DONE) Fix TODO and FIXME
 
-- Add multi-threading support for exact algorithms
-  - (DONE) Pulp: highs
+- (DONE) Add multi-threading support for exact algorithms
+  - Pulp: highs
+  - No need to further optimize join / util functions from DPOP
 
-- Require argument stop_cycle for all iterative algorithm calls
+- (DONE) Two ways to terminate the algorithms:
+  - '--timeout' from solve
+  - '-p stop_cycle:30' from the algorithm
+
 
 - (WIP) Review instance generators:
   - (DONE) Add seed value
   - (DONE) Add random graph
   - Add support to generate multiple instances
-    - Check how we should name instances
+    - How should we name instances?
+      - Provide prefix ?
 
 - Optimize commonly used files with overheads
 
