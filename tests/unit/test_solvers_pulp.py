@@ -158,6 +158,41 @@ def test_pulp_solver_rejects_cbc_when_no_backend_is_available(monkeypatch):
         pulp_solver._build_solver("cbc")
 
 
+def test_pulp_solver_uses_highs_from_path(monkeypatch):
+    captured = {}
+
+    class FakeHighsSolver:
+        def __init__(self, path, msg, timeLimit, threads):
+            captured["path"] = path
+            captured["msg"] = msg
+            captured["timeLimit"] = timeLimit
+            captured["threads"] = threads
+
+    monkeypatch.setattr(pulp_solver, "HiGHS_CMD", FakeHighsSolver)
+    monkeypatch.setattr(pulp_solver.shutil, "which", lambda name: "/opt/bin/highs")
+    monkeypatch.setattr(pulp_solver.os, "cpu_count", lambda: 8)
+
+    solver, solver_name, threads = pulp_solver._build_solver("highs", timeout=12)
+
+    assert isinstance(solver, FakeHighsSolver)
+    assert solver_name == "highs"
+    assert threads == 8
+    assert captured == {
+        "path": "/opt/bin/highs",
+        "msg": False,
+        "timeLimit": 12,
+        "threads": 8,
+    }
+
+
+def test_pulp_solver_rejects_highs_when_no_backend_is_available(monkeypatch):
+    monkeypatch.setattr(pulp_solver, "HiGHS_CMD", object())
+    monkeypatch.setattr(pulp_solver.shutil, "which", lambda name: None)
+
+    with pytest.raises(PulpDcopSolverError, match="HiGHS solver not found"):
+        pulp_solver._build_solver("highs")
+
+
 def test_pulp_solver_rejects_threads_for_glpk():
     with pytest.raises(PulpDcopSolverError, match="GLPK"):
         pulp_solver._build_solver("glpk", threads=2)

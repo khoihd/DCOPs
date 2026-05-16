@@ -29,10 +29,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import shutil
 import sys
 from subprocess import STDOUT, check_output
 
 import pytest
+from pulp import listSolvers
 
 from tests.dcop_cli.utils import instance_path
 
@@ -110,3 +112,37 @@ def test_solve_pulp_accepts_threads_parameter():
     assert result["solver_backend"] == "cbc"
     assert result["solver_threads"] == 4
     assert result["solver_solution_status"] == "Optimal Solution Found"
+
+
+@pytest.mark.skipif(
+    shutil.which("highs") is None or "HiGHS_CMD" not in listSolvers(),
+    reason="HiGHS command solver is not available",
+)
+def test_solve_pulp_accepts_highs_backend():
+    output = check_output(
+        [
+            sys.executable,
+            "-m",
+            "pydcop.dcop_cli",
+            "-v",
+            "0",
+            "solve",
+            "-a",
+            "pulp",
+            "-p",
+            "solver:highs",
+            "-p",
+            "threads:2",
+            instance_path("graph_coloring1.yaml"),
+        ],
+        stderr=STDOUT,
+        timeout=10,
+    )
+
+    result = json.loads(output.decode(encoding="utf-8"))
+    assert result["status"] == "FINISHED"
+    assert result["solver"] == "pulp"
+    assert result["solver_backend"] == "highs"
+    assert result["solver_threads"] == 2
+    assert result["solver_solution_status"] == "Optimal Solution Found"
+    assert result["assignment"] == {"v1": "R", "v2": "G", "v3": "R"}

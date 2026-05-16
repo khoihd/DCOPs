@@ -48,9 +48,14 @@ try:
 except ImportError:
     PULP_CBC_CMD = None
 
+try:
+    from pulp import HiGHS_CMD
+except ImportError:
+    HiGHS_CMD = None
+
 
 DEFAULT_PULP_SOLVER = "cbc"
-SUPPORTED_PULP_SOLVERS = ("cbc", "glpk")
+SUPPORTED_PULP_SOLVERS = ("cbc", "glpk", "highs")
 
 
 @dataclass(frozen=True)
@@ -218,6 +223,25 @@ def _build_solver(
 
     if threads is None:
         threads = os.cpu_count() or 1
+
+    if solver_name == "highs":
+        if HiGHS_CMD is None:
+            raise PulpDcopSolverError(
+                "This PuLP version does not provide a HiGHS command solver"
+            )
+        highs_path = shutil.which("highs")
+        if highs_path is None:
+            raise PulpDcopSolverError("HiGHS solver not found on PATH")
+        return (
+            HiGHS_CMD(
+                path=highs_path,
+                msg=False,
+                timeLimit=timeout,
+                threads=threads,
+            ),
+            solver_name,
+            threads,
+        )
 
     cbc_path = shutil.which("cbc")
     if cbc_path is not None:
