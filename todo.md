@@ -11,9 +11,11 @@
   - NCBB
   - SyncBB
 
-- (DONE) Fix TODO and FIX
+- (DONE) Fix TODO and FIXME
 
-- Add multi-threading support for all algorithms:
+- Add multi-threading support for exact algorithms
+  - (DONE) Pulp: highs
+  - (WIP) DPOP
 
 - Require a parameter for termination mechanism to all iterative algorithms
 
@@ -26,6 +28,3 @@
 - Optimize commonly used files with overheads
 
 - Optimize instance generator
-
-- Investigate optional multicore PuLP solving with a CBC backend and a
-  `threads` parameter; current `GLPK_CMD` path is effectively single-core.
