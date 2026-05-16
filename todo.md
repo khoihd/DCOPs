@@ -15,7 +15,6 @@
 
 - Add multi-threading support for exact algorithms
   - (DONE) Pulp: highs
-  - (WIP) DPOP
 
 - Require a parameter for termination mechanism to all iterative algorithms
 
@@ -28,3 +27,14 @@
 - Optimize commonly used files with overheads
 
 - Optimize instance generator
+
+- Guide:
+    python -m pydcop.dcop_cli -v 3 solve -a dpop random20.yaml
+    python -m pydcop.dcop_cli -v 3 solve -a pulp random20.yaml
+    python -m pydcop.dcop_cli -v 3 solve -a dsa random20.yaml -p stop_cycle:30 -c cycle_change --run_metrics dsa_max_random20.csv
+    python -m pydcop.dcop_cli generate random_graph --variables_count 20 --domain_size 10 --p_edge 0.4 --objective max > random20.yaml
+
+    pip install -e .
+    python -m pydcop.dcop_cli
+    pytest
+    ruff check .
