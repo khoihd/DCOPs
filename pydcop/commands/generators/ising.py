@@ -117,7 +117,7 @@ Options
   Do not generate agents.
 
 ``--capacity <capacity>``
-  Capacity for generated agents. Optional, defaults to 99.
+  Capacity for generated agents. Optional, defaults to 999.
 
 ``--fg_dist``
   When using this flag, the agents and distribution are generated for factor-graph
@@ -166,7 +166,7 @@ from pydcop.dcop.yamldcop import dcop_yaml
 
 logger = logging.getLogger("pydcop.cli.generate")
 
-DEFAULT_AGENT_CAPACITY = 99
+DEFAULT_AGENT_CAPACITY = 999
 
 
 def init_cli_parser(parent_parser):

@@ -31,7 +31,7 @@ def test_grid_hard():
     dcop = run_generate("grid", 9, 3, soft=False)
     assert len(dcop.variables) == 9
     assert len(dcop.constraints) == 12
-    assert dcop.agents["a00"].capacity == 99
+    assert dcop.agents["a00"].capacity == 999
 
 
 def test_capacity_can_be_overridden():

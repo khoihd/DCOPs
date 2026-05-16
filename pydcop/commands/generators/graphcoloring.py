@@ -117,7 +117,7 @@ Options
   otherwise one agent is created for each variable.
 
 ``--capacity <capacity>``
-  Capacity for generated agents. Optional, defaults to 99.
+  Capacity for generated agents. Optional, defaults to 999.
 
 ``--objective <objective>``
   Optimization objective for the generated DCOP, ``min`` or ``max``.
@@ -169,7 +169,7 @@ logger = logging.getLogger("pydcop.cli.generate")
 
 COLORS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 HARD_CONSTRAINT_VALUE = 999999
-DEFAULT_AGENT_CAPACITY = 99
+DEFAULT_AGENT_CAPACITY = 999
 
 
 def init_cli_parser(parent_parser):

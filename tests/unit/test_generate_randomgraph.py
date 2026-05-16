@@ -27,7 +27,7 @@ def test_random_graph_constraints_use_costs_in_range():
     assert dcop.objective == "min"
     assert len(dcop.variables) == 5
     assert len(dcop.agents) == 5
-    assert dcop.agents["a00"].capacity == 99
+    assert dcop.agents["a00"].capacity == 999
     for constraint in dcop.constraints.values():
         variable1, variable2 = constraint.dimensions
         for value1 in variable1.domain:

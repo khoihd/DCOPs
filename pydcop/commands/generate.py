@@ -56,7 +56,7 @@ it currently generates problems for the following types:
    generate/secp
 
 When a generator creates agents and exposes a ``--capacity`` option, generated
-agents use a default capacity of 99 unless another value is provided.
+agents use a default capacity of 999 unless another value is provided.
 
 
 Planned
@@ -106,7 +106,7 @@ from pydcop.dcop.yamldcop import dcop_yaml
 
 logger = logging.getLogger("pydcop.cli.generate")
 
-DEFAULT_AGENT_CAPACITY = 99
+DEFAULT_AGENT_CAPACITY = 999
 
 
 def set_parser(main_subparsers):

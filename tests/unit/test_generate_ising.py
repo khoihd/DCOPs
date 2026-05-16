@@ -134,7 +134,7 @@ def test_ising_defaults_agent_capacity():
         3, 3, 1.6, 0.05, True, False, True, True, random_generator=Random(12)
     )
 
-    assert dcop.agents["a_0_0"].capacity == 99
+    assert dcop.agents["a_0_0"].capacity == 999
 
 
 def test_ising_capacity_can_be_overridden():

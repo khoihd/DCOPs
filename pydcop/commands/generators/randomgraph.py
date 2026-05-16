@@ -83,7 +83,7 @@ Options
   Do not generate one agent per variable.
 
 ``--capacity <capacity>``
-  Capacity for generated agents. Optional, defaults to 99.
+  Capacity for generated agents. Optional, defaults to 999.
 
 Examples
 --------
@@ -108,7 +108,7 @@ from pydcop.dcop.yamldcop import dcop_yaml
 logger = logging.getLogger("pydcop.cli.generate")
 
 MAX_CONNECTED_GRAPH_ATTEMPTS = 1000
-DEFAULT_AGENT_CAPACITY = 99
+DEFAULT_AGENT_CAPACITY = 999
 
 
 def init_cli_parser(parent_parser):

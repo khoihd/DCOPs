@@ -72,7 +72,7 @@ Options
   Number of rules in the SECP.
 
 ``--capacity <capacity>``
-  Capacity of an agent. Optional, defaults to 99.
+  Capacity of an agent. Optional, defaults to 999.
 
 ``--max_model_size <max_model_size>``
   The maximum number of lights involved in a model.
@@ -106,7 +106,7 @@ from pydcop.dcop.yamldcop import dcop_yaml
 
 logger = logging.getLogger("pydcop.generate")
 
-DEFAULT_AGENT_CAPACITY = 99
+DEFAULT_AGENT_CAPACITY = 999
 
 
 def init_cli_parser(subparser):

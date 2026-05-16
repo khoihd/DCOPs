@@ -12,7 +12,7 @@ def test_generate_random_graph():
     assert dcop.objective == "min"
     assert len(dcop.variables) == 6
     assert len(dcop.agents) == 6
-    assert dcop.agents["a00"].capacity == 99
+    assert dcop.agents["a00"].capacity == 999
 
 
 def test_capacity_can_be_overridden():

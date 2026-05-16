@@ -119,7 +119,7 @@ Options
   Default hosting cost for generated agents. Optional.
 
 ``--capacity <capacity>``
-  Capacity for generated agents. Optional, defaults to 99.
+  Capacity for generated agents. Optional, defaults to 999.
 
 
 Examples
@@ -154,7 +154,7 @@ from pydcop.distribution.objects import Distribution
 from pydcop.utils.expressionfunction import ExpressionFunction
 
 
-DEFAULT_AGENT_CAPACITY = 99
+DEFAULT_AGENT_CAPACITY = 999
 
 
 def init_cli_parser(parent_parser):
