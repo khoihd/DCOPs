@@ -22,7 +22,15 @@ def test_mixed_problem_extensive_flag_generates_extensional_constraints():
     assert len(dcop.constraints) == 2
 
 
-def run_generate_output(extensive=False):
+def test_mixed_problem_capacity_is_written_on_agents():
+    output = run_generate_output(capacity=25)
+
+    dcop = load_dcop(output)
+    assert dcop.agents["a1"].capacity == 25
+    assert dcop.agents["a2"].capacity == 25
+
+
+def run_generate_output(extensive=False, capacity=None):
     cmd = (
         f"{pydcop_cmd()} generate mixed_problem "
         "-v 2 "
@@ -34,5 +42,7 @@ def run_generate_output(extensive=False):
     )
     if extensive:
         cmd += " --extensive"
+    if capacity is not None:
+        cmd += f" --capacity {capacity}"
 
     return check_output(cmd, stderr=STDOUT, timeout=10, shell=True)

@@ -459,6 +459,9 @@ def generate_mixed_problem(args):
     agents = {}
     constraints = {}
 
+    def build_agent(name):
+        return AgentDef(name, capacity=capacity)
+
     if arity == 1:
         if constraint_count != variable_count:
             raise ValueError(
@@ -502,12 +505,12 @@ def generate_mixed_problem(args):
 
             if auto_agents:
                 a_name = "a" + str(n)
-                agents[a_name] = AgentDef(a_name, capacity)
+                agents[a_name] = build_agent(a_name)
 
         if not auto_agents:
             for i in range(agents_count):
                 a_name = "a" + str(i)
-                agents[a_name] = AgentDef(a_name, capacity)
+                agents[a_name] = build_agent(a_name)
 
     elif arity == 2:
         edges_count = int(variable_count * (variable_count - 1) * density / 2)
@@ -539,12 +542,12 @@ def generate_mixed_problem(args):
             variables[name] = Variable(name, d)
             if auto_agents:
                 a_name = "a" + str(i)
-                agents[a_name] = AgentDef(a_name, capacity)
+                agents[a_name] = build_agent(a_name)
 
         if not auto_agents:
             for i in range(agents_count):
                 a_name = "a" + str(i)
-                agents[a_name] = AgentDef(a_name, capacity)
+                agents[a_name] = build_agent(a_name)
 
         constraints = {}
         for i, edge in enumerate(graph.edges):
@@ -626,12 +629,12 @@ def generate_mixed_problem(args):
             variables[name] = Variable(name, d)
             if auto_agents:
                 a_name = "a" + str(i)
-                agents[a_name] = AgentDef(a_name, capacity)
+                agents[a_name] = build_agent(a_name)
 
         if not auto_agents:
             for i in range(agents_count):
                 a_name = "a" + str(i)
-                agents[a_name] = AgentDef(a_name, capacity)
+                agents[a_name] = build_agent(a_name)
 
         constraints = {}
         for c, neighbors in edges.items():
