@@ -109,10 +109,10 @@
   - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`
   - `mgm_max_metrics.csv`, `mgm_min_metrics.csv`
   - `mgm2_max_metrics.csv`, `mgm2_min_metrics.csv`
-  - `maxsum_max_metrics.csv`
-  - `random.yaml`
+  - `maxsum_max_metrics.csv`, `maxsum_max_random20.csv`
+  - `random.yaml`, `random20.yaml`, `random20_optimal.txt`
 
-## PuLP/CBC
+## PuLP/HiGHS/CBC
 
 - `pydcop solve -a pulp <dcop_file>` uses the centralized exact PuLP solver in
   `pydcop/solvers/pulp_solver.py`.
@@ -121,9 +121,21 @@
 - The solver creates one binary choice variable per DCOP variable value and
   one binary tuple variable per relation assignment, then optimizes relation
   values plus variable costs for `objective: min|max`.
-- PuLP solve now defaults to CBC and accepts:
-  - `-p solver:cbc|glpk`
+- PuLP solve now defaults to HiGHS and accepts:
+  - `-p solver:highs|cbc|glpk`
   - `-p threads:N`
+- Recent PuLP solver commits:
+  - `d1f8d67` adds a HiGHS command backend via PuLP's `HiGHS_CMD`.
+  - `adeffdc` documents PuLP HiGHS threading defaults.
+  - `babf2ba` switches the default PuLP backend from CBC to HiGHS.
+- Default backend behavior after `babf2ba`:
+  - plain `pydcop solve -a pulp ...` uses `solver_backend: highs`
+  - default thread count is `os.cpu_count() or 1`
+  - on the current M1 laptop this reports `solver_threads: 8`
+  - because PuLP's `HiGHS_CMD` receives a concrete thread count, it also
+    enables HiGHS `parallel=on`; HiGHS would keep `parallel=choose` only if no
+    thread count were passed to the wrapper
+  - `msg` remains `False`, so solver logs do not corrupt JSON stdout
 - PuLP metrics include `solver_backend`, `solver_threads`,
   `solver_status`, and `solver_solution_status`.
 - CBC via PuLP can report coarse `solver_status: Optimal` even when the
@@ -139,14 +151,18 @@
   `COIN_CMD(path=...)`, falling back to PuLP's bundled `PULP_CBC_CMD` when no
   PATH CBC exists.
 - On the current M1 laptop:
+  - `/opt/homebrew/bin/highs` is installed and available on `PATH`
   - `/Users/khoihd/miniconda3/bin/cbc` is ARM64 but does not recognize
     `-threads`
   - `/opt/homebrew/bin/cbc` is ARM64 and recognizes `-threads`
-  - Prefer Homebrew CBC first in `PATH` for threaded CBC runs.
+  - Homebrew CBC is currently the `cbc` found first on `PATH`.
 - Relevant checks used recently:
   - `pytest tests/unit/test_solvers_pulp.py tests/dcop_cli/test_solve_pulp.py`
   - `ruff check pydcop/solvers/pulp_solver.py pydcop/commands/solve.py tests/unit/test_solvers_pulp.py tests/dcop_cli/test_solve_pulp.py`
   - `python -m pydcop.dcop_cli solve -a pulp -p threads:2 tests/instances/graph_coloring1.yaml`
+  - `python -m pydcop.dcop_cli -v 0 solve -a pulp tests/instances/graph_coloring1.yaml`
+  - `python -m pydcop.dcop_cli -v 0 solve -a pulp -p solver:highs tests/instances/graph_coloring1.yaml`
+  - `python -m pydcop.dcop_cli -v 0 solve -a pulp -p solver:cbc tests/instances/graph_coloring1.yaml`
 
 ## MaxSum
 
