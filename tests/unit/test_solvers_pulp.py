@@ -103,6 +103,10 @@ def test_pulp_solver_marks_unproven_incumbent_as_feasible(monkeypatch):
     assert result.assignment
 
 
+def test_pulp_solver_defaults_to_highs():
+    assert pulp_solver.DEFAULT_PULP_SOLVER == "highs"
+
+
 def test_pulp_solver_prefers_cbc_from_path(monkeypatch):
     captured = {}
 

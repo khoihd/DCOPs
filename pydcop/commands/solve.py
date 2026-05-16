@@ -133,15 +133,15 @@ Options
   This option may be used multiple times to set several parameters.
   Available parameters depend on the algorithm,
   check :ref:`algorithms documentation<implementation_reference_algorithms>`.
-  With ``--algo pulp``, supported parameters are ``solver:cbc``,
-  ``solver:glpk``, ``solver:highs``, and ``threads:<count>``. CBC is used by
+  With ``--algo pulp``, supported parameters are ``solver:highs``,
+  ``solver:cbc``, ``solver:glpk``, and ``threads:<count>``. HiGHS is used by
   default with an explicit thread count set to one thread per available CPU
-  core, preferring a ``cbc`` executable found on ``PATH`` before falling back
-  to PuLP's bundled CBC solver. HiGHS uses the same default thread count; with
-  PuLP's HiGHS command wrapper, setting a thread count also enables HiGHS
-  ``parallel=on`` mode. If no thread count were passed to HiGHS, HiGHS would
-  keep its own ``parallel=choose`` default, but this command supplies the
-  CPU-count default unless ``threads:<count>`` overrides it.
+  core. With PuLP's HiGHS command wrapper, setting a thread count also enables
+  HiGHS ``parallel=on`` mode. If no thread count were passed to HiGHS, HiGHS
+  would keep its own ``parallel=choose`` default, but this command supplies the
+  CPU-count default unless ``threads:<count>`` overrides it. CBC still prefers
+  a ``cbc`` executable found on ``PATH`` before falling back to PuLP's bundled
+  CBC solver.
 
 ``--distribution <distribution>`` / ``-d <distribution>``
   Either a :ref:`distribution algorithm<implementation_reference_distributions>`
@@ -637,7 +637,7 @@ def _pulp_metrics(dcop, result, elapsed):
 
 
 def _parse_pulp_params(cli_params):
-    solver_name = "cbc"
+    solver_name = "highs"
     threads = None
     for raw_param in cli_params or []:
         try:

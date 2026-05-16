@@ -59,6 +59,7 @@ def test_solve_accepts_pulp_as_algorithm():
     result = json.loads(output.decode(encoding="utf-8"))
     assert result["status"] == "FINISHED"
     assert result["solver"] == "pulp"
+    assert result["solver_backend"] == "highs"
     assert result["solver_solution_status"] == "Optimal Solution Found"
     assert result["assignment"] == {"v1": "R", "v2": "G", "v3": "R"}
     assert result["cost"] == pytest.approx(-0.1)
@@ -84,6 +85,7 @@ def test_solve_pulp_handles_random_graph_instance():
     result = json.loads(output.decode(encoding="utf-8"))
     assert result["status"] == "FINISHED"
     assert result["solver"] == "pulp"
+    assert result["solver_backend"] == "highs"
     assert result["cost"] == pytest.approx(35)
 
 
@@ -109,7 +111,7 @@ def test_solve_pulp_accepts_threads_parameter():
     result = json.loads(output.decode(encoding="utf-8"))
     assert result["status"] == "FINISHED"
     assert result["solver"] == "pulp"
-    assert result["solver_backend"] == "cbc"
+    assert result["solver_backend"] == "highs"
     assert result["solver_threads"] == 4
     assert result["solver_solution_status"] == "Optimal Solution Found"
 

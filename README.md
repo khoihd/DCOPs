@@ -30,10 +30,10 @@ python -m pydcop.dcop_cli solve -a pulp instance.yaml
 
 The `pulp` solver builds a centralized LP/ILP model and does not use the
 distributed computation graph, distribution method, agents, or message runtime.
-It uses CBC by default and also supports GLPK and HiGHS:
+It uses HiGHS by default and also supports CBC and GLPK:
 
 ```bash
-python -m pydcop.dcop_cli solve -a pulp -p solver:highs instance.yaml
+python -m pydcop.dcop_cli solve -a pulp instance.yaml
 python -m pydcop.dcop_cli solve -a pulp -p solver:cbc -p threads:4 instance.yaml
 ```
 

@@ -54,7 +54,7 @@ except ImportError:
     HiGHS_CMD = None
 
 
-DEFAULT_PULP_SOLVER = "cbc"
+DEFAULT_PULP_SOLVER = "highs"
 SUPPORTED_PULP_SOLVERS = ("cbc", "glpk", "highs")
 
 
