@@ -106,9 +106,10 @@
   - `ruff check pydcop/infrastructure/communication.py`
 - Generated scratch files are currently untracked and intentionally not
   committed:
-  - `dsa_max_metrics.csv`, `dsa_min_metrics.csv`
-  - `mgm_max_metrics.csv`, `mgm_min_metrics.csv`
-  - `mgm2_max_metrics.csv`, `mgm2_min_metrics.csv`
+  - `dpop_max_random20.csv`
+  - `dsa_max_metrics.csv`, `dsa_max_random20.csv`, `dsa_min_metrics.csv`
+  - `mgm_max_metrics.csv`, `mgm_max_random20.csv`, `mgm_min_metrics.csv`
+  - `mgm2_max_metrics.csv`, `mgm2_max_random20.csv`, `mgm2_min_metrics.csv`
   - `maxsum_max_metrics.csv`, `maxsum_max_random20.csv`
   - `random.yaml`, `random20.yaml`, `random20_optimal.txt`
 
@@ -317,6 +318,23 @@
 - A deterministic random-graph fixture lives at
   `tests/instances/random_graph_6_3_0.7.yaml`; it has 6 variables, 14
   constraints, 6 agents, and PuLP optimum cost `35`.
+- Recent generator capacity work is committed:
+  - `530c9b9` fixes legacy `mixed_problem` so `--capacity` is passed as
+    `AgentDef(..., capacity=...)` instead of positionally as `default_route`.
+  - `ef1ce77`, `69df70a`, and `9e0b4fa` add/document generated-agent capacity
+    defaults and then set that default to `999`.
+  - `meetings`, `secp`, `graph_coloring`, `random_graph`, `ising`, and
+    `mixed_problem` now default generated agents to capacity `999` when their
+    generator creates agents and exposes `--capacity`; explicit
+    `--capacity N` still overrides it.
+  - `graph_coloring`, `random_graph`, and `ising` gained optional
+    `--capacity`; `iot` still computes capacity from footprint and
+    `small_world` still uses hardcoded small/average/big capacities.
+  - Relevant checks:
+    `pytest tests/unit/test_generate_meetingscheduling.py tests/unit/test_generate_secp.py tests/dcop_cli/test_generate_graphcoloring.py tests/dcop_cli/test_generate_randomgraph.py tests/unit/test_generate_randomgraph.py tests/unit/test_generate_ising.py tests/dcop_cli/test_generate_mixed_problem.py`;
+    focused `ruff check` on touched generator/test files; and
+    `SPHINXOPTS="-D autosummary_generate=0" make html` succeeded with only
+    existing duplicate-toctree consistency warnings.
 - `docs/conf.py` uses `bibtex_bibfiles = ["biblio.bib"]`, `language = "en"`,
   and no longer points at a missing `_static` directory.
 - `Makefile` supports `SPHINXOPTS` and `make html` as an alias for `make doc`.
