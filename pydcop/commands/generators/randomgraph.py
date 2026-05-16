@@ -49,6 +49,7 @@ Synopsis
                 --objective <objective>
                 [--seed <seed>]
                 [--no_agents]
+                [--capacity <capacity>]
 
 Description
 -----------
@@ -80,6 +81,9 @@ Options
 
 ``--no_agents``
   Do not generate one agent per variable.
+
+``--capacity <capacity>``
+  Capacity for generated agents. Optional, defaults to 99.
 
 Examples
 --------
@@ -154,7 +158,7 @@ def init_cli_parser(parent_parser):
         type=int,
         required=False,
         default=DEFAULT_AGENT_CAPACITY,
-        help="Capacity of agents",
+        help=f"Capacity of agents (default: {DEFAULT_AGENT_CAPACITY})",
     )
 
 

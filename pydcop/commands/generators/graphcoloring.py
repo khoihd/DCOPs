@@ -51,6 +51,7 @@ Synopsis
                 [--soft]
                 [--intentional]
                 [--noagents]
+                [--capacity <capacity>]
                 --objective <objective>
                 [--seed <seed>]
                 [--p_edge <p_edge>]
@@ -114,6 +115,9 @@ Options
 ``--noagents``
   If this flag is set, no agent definition is generated in the dcop file,
   otherwise one agent is created for each variable.
+
+``--capacity <capacity>``
+  Capacity for generated agents. Optional, defaults to 99.
 
 ``--objective <objective>``
   Optimization objective for the generated DCOP, ``min`` or ``max``.
@@ -232,7 +236,7 @@ def init_cli_parser(parent_parser):
         type=int,
         required=False,
         default=DEFAULT_AGENT_CAPACITY,
-        help="Capacity of agents",
+        help=f"Capacity of agents (default: {DEFAULT_AGENT_CAPACITY})",
     )
 
     parser.add_argument(

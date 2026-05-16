@@ -55,6 +55,9 @@ it currently generates problems for the following types:
    generate/iot
    generate/secp
 
+When a generator creates agents and exposes a ``--capacity`` option, generated
+agents use a default capacity of 99 unless another value is provided.
+
 
 Planned
 -------
@@ -230,7 +233,7 @@ def parser_mixed_problem(subparsers):
         type=int,
         required=False,
         default=DEFAULT_AGENT_CAPACITY,
-        help="Capacity of the agents.",
+        help=f"Capacity of the agents (default: {DEFAULT_AGENT_CAPACITY}).",
     )
     parser.add_argument(
         "-e",

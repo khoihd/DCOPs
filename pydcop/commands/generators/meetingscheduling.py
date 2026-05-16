@@ -119,7 +119,7 @@ Options
   Default hosting cost for generated agents. Optional.
 
 ``--capacity <capacity>``
-  Capacity for generated agents. Optional.
+  Capacity for generated agents. Optional, defaults to 99.
 
 
 Examples
@@ -228,7 +228,7 @@ def init_cli_parser(parent_parser):
         type=int,
         required=False,
         default=DEFAULT_AGENT_CAPACITY,
-        help="Capacity of agents",
+        help=f"Capacity of agents (default: {DEFAULT_AGENT_CAPACITY})",
     )
 
     parser.add_argument(

@@ -72,7 +72,7 @@ Options
   Number of rules in the SECP.
 
 ``--capacity <capacity>``
-  Capacity of an agent. Optional.
+  Capacity of an agent. Optional, defaults to 99.
 
 ``--max_model_size <max_model_size>``
   The maximum number of lights involved in a model.
@@ -126,7 +126,7 @@ def init_cli_parser(subparser):
         "--capacity",
         type=int,
         default=DEFAULT_AGENT_CAPACITY,
-        help="agent's capacity",
+        help=f"agent's capacity (default: {DEFAULT_AGENT_CAPACITY})",
     )
     parser.add_argument(
         "--max_model_size", type=int, default=3, help="maximum number of lights involved in a model"
