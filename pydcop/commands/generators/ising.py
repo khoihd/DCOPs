@@ -162,6 +162,8 @@ from pydcop.dcop.yamldcop import dcop_yaml
 
 logger = logging.getLogger("pydcop.cli.generate")
 
+DEFAULT_AGENT_CAPACITY = 99
+
 
 def init_cli_parser(parent_parser):
     parser = parent_parser.add_parser(
@@ -202,6 +204,13 @@ def init_cli_parser(parent_parser):
         action="store_true",
         help="generate the problem without any agents. You can use the 'pydcop generate " \
              "agents' to generate them with their hosting and route costs"
+    )
+    parser.add_argument(
+        "--capacity",
+        type=int,
+        required=False,
+        default=DEFAULT_AGENT_CAPACITY,
+        help="Capacity of agents",
     )
 
     parser.add_argument(
@@ -246,6 +255,7 @@ def generate(args):
         no_agents=args.no_agents,
         fg_dist=args.fg_dist,
         var_dist=args.var_dist,
+        capacity=args.capacity,
         random_generator=random_generator,
     )
 
@@ -315,6 +325,7 @@ def generate_ising(
     fg_dist: bool,
     var_dist: bool,
     random_generator=None,
+    capacity: int = DEFAULT_AGENT_CAPACITY,
 ) -> tuple[DCOP, dict, dict]:
     if random_generator is None:
         random_generator = random
@@ -338,7 +349,7 @@ def generate_ising(
     fg_mapping = defaultdict(lambda: [])
     var_mapping = defaultdict(lambda: [])
     for (row, col) in grid_graph.nodes:
-        agent = AgentDef(f"a_{row}_{col}")
+        agent = AgentDef(f"a_{row}_{col}", capacity=capacity)
         agents[agent.name] = agent
         left = (row - 1) % row_count
         down = (col + 1) % col_count

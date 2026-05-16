@@ -106,6 +106,8 @@ from pydcop.dcop.yamldcop import dcop_yaml
 
 logger = logging.getLogger("pydcop.generate")
 
+DEFAULT_AGENT_CAPACITY = 99
+
 
 def init_cli_parser(subparser):
     parser = subparser.add_parser("secp", help="generate an secp")
@@ -120,7 +122,11 @@ def init_cli_parser(subparser):
         "-r", "--rules", type=int, required=True, help="number of rules"
     )
     parser.add_argument(
-        "-c", "--capacity", type=int, default=None, help="agent's capacity"
+        "-c",
+        "--capacity",
+        type=int,
+        default=DEFAULT_AGENT_CAPACITY,
+        help="agent's capacity",
     )
     parser.add_argument(
         "--max_model_size", type=int, default=3, help="maximum number of lights involved in a model"
@@ -187,12 +193,12 @@ def generate_secp(args):
         print(dcop_yaml(dcop))
 
 
-def build_agents(lights_vars, lights_costs, capacity=None):
+def build_agents(lights_vars, lights_costs, capacity=DEFAULT_AGENT_CAPACITY):
     agents = {}
     for light_var, light_cost in zip(lights_vars, lights_costs):
         hosting_costs = {light_var: 0, light_cost: 0}
         logger.debug(f"Creating agent for {light_var} with hosting {hosting_costs}")
-        if capacity:
+        if capacity is not None:
             agt = AgentDef(
                 f"a{light_var}",
                 hosting_costs=hosting_costs,

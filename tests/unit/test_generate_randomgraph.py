@@ -27,6 +27,7 @@ def test_random_graph_constraints_use_costs_in_range():
     assert dcop.objective == "min"
     assert len(dcop.variables) == 5
     assert len(dcop.agents) == 5
+    assert dcop.agents["a00"].capacity == 99
     for constraint in dcop.constraints.values():
         variable1, variable2 = constraint.dimensions
         for value1 in variable1.domain:
@@ -42,6 +43,14 @@ def test_random_graph_can_skip_agents():
 
     assert dcop.objective == "max"
     assert dcop.agents == {}
+
+
+def test_random_graph_capacity_can_be_overridden():
+    dcop = generate_random_graph_dcop(
+        5, 3, 0.8, "min", random_generator=Random(12), capacity=42
+    )
+
+    assert dcop.agents["a00"].capacity == 42
 
 
 def test_seed_makes_random_graph_generation_reproducible():

@@ -31,6 +31,13 @@ def test_grid_hard():
     dcop = run_generate("grid", 9, 3, soft=False)
     assert len(dcop.variables) == 9
     assert len(dcop.constraints) == 12
+    assert dcop.agents["a00"].capacity == 99
+
+
+def test_capacity_can_be_overridden():
+    dcop = run_generate("grid", 9, 3, soft=False, capacity=42)
+
+    assert dcop.agents["a00"].capacity == 42
 
 
 def test_grid_hard_max_objective():
@@ -81,6 +88,7 @@ def run_generate(
     m_edge=None,
     objective="min",
     seed=None,
+    capacity=None,
 ):
     output = run_generate_output(
         graph,
@@ -92,6 +100,7 @@ def run_generate(
         m_edge,
         objective,
         seed,
+        capacity,
     )
     dcop = load_dcop(output)
     return dcop
@@ -107,6 +116,7 @@ def run_generate_output(
     m_edge=None,
     objective="min",
     seed=None,
+    capacity=None,
 ):
     cmd = f"{pydcop_cmd()} generate graph_coloring --graph {graph} " \
           f" --variables_count {variables_count} " \
@@ -123,5 +133,7 @@ def run_generate_output(
         cmd += f" --objective {objective}"
     if seed is not None:
         cmd += f" --seed {seed}"
+    if capacity is not None:
+        cmd += f" --capacity {capacity}"
     output = check_output(cmd, stderr=STDOUT, timeout=10, shell=True)
     return output

@@ -30,6 +30,14 @@ def test_mixed_problem_capacity_is_written_on_agents():
     assert dcop.agents["a2"].capacity == 25
 
 
+def test_mixed_problem_defaults_capacity_on_agents():
+    output = run_generate_output()
+
+    dcop = load_dcop(output)
+    assert dcop.agents["a1"].capacity == 99
+    assert dcop.agents["a2"].capacity == 99
+
+
 def run_generate_output(extensive=False, capacity=None):
     cmd = (
         f"{pydcop_cmd()} generate mixed_problem "

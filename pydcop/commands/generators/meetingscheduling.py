@@ -154,6 +154,9 @@ from pydcop.distribution.objects import Distribution
 from pydcop.utils.expressionfunction import ExpressionFunction
 
 
+DEFAULT_AGENT_CAPACITY = 99
+
+
 def init_cli_parser(parent_parser):
     parser = parent_parser.add_parser(
         "meetings", help="Generate a meeting scheduling benchmark problem"
@@ -221,7 +224,11 @@ def init_cli_parser(parent_parser):
     )
 
     parser.add_argument(
-        "--capacity", type=int, required=False, help="Capacity of agents"
+        "--capacity",
+        type=int,
+        required=False,
+        default=DEFAULT_AGENT_CAPACITY,
+        help="Capacity of agents",
     )
 
     parser.add_argument(
@@ -272,7 +279,7 @@ def generate(args):
             kw["hosting_costs"] = {v.name: 0 for v in agt_variables}
             if args.hosting_default:
                 kw["default_hosting_cost"] = args.hosting_default
-            if args.capacity:
+            if args.capacity is not None:
                 kw["capacity"] = args.capacity
             if args.routes_default:
                 kw["default_route"] = args.routes_default

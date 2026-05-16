@@ -104,6 +104,7 @@ from pydcop.dcop.yamldcop import dcop_yaml
 logger = logging.getLogger("pydcop.cli.generate")
 
 MAX_CONNECTED_GRAPH_ATTEMPTS = 1000
+DEFAULT_AGENT_CAPACITY = 99
 
 
 def init_cli_parser(parent_parser):
@@ -148,6 +149,13 @@ def init_cli_parser(parent_parser):
         action="store_true",
         help="Do not generate agents",
     )
+    parser.add_argument(
+        "--capacity",
+        type=int,
+        required=False,
+        default=DEFAULT_AGENT_CAPACITY,
+        help="Capacity of agents",
+    )
 
 
 def generate(args):
@@ -158,6 +166,7 @@ def generate(args):
         args.p_edge,
         args.objective,
         no_agents=args.no_agents,
+        capacity=args.capacity,
         random_generator=random_generator,
     )
 
@@ -176,6 +185,7 @@ def generate_random_graph_dcop(
     objective,
     no_agents=False,
     random_generator=None,
+    capacity=DEFAULT_AGENT_CAPACITY,
 ):
     if random_generator is None:
         random_generator = random
@@ -205,7 +215,7 @@ def generate_random_graph_dcop(
     agents = {}
     if not no_agents:
         for node in sorted(graph.nodes):
-            agent = AgentDef(f"a{node:02d}")
+            agent = AgentDef(f"a{node:02d}", capacity=capacity)
             agents[agent.name] = agent
 
     constraints = generate_random_constraints(graph, variables, random_generator)

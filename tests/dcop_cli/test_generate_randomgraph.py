@@ -12,6 +12,14 @@ def test_generate_random_graph():
     assert dcop.objective == "min"
     assert len(dcop.variables) == 6
     assert len(dcop.agents) == 6
+    assert dcop.agents["a00"].capacity == 99
+
+
+def test_capacity_can_be_overridden():
+    output = run_generate_output(seed=12, capacity=42)
+    dcop = load_dcop(output)
+
+    assert dcop.agents["a00"].capacity == 42
 
 
 def test_seed_makes_random_graph_output_reproducible():
@@ -28,7 +36,7 @@ def test_no_agents_skips_agents():
     assert dcop.agents == {}
 
 
-def run_generate_output(seed=None, no_agents=False):
+def run_generate_output(seed=None, no_agents=False, capacity=None):
     cmd = (
         f"{pydcop_cmd()} generate random_graph "
         "--variables_count 6 "
@@ -40,5 +48,7 @@ def run_generate_output(seed=None, no_agents=False):
         cmd += f" --seed {seed}"
     if no_agents:
         cmd += " --no_agents"
+    if capacity is not None:
+        cmd += f" --capacity {capacity}"
 
     return check_output(cmd, stderr=STDOUT, timeout=10, shell=True)

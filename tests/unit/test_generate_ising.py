@@ -129,6 +129,31 @@ def test_seed_makes_ising_generation_reproducible():
     assert fg_mapping1 == fg_mapping2
 
 
+def test_ising_defaults_agent_capacity():
+    dcop, _, _ = generate_ising(
+        3, 3, 1.6, 0.05, True, False, True, True, random_generator=Random(12)
+    )
+
+    assert dcop.agents["a_0_0"].capacity == 99
+
+
+def test_ising_capacity_can_be_overridden():
+    dcop, _, _ = generate_ising(
+        3,
+        3,
+        1.6,
+        0.05,
+        True,
+        False,
+        True,
+        True,
+        random_generator=Random(12),
+        capacity=42,
+    )
+
+    assert dcop.agents["a_0_0"].capacity == 42
+
+
 def test_distribution_results_use_the_requested_mapping_and_graph():
     fg_mapping = {"a_0_0": ["v_0_0", "cu_v_0_0", "cb_v_0_0_v_0_1"]}
     var_mapping = {"a_0_0": ["v_0_0"]}

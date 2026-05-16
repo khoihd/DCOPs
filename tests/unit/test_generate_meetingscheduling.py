@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import yaml
 
 from pydcop.commands.generators.meetingscheduling import (
+    DEFAULT_AGENT_CAPACITY,
     Event,
     Resource,
     eav_model,
@@ -142,6 +143,28 @@ def test_cli_parser_accepts_model():
     assert args.model == "tsav"
 
 
+def test_cli_parser_defaults_capacity():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    init_cli_parser(subparsers)
+
+    args = parser.parse_args(
+        [
+            "meetings",
+            "--slots_count",
+            "3",
+            "--events_count",
+            "2",
+            "--resources_count",
+            "2",
+            "--max_resources_event",
+            "2",
+        ]
+    )
+
+    assert args.capacity == DEFAULT_AGENT_CAPACITY
+
+
 def test_generate_stdout_serializes_dcop_and_distribution_as_yaml_documents(capsys):
     args = SimpleNamespace(
         slots_count=2,
@@ -154,7 +177,7 @@ def test_generate_stdout_serializes_dcop_and_distribution_as_yaml_documents(caps
         no_agents=False,
         routes_default=None,
         hosting_default=None,
-        capacity=None,
+        capacity=DEFAULT_AGENT_CAPACITY,
         model="peav",
         intentional=False,
         output=None,
@@ -165,6 +188,7 @@ def test_generate_stdout_serializes_dcop_and_distribution_as_yaml_documents(caps
     documents = list(yaml.safe_load_all(capsys.readouterr().out))
     assert len(documents) == 2
     assert documents[0]["name"] == "MeetingSceduling"
+    assert documents[0]["agents"]["a_0"]["capacity"] == DEFAULT_AGENT_CAPACITY
     assert documents[1]["inputs"]["dist_algo"] == "peav"
     assert documents[1]["inputs"]["dcop"] == "NA"
     assert "distribution" in documents[1]

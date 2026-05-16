@@ -1,6 +1,15 @@
 from random import Random
 
-from pydcop.commands.generators.secp import build_lights, build_models, build_rules
+import argparse
+
+from pydcop.commands.generators.secp import (
+    DEFAULT_AGENT_CAPACITY,
+    build_agents,
+    build_lights,
+    build_models,
+    build_rules,
+    init_cli_parser,
+)
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Domain
 from pydcop.dcop.yamldcop import dcop_yaml
@@ -8,6 +17,24 @@ from pydcop.dcop.yamldcop import dcop_yaml
 
 def test_seed_makes_secp_generation_reproducible():
     assert generate_seeded_secp() == generate_seeded_secp()
+
+
+def test_cli_parser_defaults_capacity():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    init_cli_parser(subparsers)
+
+    args = parser.parse_args(
+        ["secp", "--lights", "2", "--models", "1", "--rules", "1"]
+    )
+
+    assert args.capacity == DEFAULT_AGENT_CAPACITY
+
+
+def test_build_agents_defaults_capacity():
+    agents = build_agents({"l1": object()}, {"lc1": object()})
+
+    assert agents["al1"].capacity == DEFAULT_AGENT_CAPACITY
 
 
 def generate_seeded_secp():

@@ -103,6 +103,8 @@ from pydcop.dcop.yamldcop import dcop_yaml
 
 logger = logging.getLogger("pydcop.cli.generate")
 
+DEFAULT_AGENT_CAPACITY = 99
+
 
 def set_parser(main_subparsers):
     parser = main_subparsers.add_parser("generate", help="Generate Random problems")
@@ -227,7 +229,7 @@ def parser_mixed_problem(subparsers):
         "--capacity",
         type=int,
         required=False,
-        default=0,
+        default=DEFAULT_AGENT_CAPACITY,
         help="Capacity of the agents.",
     )
     parser.add_argument(

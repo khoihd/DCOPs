@@ -165,6 +165,7 @@ logger = logging.getLogger("pydcop.cli.generate")
 
 COLORS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 HARD_CONSTRAINT_VALUE = 999999
+DEFAULT_AGENT_CAPACITY = 99
 
 
 def init_cli_parser(parent_parser):
@@ -225,6 +226,13 @@ def init_cli_parser(parent_parser):
         required=False,
         action="store_true",
         help="Do not generate agents",
+    )
+    parser.add_argument(
+        "--capacity",
+        type=int,
+        required=False,
+        default=DEFAULT_AGENT_CAPACITY,
+        help="Capacity of agents",
     )
 
     parser.add_argument(
@@ -316,7 +324,7 @@ def generate(args):
     agents = {}
     if not args.noagents:
         for i, _ in enumerate(variables):
-            agt = AgentDef(f"a{i:02d}")
+            agt = AgentDef(f"a{i:02d}", capacity=args.capacity)
             agents[agt.name] = agt
 
     if args.soft:
