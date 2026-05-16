@@ -16,7 +16,7 @@
 - Add multi-threading support for exact algorithms
   - (DONE) Pulp: highs
 
-- Require a parameter for termination mechanism to all iterative algorithms
+- Require argument stop_cycle for all iterative algorithm calls
 
 - (WIP) Review instance generators:
   - (DONE) Add seed value
@@ -35,6 +35,5 @@
     python -m pydcop.dcop_cli generate random_graph --variables_count 20 --domain_size 10 --p_edge 0.4 --objective max > random20.yaml
 
     pip install -e .
-    python -m pydcop.dcop_cli
     pytest
     ruff check .
