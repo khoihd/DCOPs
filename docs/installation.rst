@@ -41,6 +41,14 @@ installed as a dependency by `pip`). For example, on an Ubuntu/Debian system::
 
   sudo apt-get install glpk-utils
 
+For exact centralized solves with ``pydcop solve -a pulp``, CBC is the default
+PuLP backend. pyDCOP prefers a ``cbc`` executable found on ``PATH`` before
+falling back to PuLP's bundled CBC solver. HiGHS can also be used with
+``-p solver:highs`` when the ``highs`` executable is installed and available on
+``PATH``. On macOS with Homebrew::
+
+  brew install highs
+
 
 
 .. note:: On many linux distribution, ``pip`` is not installed by default. On

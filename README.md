@@ -30,6 +30,17 @@ python -m pydcop.dcop_cli solve -a pulp instance.yaml
 
 The `pulp` solver builds a centralized LP/ILP model and does not use the
 distributed computation graph, distribution method, agents, or message runtime.
+It uses CBC by default and also supports GLPK and HiGHS:
+
+```bash
+python -m pydcop.dcop_cli solve -a pulp -p solver:highs instance.yaml
+python -m pydcop.dcop_cli solve -a pulp -p solver:cbc -p threads:4 instance.yaml
+```
+
+When `threads` is omitted, CBC and HiGHS are given an explicit thread count of
+`os.cpu_count() or 1`. With PuLP's HiGHS command wrapper, any explicit thread
+count enables HiGHS `parallel=on`; HiGHS would only keep its own
+`parallel=choose` default if no thread count were passed to the wrapper.
  
 ## Acknowledgment
 

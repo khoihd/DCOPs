@@ -158,7 +158,7 @@ def test_pulp_solver_rejects_cbc_when_no_backend_is_available(monkeypatch):
         pulp_solver._build_solver("cbc")
 
 
-def test_pulp_solver_uses_highs_from_path(monkeypatch):
+def test_pulp_solver_uses_cpu_count_for_highs_default_threads(monkeypatch):
     captured = {}
 
     class FakeHighsSolver:
@@ -182,6 +182,32 @@ def test_pulp_solver_uses_highs_from_path(monkeypatch):
         "msg": False,
         "timeLimit": 12,
         "threads": 8,
+    }
+
+
+def test_pulp_solver_passes_explicit_threads_to_highs(monkeypatch):
+    captured = {}
+
+    class FakeHighsSolver:
+        def __init__(self, path, msg, timeLimit, threads):
+            captured["path"] = path
+            captured["msg"] = msg
+            captured["timeLimit"] = timeLimit
+            captured["threads"] = threads
+
+    monkeypatch.setattr(pulp_solver, "HiGHS_CMD", FakeHighsSolver)
+    monkeypatch.setattr(pulp_solver.shutil, "which", lambda name: "/opt/bin/highs")
+
+    solver, solver_name, threads = pulp_solver._build_solver("highs", threads=4)
+
+    assert isinstance(solver, FakeHighsSolver)
+    assert solver_name == "highs"
+    assert threads == 4
+    assert captured == {
+        "path": "/opt/bin/highs",
+        "msg": False,
+        "timeLimit": None,
+        "threads": 4,
     }
 
 
