@@ -58,6 +58,10 @@ coverage.xml
 # Logs:
 *.log
 
+# Generated data:
+*.csv
+*.yaml
+
 # Sphinx documentation
 docs/_build/
 
