@@ -142,6 +142,7 @@ def init_cli_parser(parent_parser):
     )
     parser.add_argument(
         "--seed",
+        required=False,
         type=int,
         default=None,
         help="Seed value for random graph generation and constraint costs",

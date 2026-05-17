@@ -135,7 +135,11 @@ def init_cli_parser(subparser):
         "--max_rule_size", type=int, default=3, help="maximum number of elements involved in a rule"
     )
     parser.add_argument(
-        "--seed", type=int, default=None, help="Seed for random problem generation"
+        "--seed",
+        required=False,
+        type=int,
+        default=None,
+        help="Seed for random problem generation",
     )
 
 

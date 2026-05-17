@@ -190,6 +190,7 @@ def init_cli_parser(parent_parser):
     )
     parser.add_argument(
         "--seed",
+        required=False,
         type=int,
         default=None,
         help="Seed for random constraint generation",
