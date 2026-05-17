@@ -28,16 +28,16 @@
 ## Current State
 
 - Paper verification is tracked in
-  `verification_archive/algorithm_paper_check_tracker.md`; detailed notes live
-  in `verification_archive/*_paper_check.md`.
+  `archived_tasks/verification_archive/algorithm_paper_check_tracker.md`; detailed notes live
+  in `archived_tasks/verification_archive/*_paper_check.md`.
 - Verified/done paper checks include DPOP, MGM, MGM2, DBA, GDBA, DSA, ADSA,
   MixedDSA, MaxSum, AMaxSum, Dynamic MaxSum, NCBB, and SyncBB.
 - Dynamic MaxSum is marked `Done / No Separate Paper Source`, documented in
-  `verification_archive/maxsum_dynamic_paper_check.md`, and treated as a
+  `archived_tasks/verification_archive/maxsum_dynamic_paper_check.md`, and treated as a
   pyDcop-specific dynamic factor-graph extension around AMaxSum/MaxSum.
 - NCBB is marked `Done / Verified`, documented in
-  `verification_archive/ncbb_paper_check.md`, with
-  `verification_archive/papers/ncbb.pdf` committed as the source paper.
+  `archived_tasks/verification_archive/ncbb_paper_check.md`, with
+  `archived_tasks/verification_archive/papers/ncbb.pdf` committed as the source paper.
   Commit `3dfa63d` implemented NCBB search and max support.
 - SyncBB verification and follow-up implementation are committed. The
   implementation supports both `objective: min` and `objective: max` by
@@ -167,8 +167,8 @@
 
 ## MaxSum
 
-- MaxSum has been checked against `verification_archive/papers/maxsum.pdf`,
-  documented in `verification_archive/maxsum_paper_check.md`, and marked
+- MaxSum has been checked against `archived_tasks/verification_archive/papers/maxsum.pdf`,
+  documented in `archived_tasks/verification_archive/maxsum_paper_check.md`, and marked
   done / verified in the tracker.
 - Current MaxSum behavior:
   - supports both `min` and `max` objectives as repo-level generalizations of
@@ -195,8 +195,8 @@
 
 ## AMaxSum
 
-- AMaxSum has been checked against `verification_archive/papers/maxsum.pdf`,
-  documented in `verification_archive/amaxsum_paper_check.md`, and marked
+- AMaxSum has been checked against `archived_tasks/verification_archive/papers/maxsum.pdf`,
+  documented in `archived_tasks/verification_archive/amaxsum_paper_check.md`, and marked
   done / verified in the tracker.
 - The Farinelli et al. Max-Sum paper explicitly describes asynchronous local
   updates, so `pydcop/algorithms/amaxsum.py` uses the same paper source as
@@ -237,7 +237,7 @@
   normal CLI algorithm entry point: it has no `GRAPH_TYPE`, `algo_params`, or
   `build_computation()`.
 - Current behavior is documented in
-  `verification_archive/maxsum_dynamic_paper_check.md` and marked
+  `archived_tasks/verification_archive/maxsum_dynamic_paper_check.md` and marked
   `Done / No Separate Paper Source` in the tracker.
 - Recent review fixes:
   - retained variables receive refreshed factor-to-variable costs after a
@@ -254,8 +254,8 @@
 
 ## NCBB
 
-- NCBB has been checked against `verification_archive/papers/ncbb.pdf`,
-  documented in `verification_archive/ncbb_paper_check.md`, and marked
+- NCBB has been checked against `archived_tasks/verification_archive/papers/ncbb.pdf`,
+  documented in `archived_tasks/verification_archive/ncbb_paper_check.md`, and marked
   `Done / Verified` in the tracker.
 - The paper is "No-Commitment Branch and Bound Search for Distributed
   Constraint Optimization" by Anton Chechetka and Katia Sycara.
@@ -284,8 +284,8 @@
 
 ## SyncBB
 
-- SyncBB has been checked against `verification_archive/papers/syncbb.pdf`,
-  documented in `verification_archive/syncbb_paper_check.md`, and marked
+- SyncBB has been checked against `archived_tasks/verification_archive/papers/syncbb.pdf`,
+  documented in `archived_tasks/verification_archive/syncbb_paper_check.md`, and marked
   `Done / Verified with documented pyDcop extensions` in the tracker.
 - The paper is "Distributed Partial Constraint Satisfaction Problem" by
   Katsutoshi Hirayama and Makoto Yokoo.
@@ -374,7 +374,7 @@
   `tests/instances/`.
 - Known cases: `tests/utils/known_instances.py`.
 - Archived optimization notes: `archived_tasks/optimization_archive/`.
-- Paper verification notes: `verification_archive/`.
+- Paper verification notes: `archived_tasks/verification_archive/`.
 
 ## Open Questions
 

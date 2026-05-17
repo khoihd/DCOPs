@@ -2,7 +2,7 @@
 
 ## Source
 
-- Paper: `verification_archive/papers/mgm.pdf`
+- Paper: `archived_tasks/verification_archive/papers/mgm.pdf`
 - Title: "Distributed Algorithms for DCOP: A Graphical-Game-Based Approach"
 - Authors: Rajiv T. Maheswaran, Jonathan P. Pearce, and Milind Tambe
 - Implementation: `pydcop/algorithms/mgm2.py`

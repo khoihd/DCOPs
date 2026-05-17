@@ -2,7 +2,7 @@
 
 ## Source
 
-- Paper: `verification_archive/papers/syncbb.pdf`
+- Paper: `archived_tasks/verification_archive/papers/syncbb.pdf`
 - Title: "Distributed Partial Constraint Satisfaction Problem"
 - Authors: Katsutoshi Hirayama and Makoto Yokoo
 - Implementation: `pydcop/algorithms/syncbb.py`

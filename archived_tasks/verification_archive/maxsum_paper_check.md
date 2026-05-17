@@ -2,7 +2,7 @@
 
 ## Source
 
-- Paper: `verification_archive/papers/maxsum.pdf`
+- Paper: `archived_tasks/verification_archive/papers/maxsum.pdf`
 - Title: "Decentralised Coordination of Low-Power Embedded Devices Using the
   Max-Sum Algorithm"
 - Authors: A. Farinelli, A. Rogers, A. Petcu, and N. R. Jennings

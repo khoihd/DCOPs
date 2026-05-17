@@ -2,7 +2,7 @@
 
 ## Source
 
-- Paper: `verification_archive/papers/gdba.pdf`
+- Paper: `archived_tasks/verification_archive/papers/gdba.pdf`
 - Title: "Distributed Breakout: Beyond Satisfaction"
 - Authors: Steven Okamoto, Roie Zivan, and Aviv Nahon
 - Implementation: `pydcop/algorithms/gdba.py`

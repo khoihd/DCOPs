@@ -2,7 +2,7 @@
 
 ## Source
 
-- Paper: `verification_archive/papers/adsa.pdf`
+- Paper: `archived_tasks/verification_archive/papers/adsa.pdf`
 - Title: "Distributed Coordination through Anarchic Optimization"
 - Authors: Stephen Fitzpatrick and Lambert Meertens
 - Implementation: `pydcop/algorithms/adsa.py`

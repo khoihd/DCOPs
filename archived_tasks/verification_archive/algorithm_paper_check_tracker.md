@@ -24,7 +24,7 @@ verification starts.
 
 For each algorithm:
 
-1. Create `verification_archive/<algorithm>_paper_check.md`.
+1. Create `archived_tasks/verification_archive/<algorithm>_paper_check.md`.
 2. Record the paper citation/link or attached filename.
 3. Extract the algorithm contract: assumptions, graph type, initialization,
    message types, message contents, per-cycle behavior, termination, objective
@@ -50,8 +50,8 @@ For each algorithm:
 - DPOP
   - Priority: 1
   - Implementation: `pydcop/algorithms/dpop.py`
-  - Paper / Source: `verification_archive/papers/dpop.pdf`
-  - Check File: `verification_archive/dpop_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/dpop.pdf`
+  - Check File: `archived_tasks/verification_archive/dpop_paper_check.md`
   - Status: Verified
   - Notes: Core UTIL/VALUE logic matches the paper; `memory_footprint_estimate()` is
     documented as a local distribution-time approximation.
@@ -59,8 +59,8 @@ For each algorithm:
 - MGM
   - Priority: 2
   - Implementation: `pydcop/algorithms/mgm.py`
-  - Paper / Source: `verification_archive/papers/mgm.pdf`
-  - Check File: `verification_archive/mgm_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/mgm.pdf`
+  - Check File: `archived_tasks/verification_archive/mgm_paper_check.md`
   - Status: Verified
   - Notes: Core value/gain flow matches Algorithm 1; min/max gain sign handling
     and equal-gain tie separation are covered by focused tests.
@@ -68,8 +68,8 @@ For each algorithm:
 - MGM2
   - Priority: 3
   - Implementation: `pydcop/algorithms/mgm2.py`
-  - Paper / Source: `verification_archive/papers/mgm.pdf`
-  - Check File: `verification_archive/mgm2_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/mgm.pdf`
+  - Check File: `archived_tasks/verification_archive/mgm2_paper_check.md`
   - Status: Verified
   - Notes: Core five-phase flow matches Algorithm 2; coordinated-gain
     double-counting was fixed and covered by focused tests.
@@ -77,8 +77,8 @@ For each algorithm:
 - DBA
   - Priority: 4
   - Implementation: `pydcop/algorithms/dba.py`
-  - Paper / Source: `verification_archive/papers/dba.pdf`
-  - Check File: `verification_archive/dba_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/dba.pdf`
+  - Check File: `archived_tasks/verification_archive/dba_paper_check.md`
   - Status: Done / Verified
   - Notes: Core ok/improve flow matches the paper. Termination state handling
     was fixed, and breakout weights now use exact violated assignment tuples
@@ -87,8 +87,8 @@ For each algorithm:
 - GDBA
   - Priority: 5
   - Implementation: `pydcop/algorithms/gdba.py`
-  - Paper / Source: `verification_archive/papers/gdba.pdf`
-  - Check File: `verification_archive/gdba_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/gdba.pdf`
+  - Check File: `archived_tasks/verification_archive/gdba_paper_check.md`
   - Status: Done / Verified
   - Notes: Core minimization flow matches the paper. During verification,
     `R` and `C` increase scopes were corrected to follow the paper's
@@ -98,8 +98,8 @@ For each algorithm:
 - DSA
   - Priority: 6
   - Implementation: `pydcop/algorithms/dsa.py`
-  - Paper / Source: `verification_archive/papers/dsa.pdf`
-  - Check File: `verification_archive/dsa_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/dsa.pdf`
+  - Check File: `archived_tasks/verification_archive/dsa_paper_check.md`
   - Status: Done / Verified
   - Notes: A/B/C value-selection behavior matches Table 1. Every-cycle value
     broadcast is an intentional runtime adaptation for liveness under the
@@ -108,8 +108,8 @@ For each algorithm:
 - ADSA
   - Priority: 7
   - Implementation: `pydcop/algorithms/adsa.py`
-  - Paper / Source: `verification_archive/papers/adsa.pdf`
-  - Check File: `verification_archive/adsa_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/adsa.pdf`
+  - Check File: `archived_tasks/verification_archive/adsa_paper_check.md`
   - Status: Done / Verified
   - Notes: Core asynchronous wake-up/local stochastic optimization behavior
     matches Fitzpatrick and Meertens. The probability gate is applied after
@@ -120,9 +120,9 @@ For each algorithm:
 - MixedDSA
   - Priority: 8
   - Implementation: `pydcop/algorithms/mixeddsa.py`
-  - Paper / Source: `verification_archive/papers/dsa.pdf` for base DSA
+  - Paper / Source: `archived_tasks/verification_archive/papers/dsa.pdf` for base DSA
     behavior; no separate MixedDSA paper source found
-  - Check File: `verification_archive/mixeddsa_paper_check.md`
+  - Check File: `archived_tasks/verification_archive/mixeddsa_paper_check.md`
   - Status: Done / No Separate Paper Source
   - Notes: MixedDSA is treated as a pyDcop-specific hard/soft extension of DSA.
     A focused engineering review fixed no-neighbor startup, stop-cycle
@@ -132,8 +132,8 @@ For each algorithm:
 - MaxSum
   - Priority: 9
   - Implementation: `pydcop/algorithms/maxsum.py`
-  - Paper / Source: `verification_archive/papers/maxsum.pdf`
-  - Check File: `verification_archive/maxsum_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/maxsum.pdf`
+  - Check File: `archived_tasks/verification_archive/maxsum_paper_check.md`
   - Status: Done / Verified
   - Notes: Core factor-graph message equations match the Farinelli et al.
     Max-Sum paper. Verification added fixed-cycle `stop_cycle` support and
@@ -146,8 +146,8 @@ For each algorithm:
 - AMaxSum
   - Priority: 10
   - Implementation: `pydcop/algorithms/amaxsum.py`
-  - Paper / Source: `verification_archive/papers/maxsum.pdf`
-  - Check File: `verification_archive/amaxsum_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/maxsum.pdf`
+  - Check File: `archived_tasks/verification_archive/amaxsum_paper_check.md`
   - Status: Done / Verified
   - Notes: The asynchronous event-driven message flow is described in the same
     Farinelli et al. Max-Sum paper as synchronous MaxSum. Core Q/R equations
@@ -162,7 +162,7 @@ For each algorithm:
   - Paper / Source: no separate Dynamic MaxSum paper source found; contextual
     sources are `rust_deployment_2017`, `rust_self-organized_2018`, and the
     base Max-Sum paper
-  - Check File: `verification_archive/maxsum_dynamic_paper_check.md`
+  - Check File: `archived_tasks/verification_archive/maxsum_dynamic_paper_check.md`
   - Status: Done / No Separate Paper Source
   - Notes: Treated as a pyDcop-specific dynamic factor-graph extension around
     AMaxSum/MaxSum. Review fixed retained-variable cost propagation after
@@ -172,8 +172,8 @@ For each algorithm:
 - NCBB
   - Priority: 12
   - Implementation: `pydcop/algorithms/ncbb.py`
-  - Paper / Source: `verification_archive/papers/ncbb.pdf`
-  - Check File: `verification_archive/ncbb_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/ncbb.pdf`
+  - Check File: `archived_tasks/verification_archive/ncbb_paper_check.md`
   - Status: Done / Verified
   - Notes: Verified for the paper's minimization, binary-constraint setting.
     Implementation now includes shifted initialization bounds, child-specific
@@ -186,8 +186,8 @@ For each algorithm:
 - SyncBB
   - Priority: 13
   - Implementation: `pydcop/algorithms/syncbb.py`
-  - Paper / Source: `verification_archive/papers/syncbb.pdf`
-  - Check File: `verification_archive/syncbb_paper_check.md`
+  - Paper / Source: `archived_tasks/verification_archive/papers/syncbb.pdf`
+  - Check File: `archived_tasks/verification_archive/syncbb_paper_check.md`
   - Status: Done / Verified with documented pyDcop extensions
   - Notes: Verified against Hirayama and Yokoo's SBB token flow for fixed-order
     binary problems. pyDcop adapts the paper's DMCSP max-violation objective to

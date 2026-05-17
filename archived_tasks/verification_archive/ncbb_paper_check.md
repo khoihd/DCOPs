@@ -2,7 +2,7 @@
 
 ## Source
 
-- Paper: `verification_archive/papers/ncbb.pdf`
+- Paper: `archived_tasks/verification_archive/papers/ncbb.pdf`
 - Title: "No-Commitment Branch and Bound Search for Distributed Constraint
   Optimization"
 - Authors: Anton Chechetka and Katia Sycara

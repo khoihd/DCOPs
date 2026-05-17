@@ -2,7 +2,7 @@
 
 ## Source
 
-- Paper: `verification_archive/papers/dsa.pdf`
+- Paper: `archived_tasks/verification_archive/papers/dsa.pdf`
 - Title: "Distributed stochastic search and distributed breakout: properties,
   comparison and applications to constraint optimization problems in sensor
   networks"

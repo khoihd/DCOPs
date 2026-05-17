@@ -2,7 +2,7 @@
 
 ## Source
 
-- Paper: `verification_archive/papers/dba.pdf`
+- Paper: `archived_tasks/verification_archive/papers/dba.pdf`
 - Title: "Distributed Breakout Algorithm for Solving Distributed Constraint
   Satisfaction Problems"
 - Authors: Makoto Yokoo and Katsutoshi Hirayama
