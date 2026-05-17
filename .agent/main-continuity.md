@@ -56,6 +56,20 @@
     (`9a5b66d`, `8ba94f4`).
   - The imported Java project `.gitignore` was removed after follow-up cleanup
     (`45b1537`).
+- Recent PD-DCOP documentation work:
+  - Commit `879f112` expands `pddcop/pddcop_jair_key_points.md` with
+    implementation-relevant details from the JAIR paper: objective
+    decomposition, CDFU/MCC control flow and equations, collapsed DCOP
+    formulas, local-search gain mechanics, sequential greedy switching-cost
+    constraints, online effective utility, theorem details, experiment setup,
+    and MD-DCOP comparison mapping.
+  - Commit `879f112` also adds `pddcop/pddcop_java_key_points.md`, a
+    Java-source handoff covering the `pddcop_java` project layout, `.dzn`
+    format, table model, algorithm modes, probability handling, DPOP/MGM/local
+    search behavior, online evaluation, R-learning notes, stale/incomplete
+    Java paths, source-review answers, and suggested Python porting order.
+  - No tests were run for the PD-DCOP notes work because it was documentation
+    only.
 - Recent TODO cleanups:
   - `pydcop/computations_graph/factor_graph.py` slices external variables out
     of factor constraints before graph construction, so external variable
@@ -388,7 +402,8 @@
 - Archived optimization notes: `archived_tasks/optimization_archive/`.
 - Paper verification notes: `archived_tasks/verification_archive/`.
 - PD-DCOP reference material: `pddcop/`; paper notes in
-  `pddcop/pddcop_jair_key_points.md`, Java reference project in
+  `pddcop/pddcop_jair_key_points.md`, Java source handoff in
+  `pddcop/pddcop_java_key_points.md`, Java reference project in
   `pddcop/pddcop_java/`.
 
 ## Open Questions
