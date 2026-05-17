@@ -39,6 +39,21 @@ Important assumptions used by the paper:
 - Each utility function has at most one random variable. If a function involves several random variables, they can be merged into one joint random variable.
 - Random variables evolve independently through time-homogeneous Markov chains.
 - Switching cost is identical across decision variables in the formal model.
+- Utilities are non-negative or `-infinity` for infeasible configurations in the formal DCOP definition.
+- The paper's basic DCOP background assumes binary utility functions when defining the constraint graph, but the PD-DCOP tuple itself allows utility functions over mixed sets of decision and random variables.
+
+The paper notes that PD-DCOPs can also model dynamic constraint-graph changes:
+
+- Deleting a constraint can be represented by making its associated random variable transition to a state where the utility is zero for all decision assignments.
+- Adding a constraint can be represented by including a zero-utility constraint from the start, then transitioning to states with nonzero utility.
+
+The motivating Distributed Radar Coordination and Scheduling Problem maps:
+
+- meteorological command centers to agents;
+- radars to decision variables;
+- precipitation events/levels to random variables/states;
+- radar scanning directions to decision domains;
+- energy or motion cost for changing radar direction to switching cost.
 
 ## Objective
 
@@ -66,6 +81,14 @@ Each random variable distribution evolves by:
 
 `p_y^t(omega) = sum_omega' p_y^{t-1}(omega') * T_y(omega', omega)`
 
+The objective is decomposed into three terms:
+
+- `P`: cumulative discounted ordinary and expected random utility for time steps `0..h-1`.
+- `Q`: cumulative discounted switching penalty between consecutive assignments.
+- `R`: future utility from time `h` onward, assuming the solution at time `h` is kept for all later steps.
+
+The switching penalty function is written as `Delta(x^t, x^(t+1))`. If either assignment is `null`, `Delta` returns `0`; this matters when CDFU calls the multi-DCOP solve with no fixed assignment after the modeled horizon.
+
 ## Future Utility Handling
 
 The paper uses two future-utility treatments depending on `gamma`.
@@ -80,7 +103,17 @@ For constraints without random variables, the terminal future term is scaled by:
 
 `gamma^h / (1 - gamma)`
 
-For constraints with random variables, the paper defines a recursive future expected utility over the Markov transition matrix. This behaves like a discounted infinite-horizon value calculation for a fixed decision assignment at horizon `h`.
+For constraints with random variables, the paper defines a recursive future expected utility over the Markov transition matrix:
+
+`tilde_f_i(x_i | y_i = omega) = gamma^h * f_i(x_i | y_i = omega) + gamma * sum_omega' T_y_i(omega, omega') * tilde_f_i(x_i | y_i = omega')`
+
+This behaves like a discounted infinite-horizon value calculation for a fixed decision assignment at horizon `h`.
+
+Control flow:
+
+- If `gamma < 1`, call `SolveMultiDCOPs(hbar = h, x^(hbar+1) = null)`.
+- The resulting assignment sequence covers `0..h`.
+- No switching cost is applied after `h` because the fixed next assignment is `null`.
 
 Implementation idea:
 
@@ -106,10 +139,24 @@ Then solve the horizon problem using stationary expected utilities:
 
 `sum_omega f(x | y = omega) * p*_y(omega)`
 
+Control flow:
+
+- If `gamma = 1`, first call `SolveHorizonDCOP()` to solve a DCOP at time `h` using stationary distributions.
+- Let that horizon solution be `s_h`.
+- Then call `SolveMultiDCOPs(hbar = h - 1, x^(hbar+1) = s_h)`.
+- The multi-DCOP solve includes switching cost from the time `h-1` assignment to `s_h`.
+
+Stationary-distribution computation is local to the agent whose decision variable is constrained with the random variable. This follows from the paper's independence assumption for random-variable transition functions.
+
 Implementation idea:
 
 - Solve the horizon assignment `s_h` using the stationary distribution.
 - Then solve time steps `0..h-1`, including switching cost from time `h-1` to fixed assignment `s_h`.
+
+Markov-chain convergence assumptions:
+
+- The paper considers chains guaranteed to converge to a unique stationary distribution from any initial distribution.
+- Sufficient conditions listed from strict to loose are: all transition probabilities positive; one ergodic class; or an ergodic unichain.
 
 ## Exact Approach: Collapsed DCOP
 
@@ -123,6 +170,18 @@ Key transformation:
 - Utility functions are collapsed by summing discounted utilities across time.
 - Random-variable constraints are converted into expected utility constraints using the appropriate random-variable distributions.
 - Each decision variable receives a unary switching-cost function over its vector assignment.
+
+For a decision-only utility `f_i`, the collapsed utility is:
+
+`F_i(x_i) = sum_t F_i^t(x_i^t)`
+
+where `F_i^t` is `gamma^t * f_i(x_i^t)` except in the CDFU terminal case `t = hbar = h`, where it is `gamma^h / (1 - gamma) * f_i(x_i^h)`.
+
+For a mixed decision/random utility, the collapsed utility uses the expected utility at each time step. In the CDFU terminal case, it uses the recursive `tilde_f_i` future utility.
+
+The collapsed switching-cost utility for a decision variable is:
+
+`C_i(x_i) = -sum_t gamma^t * c * Delta(x_i^t, x_i^(t+1))`
 
 This collapsed DCOP can be solved by an exact DCOP algorithm such as DPOP.
 
@@ -175,7 +234,11 @@ Process:
 Important implementation details:
 
 - Best response enumeration is over `D^(h+1)` local value sequences.
-- Utility per time step includes local constraint utility minus switching cost to adjacent time steps.
+- `CalcUtils` computes one net utility per time step as local transformed-constraint utility minus adjacent switching costs.
+- At `t = 0`, the adjacent cost is from `0` to `1`.
+- At interior time steps, adjacent cost includes both `t-1` to `t` and `t` to `t+1`.
+- At `t = hbar`, adjacent cost includes `hbar-1` to `hbar` and optionally `hbar` to a fixed assignment `x^(hbar+1)`.
+- `CalcCumulativeUtil` sums transformed local utilities over the whole horizon-vector candidate and subtracts switching costs across the candidate sequence.
 - If a fixed next-horizon assignment exists, switching from `hbar` to `hbar + 1` is included.
 - Like MGM, neighboring agents should not change conflicting values in the same time step if another has higher gain.
 - The paper proves local-search solution quality is monotonically increasing by iteration.
@@ -191,6 +254,14 @@ The paper proposes a pseudo-tree heuristic for `LS-SDPOP`:
 - Put agents constrained with random variables higher in the pseudo-tree to maximize reuse across successive DCOPs.
 - Combine that with max-degree using a weight `w`.
 - Experiments found `w = 0.6` effective in their random-network setup.
+
+The heuristic formulas are:
+
+- `h1(a) = (1 + I(a)) * |N_y(a)|`, where `I(a)` indicates whether `a` is constrained with a random variable and `N_y(a)` counts neighbors constrained with random variables.
+- `h2(a) = |N(a)|`, the max-degree heuristic.
+- `h3(a) = w * h1(a) + (1 - w) * h2(a)`.
+
+`LS-SDPOP` reuses S-DPOP information because UTIL tables are unchanged across adjacent time steps when neither an agent nor its descendants are constrained with random variables.
 
 ## Sequential Greedy Approaches
 
@@ -208,6 +279,11 @@ At each step it:
 
 This is proactive and can be run offline.
 
+The paper's switching-cost unary constraints for FORWARD are:
+
+- For `0 < t < hbar`: `C^t(x) = -c * Delta(x^(t-1), x^t)`.
+- At `t = hbar`: include the previous-step switching cost, and if `x^(hbar+1)` is not null, also include the cost from `x^hbar` to the fixed next assignment.
+
 ### BACKWARD
 
 BACKWARD solves from the fixed horizon solution backward.
@@ -215,6 +291,11 @@ BACKWARD solves from the fixed horizon solution backward.
 It is applicable when the next assignment `x^(hbar+1)` is available, especially in the MCC case where the stationary-distribution horizon solution is computed first.
 
 At each step it adds switching cost to the already chosen next time-step solution.
+
+The paper's switching-cost unary constraints for BACKWARD are:
+
+- For `0 <= t < hbar`: `C^t(x) = -c * Delta(x^t, x^(t+1))`.
+- At `t = hbar`: `C^hbar(x) = -c * Delta(x^hbar, x^(hbar+1))`.
 
 ## Online Approaches
 
@@ -231,6 +312,20 @@ Effective utility accounts for:
 - the previous solution used while searching;
 - current solution quality;
 - switching cost between adopted solutions.
+
+For `REACT`, the effective utility at time step `t` is:
+
+`U_eff = (w1_t * q_(t-1)^t + w2_t * q_t^t - (w1_t + w2_t) * c_(t-1,t)) / (w1_t + w2_t)`
+
+where:
+
+- `w1_t`: time spent searching during time step `t`;
+- `w2_t`: time spent adopting the newly found solution during time step `t`;
+- `q_(t-1)^t`: quality of the previous solution evaluated in the current problem;
+- `q_t^t`: quality of the current solution evaluated in the current problem;
+- `c_(t-1,t)`: switching cost between the previous and current solutions.
+
+For `FORWARD` and `HYBRID`, the solution is available before the start of the time step, so `w1_t = 0` and the effective utility reduces to current quality minus switching cost.
 
 Implementation takeaway:
 
@@ -252,10 +347,18 @@ CDFU error bound:
 
 - When `gamma < 1`, finite-horizon error is bounded by a geometric tail:
   `gamma^h / (1 - gamma) * F_delta`.
+- Given an acceptable error `epsilon`, the paper gives a minimum-horizon corollary:
+  `h >= log_gamma(((1 - gamma) * epsilon) / F_delta)`.
 
 MCC error bound:
 
 - With positive minimum joint transition probability, the finite-horizon MCC error decreases according to the Markov-chain convergence rate, plus a switching-cost term.
+- More specifically, with `theta_y = min_omega,omega' T_y(omega, omega')` and `beta = product_y theta_y`, the bound has a `c * |X|` switching term plus a geometric convergence term using `(1 - 2 beta)^h / (2 beta)`.
+
+Upper/lower bounds:
+
+- For any assignment sequence `x`, its finite-horizon value `F^h(x)` is a lower bound on the optimal finite-horizon value.
+- An upper bound is obtained by independently maximizing each transformed per-time-step component while ignoring switching costs.
 
 Local-search complexity:
 
@@ -277,6 +380,23 @@ Problem domains:
 - dynamic distributed meeting scheduling;
 - distributed radar coordination and scheduling.
 
+Default offline experimental setup:
+
+- `|A| = |X| = 10`.
+- `|Y| = 0.2 * |X|`.
+- decision and random domain sizes are both `3`.
+- horizon `h = 4`.
+- switching cost `c = 50`.
+- utility values are sampled uniformly from `[0, 10]`.
+- random-variable initial distributions and transition functions are randomly generated and normalized.
+- results average 30 independent runs, with a 30-minute timeout, on a 2.1 GHz machine with 16 GB RAM using JADE.
+
+Domain-specific setup:
+
+- Random networks use constraint density `p1 = 0.5`.
+- Dynamic distributed meeting scheduling uses the PEAV formulation, inequality constraints to prevent overlapping meetings, and 5 possible start times per meeting.
+- Distributed radar coordination uses grid networks, 8 sensing directions, cardinal-neighbor sensor connections, and randomly placed precipitation random variables.
+
 Main findings:
 
 - `C-DPOP` is exact but scales poorly because the collapsed variable domains grow exponentially with horizon.
@@ -292,6 +412,15 @@ Online findings:
 - Proactive algorithms are best when switching cost is large or changes happen quickly.
 - Hybrid algorithms gain from both sides: they can adopt immediately like proactive approaches while using observations to improve next-step predictions.
 
+Default online experimental setup:
+
+- `|A| = |X| = |Y| = 10`.
+- decision and random domain sizes are both `5`.
+- horizon `h = 10`.
+- random networks use `p1 = 0.5`.
+- algorithms vary the time duration between problem changes and the switching cost.
+- effective-utility differences are reported as `(algorithm effective utility - reactive counterpart effective utility) / h`.
+
 ## Relation To MD-DCOPs
 
 PD-DCOPs differ from Markovian Dynamic DCOPs (MD-DCOPs):
@@ -302,6 +431,16 @@ PD-DCOPs differ from Markovian Dynamic DCOPs (MD-DCOPs):
 - PD-DCOP solutions are open-loop assignment sequences, unlike closed-loop policies in Dec-MDP/Dec-POMDP-style models.
 
 For fair comparison, the paper augments MD-DCOP state with previous decision assignments so switching cost can be represented.
+
+The MD-DCOP comparison maps each PD-DCOP random state into an augmented state:
+
+`<omega_i^t, x_i^(t-1)>`
+
+and adjusts utility to:
+
+`f'_i(<omega_i^t, x_i^(t-1)>, x_i^t) = f_i(omega_i^t, x_i^t) - c * Delta(x_i^(t-1), x_i^t)`
+
+The transition function allows only augmented transitions whose previous-decision component matches the just-chosen decision; otherwise transition probability is `0`.
 
 Trade-off:
 
@@ -354,15 +493,9 @@ Likely useful Python implementation layers:
    - model actual realized random-variable trajectories;
    - compute effective utility with search/adoption time windows.
 
-## Open Questions For Java-Source Reading
+## Java-Source Follow-Up
 
-- How does the Java project represent random variables and mixed constraints?
-- Does it implement all algorithms from the paper or a subset?
-- How are CDFU recursive terminal utilities computed numerically?
-- How does it solve stationary distributions?
-- Does it use JADE message passing directly for all distributed algorithms?
-- How does it encode switching costs in generated unary constraints?
-- What termination conditions are used for local search and MGM?
-- How are infeasible utilities represented?
-- How is online effective utility simulated?
-- Which pieces should be ported literally and which should map to pyDcop's existing abstractions?
+The original source-review questions from this note are answered in
+`pddcop/pddcop_java_key_points.md`, especially the "Source Review Answers"
+section. Use that file when deciding which Java implementation details should be
+ported literally and which should map onto existing pyDcop abstractions.
