@@ -375,6 +375,9 @@
 - Known cases: `tests/utils/known_instances.py`.
 - Archived optimization notes: `archived_tasks/optimization_archive/`.
 - Paper verification notes: `archived_tasks/verification_archive/`.
+- PD-DCOP reference material: `pddcop/`; paper notes in
+  `pddcop/pddcop_jair_key_points.md`, Java reference project in
+  `pddcop/pddcop_java/`.
 
 ## Open Questions
 
