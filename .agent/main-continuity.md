@@ -44,6 +44,18 @@
   inferring objective direction from the DCOP instance, not from algorithm
   parameters.
 - `todo.md` verification status edits have been committed.
+- Recent repository organization:
+  - Generated CSV/YAML experiment files are ignored via `.gitignore`
+    (`38e27f2`).
+  - Optimization archive notes now live under
+    `archived_tasks/optimization_archive/` (`730c04b`).
+  - Paper verification notes and source PDFs now live under
+    `archived_tasks/verification_archive/` (`9f66a24`).
+  - PD-DCOP reference material was added under `pddcop/`, including the JAIR
+    paper, implementation-oriented notes, and the Java reference project
+    (`9a5b66d`, `8ba94f4`).
+  - The imported Java project `.gitignore` was removed after follow-up cleanup
+    (`45b1537`).
 - Recent TODO cleanups:
   - `pydcop/computations_graph/factor_graph.py` slices external variables out
     of factor constraints before graph construction, so external variable
