@@ -21,7 +21,6 @@
   - '--timeout' from solve
   - '-p stop_cycle:30' from the algorithm
 
-
 - (WIP) Review instance generators:
   - (DONE) Add seed value
   - (DONE) Add random graph
@@ -29,11 +28,7 @@
     - How should we name instances?
       - Provide prefix ?
 
-- Optimize commonly used files with overheads
-
-- Optimize instance generator
-
-- Guide:
+- CLI:
     python -m pydcop.dcop_cli -v 3 solve -a dpop random20.yaml
     python -m pydcop.dcop_cli -v 3 solve -a pulp random20.yaml
     python -m pydcop.dcop_cli -v 3 solve -a dsa random20.yaml -p stop_cycle:30 -c cycle_change --run_metrics dsa_max_random20.csv
