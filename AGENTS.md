@@ -10,7 +10,7 @@ its own sake; prefer clear internal names and behavior when the human developer
 asks for a change.
 
 ## Session continuity
-- When a session starts, read `.agent/main-continuity.md` if it exists; if it is large, read only the latest/current-session-relevant section first.
+- When a session starts, immediately after reading this `AGENTS.md`, read `.agent/main-continuity.md` if it exists; if it is large, read only the latest/current-session-relevant section first.
 
 ## Project map
 - `pydcop/dcop/` — core DCOP model: `dcop.py`, variables/agents in `objects.py`, constraints/relations in `relations.py`, YAML load/dump in `yamldcop.py`.
