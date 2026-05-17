@@ -373,7 +373,7 @@
 - Tests: `tests/unit/`, `tests/api/`, `tests/dcop_cli/`,
   `tests/instances/`.
 - Known cases: `tests/utils/known_instances.py`.
-- Archived optimization notes: `archived_tasks/`.
+- Archived optimization notes: `archived_tasks/optimization_archive/`.
 - Paper verification notes: `verification_archive/`.
 
 ## Open Questions
