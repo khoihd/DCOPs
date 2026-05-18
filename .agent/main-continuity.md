@@ -93,6 +93,18 @@
     local thread/process runners own the default `float("inf")`
     (`9aa370d`).
   - Recent CLI/generator/runtime TODO/FIXME cleanup commits on `main`:
+    - `99c06c1` updates `todo.md` follow-ups: output parent-directory support
+      is marked done, instance generator review is marked done with
+      multi-instance generation delegated to scripts using `--output`, and
+      PD-DCOP implementation is added as the next larger TODO area.
+    - `0ca82ec` adds shared command output helpers in
+      `pydcop/commands/_utils.py` using `pathlib.Path` with
+      `mkdir(parents=True, exist_ok=True)` and routes command/generator output
+      writes through them so nested `--output`, run metrics, and end metrics
+      paths create missing parent directories consistently. It also replaces
+      the old manual slash-splitting `os.makedirs` helpers in generator code.
+    - `6a0e442` updates `todo.md` notes around PuLP HiGHS naming,
+      algorithm termination options, and generator review wording.
     - `c40c0a4` makes generator `--seed` argparse definitions explicitly
       optional (`required=False`) for `ising`, `meetingscheduling`,
       `randomgraph`, and `secp`, matching existing `graphcoloring` and `iot`
@@ -125,9 +137,34 @@
     tests, focused `ruff check` commands, and representative CLI help/solve
     invocations.
 - No active interrupted TODO/FIXME request is pending. The last completed
-  code cleanup request was the `pydcop/infrastructure/communication.py` FIXME
-  removal in `2fa1ee5`; `todo.md` was committed afterward in `7968194`.
+  code change was nested-output parent directory support in `0ca82ec`; the
+  matching `todo.md` follow-up update was committed in `99c06c1`.
 - Recent targeted checks:
+  - `ruff check pydcop/commands/_utils.py pydcop/commands/generate.py
+    pydcop/commands/generators/randomgraph.py
+    pydcop/commands/generators/graphcoloring.py
+    pydcop/commands/generators/agents.py
+    pydcop/commands/generators/scenario.py
+    pydcop/commands/generators/ising.py
+    pydcop/commands/generators/meetingscheduling.py
+    pydcop/commands/generators/iot.py
+    pydcop/commands/generators/secp.py
+    pydcop/commands/generators/smallworld.py pydcop/commands/distribute.py
+    pydcop/commands/solve.py pydcop/commands/run.py
+    pydcop/commands/orchestrator.py pydcop/commands/replica_dist.py
+    pydcop/commands/consolidate.py tests/unit/test_commands_utils.py`
+  - `pytest tests/unit/test_commands_utils.py
+    tests/unit/test_commands_solve.py tests/unit/test_commands_orchestrator.py`
+  - `pytest tests/dcop_cli/test_generate_randomgraph.py
+    tests/dcop_cli/test_solve_pulp.py`
+  - Smoke checks for nested output paths:
+    `python -m pydcop.dcop_cli --output .tmp-output/nested/test.yaml generate
+    random_graph --variables_count 4 --domain_size 3 --p_edge 0.8 --objective
+    max --seed 1` and
+    `python -m pydcop.dcop_cli --output
+    .tmp-output/results/nested/result.json solve --algo pulp
+    .tmp-output/nested/test.yaml`; the scratch `.tmp-output` directory was
+    removed afterward.
   - `ruff check pydcop/commands/generators/ising.py
     pydcop/commands/generators/meetingscheduling.py
     pydcop/commands/generators/randomgraph.py
