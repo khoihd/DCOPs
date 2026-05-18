@@ -27,162 +27,45 @@
 
 ## Current State
 
-- Paper verification is tracked in
-  `archived_tasks/verification_archive/algorithm_paper_check_tracker.md`; detailed notes live
-  in `archived_tasks/verification_archive/*_paper_check.md`.
-- Verified/done paper checks include DPOP, MGM, MGM2, DBA, GDBA, DSA, ADSA,
-  MixedDSA, MaxSum, AMaxSum, Dynamic MaxSum, NCBB, and SyncBB.
-- Dynamic MaxSum is marked `Done / No Separate Paper Source`, documented in
-  `archived_tasks/verification_archive/maxsum_dynamic_paper_check.md`, and treated as a
-  pyDcop-specific dynamic factor-graph extension around AMaxSum/MaxSum.
-- NCBB is marked `Done / Verified`, documented in
-  `archived_tasks/verification_archive/ncbb_paper_check.md`, with
-  `archived_tasks/verification_archive/papers/ncbb.pdf` committed as the source paper.
-  Commit `3dfa63d` implemented NCBB search and max support.
-- SyncBB verification and follow-up implementation are committed. The
-  implementation supports both `objective: min` and `objective: max` by
-  inferring objective direction from the DCOP instance, not from algorithm
-  parameters.
-- `todo.md` verification status edits have been committed.
-- Recent repository organization:
-  - Generated CSV/YAML experiment files are ignored via `.gitignore`
-    (`38e27f2`).
-  - Optimization archive notes now live under
-    `archived_tasks/optimization_archive/` (`730c04b`).
-  - Paper verification notes and source PDFs now live under
-    `archived_tasks/verification_archive/` (`9f66a24`).
-  - PD-DCOP reference material was added under `pddcop/`, including the JAIR
-    paper, implementation-oriented notes, and the Java reference project
-    (`9a5b66d`, `8ba94f4`).
-  - The imported Java project `.gitignore` was removed after follow-up cleanup
-    (`45b1537`).
-- Recent PD-DCOP documentation work:
-  - Commit `879f112` expands `pddcop/pddcop_jair_key_points.md` with
-    implementation-relevant details from the JAIR paper: objective
-    decomposition, CDFU/MCC control flow and equations, collapsed DCOP
-    formulas, local-search gain mechanics, sequential greedy switching-cost
-    constraints, online effective utility, theorem details, experiment setup,
-    and MD-DCOP comparison mapping.
-  - Commit `879f112` also adds `pddcop/pddcop_java_key_points.md`, a
-    Java-source handoff covering the `pddcop_java` project layout, `.dzn`
-    format, table model, algorithm modes, probability handling, DPOP/MGM/local
-    search behavior, online evaluation, R-learning notes, stale/incomplete
-    Java paths, source-review answers, and suggested Python porting order.
-  - No tests were run for the PD-DCOP notes work because it was documentation
-    only.
-- Recent TODO cleanups:
-  - `pydcop/computations_graph/factor_graph.py` slices external variables out
-    of factor constraints before graph construction, so external variable
-    references do not create dangling factor links.
-  - `pydcop/algorithms/mgm.py` has updated parameter documentation and a CLI
-    example for running MGM with `stop_cycle` and `break_mode`.
-  - MaxSum `factor_costs_for_var` now supports optional `valid_assignments`
-    filtering for caller-provided valid tuples (`e2005f0`).
-  - Exact `-float("inf")` occurrences were changed to explicit
-    `float("-inf")` literals (`cbcea82`).
-  - `ilp_fgdp` and `adhoc` repair hooks now clearly raise
-    `ImpossibleDistributionException` instead of carrying TODO stubs because
-    dynamic repair is unsupported for those methods (`be5c615`, `f3c009b`).
-  - `gh_cgdp` tracks remaining capacity explicitly during greedy/backtracking
-    distribution, including fixed placements and backtracking resets
-    (`ef8db77`).
-  - `oilp_cgdp` handles unique zero-hosting-cost fixed computations outside
-    ILP variables, supports fixed-only distributions without GLPK, and rejects
-    fixed capacity overrun (`3d5e38b`).
-  - `pydcop commands run` no longer exposes command-level `--infinity`;
-    local thread/process runners own the default `float("inf")`
-    (`9aa370d`).
-  - Recent CLI/generator/runtime TODO/FIXME cleanup commits on `main`:
-    - `99c06c1` updates `todo.md` follow-ups: output parent-directory support
-      is marked done, instance generator review is marked done with
-      multi-instance generation delegated to scripts using `--output`, and
-      PD-DCOP implementation is added as the next larger TODO area.
-    - `0ca82ec` adds shared command output helpers in
-      `pydcop/commands/_utils.py` using `pathlib.Path` with
-      `mkdir(parents=True, exist_ok=True)` and routes command/generator output
-      writes through them so nested `--output`, run metrics, and end metrics
-      paths create missing parent directories consistently. It also replaces
-      the old manual slash-splitting `os.makedirs` helpers in generator code.
-    - `6a0e442` updates `todo.md` notes around PuLP HiGHS naming,
-      algorithm termination options, and generator review wording.
-    - `c40c0a4` makes generator `--seed` argparse definitions explicitly
-      optional (`required=False`) for `ising`, `meetingscheduling`,
-      `randomgraph`, and `secp`, matching existing `graphcoloring` and `iot`
-      behavior. This is behavior-preserving; all seed defaults remain `None`.
-    - `43a867b` adds intentional PEAV meeting constraints.
-    - `32939f1` validates command module loading.
-    - `d424b91` exposes hosted replicas in UI agent data.
-    - `500c105` handles add-agent scenario events explicitly.
-    - `76ae24e` adds meeting scheduling model variants.
-    - `a93f3e0` documents AMaxSum example results.
-    - `6bb63bd` clarifies dynamic MaxSum factor removal state.
-    - `24a2662` documents MaxSum example results.
-    - `0efb3a9` fixes comhost backtracking candidates.
-    - `73ca0be` uses replica distribution algo params and default infinity.
-    - `a34653c` uses orchestrator default infinity and stops the metrics
-      collector.
-    - `59881a5` stops the solve metrics collector cleanly.
-    - `c6c208f` serializes meeting generator stdout as YAML documents.
-    - `d88de73` stops the shared command metrics collector cleanly.
-    - `4e1d05d` makes infrastructure run use symbolic infinity by default.
-    - `8db15ef` tracks repair computations explicitly instead of filtering
-      them by generated `B...` names.
-    - `33eb7e7` gates scenario events on explicit completion instead of a
-      fixed 20-second retry delay.
-    - `2fa1ee5` removes the stale commented in-process address hack from
-      communication.
-    - `7968194` updates `todo.md`, marking TODO/FIX cleanup done and adding
-      the multi-threading support follow-up.
-  - Targeted checks used across this batch included the relevant unit/API
-    tests, focused `ruff check` commands, and representative CLI help/solve
-    invocations.
-- No active interrupted TODO/FIXME request is pending. The last completed
-  code change was nested-output parent directory support in `0ca82ec`; the
-  matching `todo.md` follow-up update was committed in `99c06c1`.
-- Recent targeted checks:
-  - `ruff check pydcop/commands/_utils.py pydcop/commands/generate.py
-    pydcop/commands/generators/randomgraph.py
-    pydcop/commands/generators/graphcoloring.py
-    pydcop/commands/generators/agents.py
-    pydcop/commands/generators/scenario.py
-    pydcop/commands/generators/ising.py
-    pydcop/commands/generators/meetingscheduling.py
-    pydcop/commands/generators/iot.py
-    pydcop/commands/generators/secp.py
-    pydcop/commands/generators/smallworld.py pydcop/commands/distribute.py
-    pydcop/commands/solve.py pydcop/commands/run.py
-    pydcop/commands/orchestrator.py pydcop/commands/replica_dist.py
-    pydcop/commands/consolidate.py tests/unit/test_commands_utils.py`
+- No active interrupted request is pending.
+- Recent work on `main`:
+  - `b2bc4f7` updates these continuity notes.
+  - `99c06c1` updates `todo.md` follow-ups: output parent-directory support is
+    marked done, instance generator review is marked done with multi-instance
+    generation delegated to scripts using `--output`, and PD-DCOP support is
+    tracked as the next larger TODO area.
+  - `0ca82ec` adds shared command output helpers in
+    `pydcop/commands/_utils.py` using `pathlib.Path` with
+    `mkdir(parents=True, exist_ok=True)`. Command and generator output writes
+    now create missing parent directories for nested `--output`, run metrics,
+    and end metrics paths.
+  - `6a0e442` updates `todo.md` notes around PuLP HiGHS naming, algorithm
+    termination options, and generator review wording.
+- Recent checks for the output-directory work:
+  - `ruff check` on touched command/generator files and
+    `tests/unit/test_commands_utils.py`.
   - `pytest tests/unit/test_commands_utils.py
     tests/unit/test_commands_solve.py tests/unit/test_commands_orchestrator.py`
   - `pytest tests/dcop_cli/test_generate_randomgraph.py
     tests/dcop_cli/test_solve_pulp.py`
-  - Smoke checks for nested output paths:
-    `python -m pydcop.dcop_cli --output .tmp-output/nested/test.yaml generate
-    random_graph --variables_count 4 --domain_size 3 --p_edge 0.8 --objective
-    max --seed 1` and
-    `python -m pydcop.dcop_cli --output
-    .tmp-output/results/nested/result.json solve --algo pulp
-    .tmp-output/nested/test.yaml`; the scratch `.tmp-output` directory was
-    removed afterward.
-  - `ruff check pydcop/commands/generators/ising.py
-    pydcop/commands/generators/meetingscheduling.py
-    pydcop/commands/generators/randomgraph.py
-    pydcop/commands/generators/secp.py`
-  - `pytest tests/unit/test_infra_agents.py`
-  - `ruff check pydcop/infrastructure/agents.py tests/unit/test_infra_agents.py`
-  - `pytest tests/unit/test_infra_orchestrator.py`
-  - `ruff check pydcop/infrastructure/orchestrator.py tests/unit/test_infra_orchestrator.py`
-  - `pytest tests/unit/test_infra_communication.py`
-  - `ruff check pydcop/infrastructure/communication.py`
-- Generated scratch files are currently untracked and intentionally not
-  committed:
-  - `dpop_max_random20.csv`
-  - `dsa_max_metrics.csv`, `dsa_max_random20.csv`, `dsa_min_metrics.csv`
-  - `mgm_max_metrics.csv`, `mgm_max_random20.csv`, `mgm_min_metrics.csv`
-  - `mgm2_max_metrics.csv`, `mgm2_max_random20.csv`, `mgm2_min_metrics.csv`
-  - `maxsum_max_metrics.csv`, `maxsum_max_random20.csv`
-  - `random.yaml`, `random20.yaml`, `random20_optimal.txt`
+  - Smoke checks for nested `--output` paths with `generate random_graph` and
+    `solve --algo pulp`; scratch `.tmp-output` was removed.
+
+## Repository Notes
+
+- Paper verification is tracked in
+  `archived_tasks/verification_archive/algorithm_paper_check_tracker.md`.
+  Detailed notes live in `archived_tasks/verification_archive/*_paper_check.md`.
+- Verified/done paper checks include DPOP, MGM, MGM2, DBA, GDBA, DSA, ADSA,
+  MixedDSA, MaxSum, AMaxSum, Dynamic MaxSum, NCBB, and SyncBB.
+- Paper verification notes and source PDFs now live under
+  `archived_tasks/verification_archive/`.
+- Optimization archive notes live under `archived_tasks/optimization_archive/`.
+- PD-DCOP reference material lives under `pddcop/`:
+  - `pddcop/pddcop_jair_key_points.md`
+  - `pddcop/pddcop_java_key_points.md`
+  - `pddcop/pddcop_java/`
+- Generated CSV/YAML experiment files are ignored via `.gitignore`.
 
 ## PuLP/HiGHS/CBC
 
@@ -193,226 +76,74 @@
 - The solver creates one binary choice variable per DCOP variable value and
   one binary tuple variable per relation assignment, then optimizes relation
   values plus variable costs for `objective: min|max`.
-- PuLP solve now defaults to HiGHS and accepts:
+- PuLP solve defaults to HiGHS and accepts:
   - `-p solver:highs|cbc|glpk`
   - `-p threads:N`
-- Recent PuLP solver commits:
-  - `d1f8d67` adds a HiGHS command backend via PuLP's `HiGHS_CMD`.
-  - `adeffdc` documents PuLP HiGHS threading defaults.
-  - `babf2ba` switches the default PuLP backend from CBC to HiGHS.
-- Default backend behavior after `babf2ba`:
-  - plain `pydcop solve -a pulp ...` uses `solver_backend: highs`
+- Default HiGHS behavior:
+  - plain `pydcop solve -a pulp ...` reports `solver_backend: highs`
   - default thread count is `os.cpu_count() or 1`
   - on the current M1 laptop this reports `solver_threads: 8`
-  - because PuLP's `HiGHS_CMD` receives a concrete thread count, it also
-    enables HiGHS `parallel=on`; HiGHS would keep `parallel=choose` only if no
-    thread count were passed to the wrapper
+  - passing a concrete thread count to PuLP's `HiGHS_CMD` enables HiGHS
+    `parallel=on`
   - `msg` remains `False`, so solver logs do not corrupt JSON stdout
-- PuLP metrics include `solver_backend`, `solver_threads`,
-  `solver_status`, and `solver_solution_status`.
-- CBC via PuLP can report coarse `solver_status: Optimal` even when the
-  separate solution status is only `Solution Found` after a timeout or manual
-  stop. The CLI maps this case to top-level `status: FEASIBLE`, meaning the
-  assignment is valid but not proven optimal. Only `solver_solution_status:
-  Optimal Solution Found` maps to top-level `status: FINISHED`.
-- On the untracked `random.yaml` instance (`RandomGraph_30_10_0.4`, max),
-  `-t 20` and `-t 60` with `-p threads:4` found objective/cost `1013` with
-  `status: FEASIBLE`, so `1013` is a feasible incumbent, not a certified
-  optimum.
+- PuLP metrics include `solver_backend`, `solver_threads`, `solver_status`,
+  and `solver_solution_status`.
+- CBC via PuLP can report coarse `solver_status: Optimal` while
+  `solver_solution_status` is only `Solution Found`; the CLI maps that to
+  top-level `status: FEASIBLE`. Only `Optimal Solution Found` maps to
+  `status: FINISHED`.
 - CBC selection prefers a `cbc` executable found on `PATH` via
-  `COIN_CMD(path=...)`, falling back to PuLP's bundled `PULP_CBC_CMD` when no
-  PATH CBC exists.
+  `COIN_CMD(path=...)`, falling back to PuLP's bundled `PULP_CBC_CMD`.
 - On the current M1 laptop:
   - `/opt/homebrew/bin/highs` is installed and available on `PATH`
   - `/Users/khoihd/miniconda3/bin/cbc` is ARM64 but does not recognize
     `-threads`
   - `/opt/homebrew/bin/cbc` is ARM64 and recognizes `-threads`
-  - Homebrew CBC is currently the `cbc` found first on `PATH`.
-- Relevant checks used recently:
-  - `pytest tests/unit/test_solvers_pulp.py tests/dcop_cli/test_solve_pulp.py`
-  - `ruff check pydcop/solvers/pulp_solver.py pydcop/commands/solve.py tests/unit/test_solvers_pulp.py tests/dcop_cli/test_solve_pulp.py`
-  - `python -m pydcop.dcop_cli solve -a pulp -p threads:2 tests/instances/graph_coloring1.yaml`
-  - `python -m pydcop.dcop_cli -v 0 solve -a pulp tests/instances/graph_coloring1.yaml`
-  - `python -m pydcop.dcop_cli -v 0 solve -a pulp -p solver:highs tests/instances/graph_coloring1.yaml`
-  - `python -m pydcop.dcop_cli -v 0 solve -a pulp -p solver:cbc tests/instances/graph_coloring1.yaml`
+  - Homebrew CBC is currently the `cbc` found first on `PATH`
 
-## MaxSum
+## Algorithm Notes
 
-- MaxSum has been checked against `archived_tasks/verification_archive/papers/maxsum.pdf`,
-  documented in `archived_tasks/verification_archive/maxsum_paper_check.md`, and marked
-  done / verified in the tracker.
-- Current MaxSum behavior:
-  - supports both `min` and `max` objectives as repo-level generalizations of
-    the paper's mostly maximization framing
-  - supports fixed-cycle stop with `-p stop_cycle:N`
-  - supports optional heuristic convergence stop with
-    `-p auto_stop:1 -p stable_cycles:N`
-  - defaults `start_messages` to `all`
-  - keeps computations participating in synchronization after local
-    auto-stop notification until the orchestrator stops all computations
-  - supports `--run_metrics` with `--collect_on cycle_change`
-- MaxSum verification/runtime fixes included:
-  - corrected variable-to-factor normalization so integrated variable costs are
-    included in the zero-sum Q-message normalization
-  - added `stop_cycle`
-  - added `auto_stop` / `stable_cycles`
-  - fixed synchronous cycle metrics so the runtime row uses the completed
-    orchestrator cycle
-- Relevant checks used recently:
-  - `pytest tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py tests/unit/test_algorithms_objects.py`
-  - `ruff check pydcop/algorithms/maxsum.py pydcop/algorithms/amaxsum.py tests/unit/test_algorithms_maxsum.py tests/unit/test_algorithms_amaxsum.py`
-  - `python -m pydcop.dcop_cli -t 10 solve -a maxsum -p auto_stop:1 -p stable_cycles:1 -d oneagent tests/instances/graph_coloring1.yaml`
-  - `python -m pydcop.dcop_cli -t 10 solve -a maxsum -p noise:0 -p stop_cycle:2 -d oneagent tests/instances/graph_coloring1.yaml`
+- MaxSum and AMaxSum are verified against the Farinelli et al. Max-Sum paper.
+  Both support `min` and `max` as pyDcop generalizations.
+- MaxSum supports `stop_cycle`, optional `auto_stop` / `stable_cycles`, and
+  `--run_metrics` with `--collect_on cycle_change`.
+- AMaxSum reuses MaxSum parameters but defaults `auto_stop` to `1` and requires
+  either `stop_cycle > 0` or `auto_stop:1`. Its `stop_cycle` is a local async
+  update limit, not a globally synchronized round count.
+- Dynamic MaxSum has no separate paper source found; it is documented as a
+  pyDcop-specific dynamic factor-graph extension around AMaxSum/MaxSum.
+  `pydcop/algorithms/maxsum_dynamic.py` is a low-level helper module, not a
+  normal CLI algorithm entry point.
+- NCBB is implemented in `pydcop/algorithms/ncbb.py`, including
+  branch-specific descendants, lower-bound delta propagation, subtree search,
+  pruning, result selection, STOP propagation, and max support via internal
+  objective negation.
+- SyncBB is implemented in `pydcop/algorithms/syncbb.py` as a pyDcop additive
+  weighted-DCOP adaptation of SBB. Objective direction is inferred from the
+  DCOP instance objective.
+- MGM and DSA do not currently implement a global convergence stop such as
+  "all computations kept the same value this cycle"; they rely on
+  `stop_cycle`, timeout, or external stop.
 
-## AMaxSum
+## Generators And CLI
 
-- AMaxSum has been checked against `archived_tasks/verification_archive/papers/maxsum.pdf`,
-  documented in `archived_tasks/verification_archive/amaxsum_paper_check.md`, and marked
-  done / verified in the tracker.
-- The Farinelli et al. Max-Sum paper explicitly describes asynchronous local
-  updates, so `pydcop/algorithms/amaxsum.py` uses the same paper source as
-  synchronous MaxSum.
-- AMaxSum reuses MaxSum parameters but overrides `auto_stop` to default to `1`
-  and requires either `stop_cycle > 0` or `auto_stop:1`.
-- AMaxSum defaults `start_messages` to `all`.
-- `stop_cycle` is interpreted as a local async update limit, not a globally
-  synchronized round count. Variable computations increment the local count for
-  each processed factor message; factor computations increment it only when
-  they have enough variable messages to run a real factor update.
-- `auto_stop` and `stable_cycles` are interpreted as coordinated async
-  stability: computations report `finished()` after enough stable local updates
-  but keep processing messages until the orchestrator sees every computation
-  stable and stops the run. If a later message changes an outgoing message,
-  AMaxSum reports `finished("running")` so the orchestrator clears its
-  finished state.
-- A quiet-period check lets an AMaxSum computation report stable when its last
-  changed outgoing message does not trigger another incoming update.
-- The generic computation finished management message now carries a `status`
-  field; existing algorithms still call `finished()` with the default
-  `"finished"` status.
-- `SAME_COUNT` remains the resend/suppression throttle.
-- Relevant checks used recently:
-  - `pytest tests/unit/test_algorithms_amaxsum.py tests/unit/test_infra_orchestrator.py`
-  - `pytest tests/unit/test_algorithms_amaxsum.py tests/unit/test_infra_orchestrator.py tests/unit/test_infra_agents.py tests/unit/test_infra_orchestratedagents.py`
-  - `ruff check pydcop/algorithms/__init__.py pydcop/commands/_utils.py pydcop/algorithms/amaxsum.py tests/unit/test_algorithms_amaxsum.py`
-  - `ruff check pydcop/algorithms/amaxsum.py pydcop/infrastructure/computations.py pydcop/infrastructure/orchestratedagents.py pydcop/infrastructure/orchestrator.py tests/unit/test_algorithms_amaxsum.py tests/unit/test_infra_orchestrator.py`
-  - `python -m pydcop.dcop_cli -t 10 solve -a amaxsum -p noise:0 -d oneagent tests/instances/graph_coloring1.yaml`
-  - `python -m pydcop.dcop_cli -t 10 solve -a amaxsum -p noise:0 -p auto_stop:0 -d oneagent tests/instances/graph_coloring1.yaml` exits early with the expected parameter error unless `stop_cycle` is set.
-
-## Dynamic MaxSum
-
-- Dynamic MaxSum has no separate paper source found. Contextual sources are
-  Rust/Picard/Ramparany dynamic deployment/resilience papers plus the base
-  Farinelli et al. Max-Sum paper for Q/R equations.
-- `pydcop/algorithms/maxsum_dynamic.py` is a low-level helper module, not a
-  normal CLI algorithm entry point: it has no `GRAPH_TYPE`, `algo_params`, or
-  `build_computation()`.
-- Current behavior is documented in
-  `archived_tasks/verification_archive/maxsum_dynamic_paper_check.md` and marked
-  `Done / No Separate Paper Source` in the tracker.
-- Recent review fixes:
-  - retained variables receive refreshed factor-to-variable costs after a
-    dynamic factor scope change
-  - forced dynamic factor sends update `_prev_messages`, keeping stable-message
-    suppression state aligned with messages sent outside the normal AMaxSum
-    receive loop
-  - variable-side `ADD` handling is idempotent for repeated `ADD` messages from
-    the same factor
-- Relevant checks used recently:
-  - `pytest tests/unit/test_algorithms_dynamic_maxsum.py`
-  - `pytest tests/unit/test_algorithms_dynamic_maxsum.py tests/unit/test_algorithms_amaxsum.py tests/unit/test_algorithms_maxsum.py`
-  - `ruff check pydcop/algorithms/maxsum_dynamic.py tests/unit/test_algorithms_dynamic_maxsum.py`
-
-## NCBB
-
-- NCBB has been checked against `archived_tasks/verification_archive/papers/ncbb.pdf`,
-  documented in `archived_tasks/verification_archive/ncbb_paper_check.md`, and marked
-  `Done / Verified` in the tracker.
-- The paper is "No-Commitment Branch and Bound Search for Distributed
-  Constraint Optimization" by Anton Chechetka and Katia Sycara.
-- `pydcop/algorithms/ncbb.py` now implements initialization and the main
-  branch-and-bound search loop from Figures 1 and 2, including
-  child-specific constrained descendants, lower-bound delta propagation,
-  subtree search, pruning, result selection, and STOP propagation.
-- `PseudoTreeNode.branch_descendants` in
-  `pydcop/computations_graph/pseudotree.py` records the paper's
-  `descendants[child]` structure for NCBB.
-- `memory_footprint_estimate()` and `communication_load()` are implemented
-  with polynomial-space / constant-message-size estimates.
-- The paper is minimization-only, but this implementation supports
-  `objective: max` as a pyDcop extension by minimizing the negated objective
-  internally.
-- NCBB has no objective-specific `algo_params`; objective direction is inferred
-  from the DCOP instance objective via `AlgorithmDef.mode`.
-- NCBB requires finite-domain variables and binary constraints. It does not
-  require NCBB-specific YAML fields beyond the usual problem definition,
-  agents/distribution, and `objective: min|max`.
-- Relevant checks used recently:
-  - `pytest tests/unit/test_algorithms_ncbb.py tests/unit/test_graph_pseudotree.py`
-  - `ruff check pydcop/algorithms/ncbb.py tests/unit/test_algorithms_ncbb.py`
-  - `python -m pydcop.dcop_cli -t 10 solve -a ncbb -d oneagent tests/instances/graph_coloring1.yaml`
-  - `python -m pydcop.dcop_cli -t 10 solve -a ncbb -d oneagent tests/instances/graph_coloring_tuto_max.yaml`
-
-## SyncBB
-
-- SyncBB has been checked against `archived_tasks/verification_archive/papers/syncbb.pdf`,
-  documented in `archived_tasks/verification_archive/syncbb_paper_check.md`, and marked
-  `Done / Verified with documented pyDcop extensions` in the tracker.
-- The paper is "Distributed Partial Constraint Satisfaction Problem" by
-  Katsutoshi Hirayama and Makoto Yokoo.
-- The paper's SBB solves DMCSPs by minimizing the max per-agent number of
-  violated constraints; `pydcop/algorithms/syncbb.py` is a pyDcop adaptation
-  for additive weighted DCOP objectives and supports both `min` and `max`.
-- SyncBB has no objective-specific `algo_params`; objective direction is
-  inferred from the DCOP instance objective via `AlgorithmDef.mode`.
-- Verification fixes:
-  - forward-token handling now adopts better received bounds before local search
-  - `get_next_assignment()` no longer returns a candidate that passed only a
-    prefix of the path before a later bound check failed
-  - max-mode support explicitly avoids pruning a candidate from partial utility
-    alone, because later variables may make that branch optimal
-  - explicit `memory_footprint_estimate()` and `communication_load()` estimates
-    now account for SyncBB path-token payloads and fixed-order communication
-- Relevant checks used recently:
-  - `pytest tests/unit/test_algorithms_syncbb.py`
-  - `ruff check pydcop/algorithms/syncbb.py tests/unit/test_algorithms_syncbb.py`
-
-## Generator And Docs Notes
-
-- Generate YAML DCOP instances with
-  `python -m pydcop.dcop_cli generate ...`; global `--output <file>` writes
-  output to a file.
+- Generate YAML DCOP instances with `python -m pydcop.dcop_cli generate ...`.
+- `--output <file>` is a global option, so it must appear before the command:
+  `python -m pydcop.dcop_cli --output out/file.yaml generate random_graph ...`.
+- Command/generator output paths now create missing parent directories.
 - Live generator types include `graph_coloring`, `random_graph`, `meetings`,
   `ising`, `agents`, `scenario`, `mixed_problem`, `small_world`, `iot`, and
   `secp`.
 - `small_world` is incomplete/experimental; `scenario` is for Dynamic DCOPs.
+- `meetings`, `secp`, `graph_coloring`, `random_graph`, `ising`, and
+  `mixed_problem` default generated agents to capacity `999` when their
+  generator creates agents and exposes `--capacity`; explicit `--capacity N`
+  overrides it.
+- `graph_coloring`, `random_graph`, `ising`, `meetings`, and `secp` have
+  optional `--seed` arguments. `iot` already had optional seed behavior.
 - A deterministic random-graph fixture lives at
   `tests/instances/random_graph_6_3_0.7.yaml`; it has 6 variables, 14
   constraints, 6 agents, and PuLP optimum cost `35`.
-- Recent generator capacity work is committed:
-  - `530c9b9` fixes legacy `mixed_problem` so `--capacity` is passed as
-    `AgentDef(..., capacity=...)` instead of positionally as `default_route`.
-  - `ef1ce77`, `69df70a`, and `9e0b4fa` add/document generated-agent capacity
-    defaults and then set that default to `999`.
-  - `meetings`, `secp`, `graph_coloring`, `random_graph`, `ising`, and
-    `mixed_problem` now default generated agents to capacity `999` when their
-    generator creates agents and exposes `--capacity`; explicit
-    `--capacity N` still overrides it.
-  - `graph_coloring`, `random_graph`, and `ising` gained optional
-    `--capacity`; `iot` still computes capacity from footprint and
-    `small_world` still uses hardcoded small/average/big capacities.
-  - Relevant checks:
-    `pytest tests/unit/test_generate_meetingscheduling.py tests/unit/test_generate_secp.py tests/dcop_cli/test_generate_graphcoloring.py tests/dcop_cli/test_generate_randomgraph.py tests/unit/test_generate_randomgraph.py tests/unit/test_generate_ising.py tests/dcop_cli/test_generate_mixed_problem.py`;
-    focused `ruff check` on touched generator/test files; and
-    `SPHINXOPTS="-D autosummary_generate=0" make html` succeeded with only
-    existing duplicate-toctree consistency warnings.
-- `docs/conf.py` uses `bibtex_bibfiles = ["biblio.bib"]`, `language = "en"`,
-  and no longer points at a missing `_static` directory.
-- `Makefile` supports `SPHINXOPTS` and `make html` as an alias for `make doc`.
-- Algorithm reference docs were updated with verified-behavior notes for DBA,
-  GDBA, DSA, ADSA, MaxSum, AMaxSum, and MixedDSA. The docs build used
-  `SPHINXOPTS="-D autosummary_generate=0" make html` and succeeded with only
-  existing multiple-toctree consistency notices.
 
 ## Durable Caveats
 
@@ -428,9 +159,6 @@
   before future DPOP join/projection changes.
 - SyncBB behavior tests cover direct message flow, pruning, termination, and
   solve-level min/max outcomes.
-- MGM and DSA do not currently implement a global convergence stop such as
-  "all computations kept the same value this cycle"; they rely on
-  `stop_cycle`, timeout, or external stop.
 
 ## Important Paths
 
@@ -441,15 +169,11 @@
 - Centralized solvers: `pydcop/solvers/`.
 - CLI: `pydcop/commands/`, `pydcop/dcop_cli.py`, `pydcop/pydcop`.
 - Generators: `pydcop/commands/generators/`.
-- Tests: `tests/unit/`, `tests/api/`, `tests/dcop_cli/`,
-  `tests/instances/`.
+- Tests: `tests/unit/`, `tests/api/`, `tests/dcop_cli/`, `tests/instances/`.
 - Known cases: `tests/utils/known_instances.py`.
 - Archived optimization notes: `archived_tasks/optimization_archive/`.
 - Paper verification notes: `archived_tasks/verification_archive/`.
-- PD-DCOP reference material: `pddcop/`; paper notes in
-  `pddcop/pddcop_jair_key_points.md`, Java source handoff in
-  `pddcop/pddcop_java_key_points.md`, Java reference project in
-  `pddcop/pddcop_java/`.
+- PD-DCOP reference material: `pddcop/`.
 
 ## Open Questions
 
