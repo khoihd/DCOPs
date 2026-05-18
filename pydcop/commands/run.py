@@ -183,6 +183,7 @@ from pydcop.commands._utils import (
     collect_tread,
     stop_collect_thread,
     add_csvline,
+    write_output_file,
 )
 from pydcop.dcop.dcop import filter_dcop
 from pydcop.dcop.yamldcop import load_dcop_from_file, load_scenario_from_file
@@ -445,8 +446,10 @@ def _results(status):
         add_csvline(run_metrics, collect_on, metrics)
 
     if output_file:
-        with open(output_file, encoding="utf-8", mode="w") as fo:
-            fo.write(json.dumps(metrics, sort_keys=True, indent="  ", cls=NumpyEncoder))
+        write_output_file(
+            output_file,
+            json.dumps(metrics, sort_keys=True, indent="  ", cls=NumpyEncoder),
+        )
     else:
         print(json.dumps(metrics, sort_keys=True, indent="  ", cls=NumpyEncoder))
 

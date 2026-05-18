@@ -94,6 +94,7 @@ generate a scenario with 3 events, for a DCOP which is given as two files.::
 import logging
 import random
 
+from pydcop.commands._utils import write_output_file
 from pydcop.dcop.scenario import DcopEvent, Scenario, EventAction
 from pydcop.dcop.yamldcop import yaml_scenario, load_dcop_from_file
 
@@ -156,8 +157,7 @@ def generate(args):
 
     if args.output:
         output_file = args.output
-        with open(output_file, encoding="utf-8", mode="w") as fo:
-            fo.write(serialized)
+        write_output_file(output_file, serialized)
     else:
         print(serialized)
 

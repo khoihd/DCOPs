@@ -80,7 +80,6 @@ Options
 """
 
 import logging
-import os
 import random
 from importlib import import_module
 from collections.abc import Callable
@@ -94,6 +93,7 @@ from pulp.pulp import LpVariable, LpProblem, lpSum, value, LpAffineExpression
 from pulp import GLPK_CMD
 
 from pydcop.algorithms import load_algorithm_module
+from pydcop.commands._utils import write_output_file
 from pydcop.computations_graph.factor_graph import (
     VariableComputationNode,
     FactorComputationNode,
@@ -492,10 +492,4 @@ def msg_load_func(
 
 
 def write_in_file(filename: str, dcop_str: str):
-    path = "/".join(filename.split("/")[:-1])
-
-    if (path != "") and (not os.path.exists(path)):
-        os.makedirs(path)
-
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(dcop_str)
+    write_output_file(filename, dcop_str)

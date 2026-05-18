@@ -49,12 +49,12 @@ constraint costs in ``0..4``::
 
 
 import logging
-import os
 from importlib import import_module
 
 import networkx as nx
 
 from pydcop.algorithms import load_algorithm_module
+from pydcop.commands._utils import write_output_file
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Variable, Domain, AgentDef
 from pydcop.dcop.relations import (
@@ -219,10 +219,4 @@ def c_name(i: int, j: int):
 
 
 def write_in_file(filename: str, dcop_str: str):
-    path = "/".join(filename.split("/")[:-1])
-
-    if (path != "") and (not os.path.exists(path)):
-        os.makedirs(path)
-
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(dcop_str)
+    write_output_file(filename, dcop_str)

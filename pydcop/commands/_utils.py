@@ -33,6 +33,7 @@ import os
 import traceback
 from functools import partial
 from importlib import import_module
+from pathlib import Path
 
 import sys
 from queue import Queue
@@ -43,6 +44,17 @@ from pydcop.algorithms import AlgorithmDef, prepare_algo_params, load_algorithm_
 logger = logging.getLogger("pydcop")
 
 METRICS_COLLECTOR_STOP = object()
+
+
+def ensure_parent_dir(filename):
+    parent = Path(filename).parent
+    if parent != Path("."):
+        parent.mkdir(parents=True, exist_ok=True)
+
+
+def write_output_file(filename, content, encoding="utf-8"):
+    ensure_parent_dir(filename)
+    Path(filename).write_text(content, encoding=encoding)
 
 
 def build_algo_def(algo_module, algo_name: str, objective, cli_params: list[str]):
@@ -145,9 +157,7 @@ def prepare_metrics_files(run, end, mode):
         if os.path.exists(run_metrics):
             os.remove(run_metrics)
         else:
-            f_dir = os.path.dirname(run_metrics)
-            if f_dir and not os.path.exists(f_dir):
-                os.makedirs(f_dir)
+            ensure_parent_dir(run_metrics)
         # Add column labels in file:
         with open(run_metrics, "w", encoding="utf-8", newline="") as f:
             csvwriter = csv.writer(f)
@@ -158,8 +168,7 @@ def prepare_metrics_files(run, end, mode):
 
     if end is not None:
         end_metrics = end
-        if not os.path.exists(os.path.dirname(end_metrics)):
-            os.makedirs(os.path.dirname(end_metrics))
+        ensure_parent_dir(end_metrics)
         # Add column labels in file:
         if not os.path.exists(end_metrics):
             with open(end_metrics, "w", encoding="utf-8", newline="") as f:

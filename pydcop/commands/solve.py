@@ -227,7 +227,13 @@ from time import perf_counter
 import numpy as np
 
 from pydcop.algorithms import list_available_algorithms
-from pydcop.commands._utils import build_algo_def, _error, _load_modules
+from pydcop.commands._utils import (
+    build_algo_def,
+    ensure_parent_dir,
+    _error,
+    _load_modules,
+    write_output_file,
+)
 from pydcop.dcop.yamldcop import load_dcop_from_file
 from pydcop.distribution.yamlformat import load_dist_from_file
 from pydcop.infrastructure.run import run_local_thread_dcop, run_local_process_dcop
@@ -439,9 +445,7 @@ def prepare_metrics_files(run, end, mode):
         if os.path.exists(run_metrics):
             os.remove(run_metrics)
         else:
-            f_dir = os.path.dirname(run_metrics)
-            if f_dir and not os.path.exists(f_dir):
-                os.makedirs(f_dir)
+            ensure_parent_dir(run_metrics)
         # Add column labels in file:
         with open(run_metrics, "w", encoding="utf-8", newline="") as f:
             csvwriter = csv.writer(f)
@@ -452,9 +456,7 @@ def prepare_metrics_files(run, end, mode):
 
     if end is not None:
         end_metrics = end
-        e_dir = os.path.dirname(end_metrics)
-        if e_dir and not os.path.exists(e_dir):
-            os.makedirs(e_dir)
+        ensure_parent_dir(end_metrics)
         # Add column labels in file:
         if not os.path.exists(end_metrics):
             with open(end_metrics, "w", encoding="utf-8", newline="") as f:
@@ -729,7 +731,9 @@ def _output_metrics(metrics):
         add_csvline(run_metrics, collect_on, metrics)
 
     if output_file:
-        with open(output_file, encoding="utf-8", mode="w") as fo:
-            fo.write(json.dumps(metrics, sort_keys=True, indent="  ", cls=NumpyEncoder))
+        write_output_file(
+            output_file,
+            json.dumps(metrics, sort_keys=True, indent="  ", cls=NumpyEncoder),
+        )
 
     print(json.dumps(metrics, sort_keys=True, indent="  ", cls=NumpyEncoder))

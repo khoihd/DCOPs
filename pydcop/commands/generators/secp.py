@@ -95,9 +95,9 @@ Generating a DCOP for a SECP with 10 lights, 3 models and 2 rules.::
 
 """
 import logging
-import os
 import random
 
+from pydcop.commands._utils import write_output_file
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Domain, Variable, AgentDef
 from pydcop.dcop.relations import constraint_from_str
@@ -380,10 +380,4 @@ def build_lights(light_count, light_domain, random_generator=None):
 
 
 def write_in_file(filename: str, dcop_str: str):
-    path = "/".join(filename.split("/")[:-1])
-
-    if (path != "") and (not os.path.exists(path)):
-        os.makedirs(path)
-
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(dcop_str)
+    write_output_file(filename, dcop_str)

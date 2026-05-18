@@ -116,6 +116,7 @@ import logging
 import re
 from collections import defaultdict
 
+from pydcop.commands._utils import write_output_file
 from pydcop.computations_graph import constraints_hypergraph
 from pydcop.dcop.objects import AgentDef
 from pydcop.dcop.yamldcop import yaml_agents, load_dcop_from_file
@@ -227,8 +228,7 @@ def generate(args):
 
     if args.output:
         output_file = args.output
-        with open(output_file, encoding="utf-8", mode="w") as fo:
-            fo.write(serialized)
+        write_output_file(output_file, serialized)
     else:
         print(serialized)
 

@@ -89,9 +89,9 @@ import random
 from collections import defaultdict
 
 import networkx as nx
-import os
 
 # from numpy.random import random
+from pydcop.commands._utils import write_output_file
 from pydcop.commands.generators import graphcoloring, meetingscheduling, ising, agents, \
     scenario, iot, secp, randomgraph
 from pydcop.commands.generators.smallworld import generate_small_world
@@ -777,13 +777,7 @@ def add_edge(
 
 
 def write_in_file(filename: str, dcop_str: str):
-    path = "/".join(filename.split("/")[:-1])
-
-    if (path != "") and (not os.path.exists(path)):
-        os.makedirs(path)
-
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(dcop_str)
+    write_output_file(filename, dcop_str)
 
 
 def find_objective(weights: list[float], n: int, is_hard: bool):

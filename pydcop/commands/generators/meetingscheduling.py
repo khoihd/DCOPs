@@ -146,6 +146,7 @@ import itertools
 
 import yaml
 
+from pydcop.commands._utils import write_output_file
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Variable, Domain, AgentDef
 from pydcop.dcop.relations import Constraint, NAryFunctionRelation, NAryMatrixRelation
@@ -305,8 +306,7 @@ def generate(args):
 
     if args.output:
         output_file = args.output
-        with open(output_file, encoding="utf-8", mode="w") as fo:
-            fo.write(dcop_yaml(dcop))
+        write_output_file(output_file, dcop_yaml(dcop))
 
         if not args.no_agents:
             dist_result = meeting_distribution_result(
@@ -314,8 +314,9 @@ def generate(args):
             )
             path, ext = splitext(output_file)
             dist_output_file = f"{path}_dist{ext}"
-            with open(dist_output_file, encoding="utf-8", mode="w") as fo:
-                fo.write(yaml.dump(dist_result, default_flow_style=False))
+            write_output_file(
+                dist_output_file, yaml.dump(dist_result, default_flow_style=False)
+            )
 
     else:
         dist_result = None

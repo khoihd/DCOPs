@@ -123,7 +123,7 @@ from threading import Timer
 import yaml
 
 from pydcop.algorithms import list_available_algorithms, load_algorithm_module
-from pydcop.commands._utils import build_algo_def
+from pydcop.commands._utils import build_algo_def, write_output_file
 from pydcop.dcop.yamldcop import load_dcop_from_file
 from pydcop.distribution.yamlformat import load_dist_from_file
 from pydcop.infrastructure.run import run_local_thread_dcop, run_local_process_dcop
@@ -257,8 +257,7 @@ def run_cmd(args, timer: Timer = None, timeout= None):
         orchestrator.stop()
         result = build_result(args, duration, msg_count, msg_size, rep_dist)
         if args.output is not None:
-            with open(args.output, encoding="utf-8", mode="w") as fo:
-                fo.write(yaml.dump(result))
+            write_output_file(args.output, yaml.dump(result))
         else:
             print(yaml.dump(result))
         sys.exit(0)

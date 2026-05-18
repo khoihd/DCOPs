@@ -7,6 +7,14 @@ import pytest
 import pydcop.commands._utils as utils
 
 
+def test_write_output_file_creates_parent_directories(tmp_path):
+    output = tmp_path / "nested" / "deeper" / "result.txt"
+
+    utils.write_output_file(output, "content")
+
+    assert output.read_text(encoding="utf-8") == "content"
+
+
 def test_collect_thread_stops_on_sentinel():
     metrics_queue = Queue()
     collected = []

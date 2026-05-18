@@ -159,6 +159,7 @@ from typing import Any
 import networkx as nx
 import yaml
 
+from pydcop.commands._utils import write_output_file
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import Variable, Domain, AgentDef
 from pydcop.dcop.relations import NAryMatrixRelation, Constraint, constraint_from_str
@@ -274,13 +275,11 @@ def generate(args):
     )
 
     if args.output:
-        with open(output_file, encoding="utf-8", mode="w") as fo:
-            fo.write(dcop_yaml(dcop))
+        write_output_file(output_file, dcop_yaml(dcop))
         path, ext = splitext(output_file)
         for suffix, dist_result in distribution_results:
             dist_output_file = f"{path}_{suffix}{ext}"
-            with open(dist_output_file, encoding="utf-8", mode="w") as fo:
-                fo.write(yaml.dump(dist_result))
+            write_output_file(dist_output_file, yaml.dump(dist_result))
 
     else:
         print(dcop_yaml(dcop))

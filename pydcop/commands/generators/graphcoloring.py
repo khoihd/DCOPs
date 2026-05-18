@@ -160,6 +160,7 @@ import random
 
 import networkx as nx
 
+from pydcop.commands._utils import write_output_file
 from pydcop.dcop.dcop import DCOP
 from pydcop.dcop.objects import VariableDomain, Variable, AgentDef
 from pydcop.dcop.relations import relation_from_str, NAryMatrixRelation
@@ -353,8 +354,7 @@ def generate(args):
 
     if args.output:
         output_file = args.output
-        with open(output_file, encoding="utf-8", mode="w") as fo:
-            fo.write(dcop_yaml(dcop))
+        write_output_file(output_file, dcop_yaml(dcop))
     else:
         print(dcop_yaml(dcop))
 

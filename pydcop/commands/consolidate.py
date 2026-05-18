@@ -68,6 +68,7 @@ import json
 import os
 
 
+from pydcop.commands._utils import ensure_parent_dir
 from pydcop.commands.distribute import (
     load_algo_module,
     load_distribution_module,
@@ -129,10 +130,13 @@ def run_cmd(args):
     if args.output and args.replace_output:
         if os.path.exists(args.output):
             os.remove(args.output)
+        else:
+            ensure_parent_dir(args.output)
 
     if args.solution:
         files = args.files
         if args.output:
+            ensure_parent_dir(args.output)
             if not os.path.exists(args.output):
                 with open(args.output, mode="w") as output_file:
                     csv_writer = csv.writer(output_file)
@@ -147,6 +151,7 @@ def run_cmd(args):
     elif args.distribution_cost:
         files = args.files
         if args.output:
+            ensure_parent_dir(args.output)
             if not os.path.exists(args.output):
                 with open(args.output, mode="w") as output_file:
                     csv_writer = csv.writer(output_file)

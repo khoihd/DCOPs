@@ -153,7 +153,7 @@ import time
 import yaml
 
 from pydcop.algorithms import list_available_algorithms, load_algorithm_module
-from pydcop.commands._utils import _error
+from pydcop.commands._utils import _error, write_output_file
 from pydcop.dcop.yamldcop import load_dcop_from_file
 from pydcop.distribution.objects import ImpossibleDistributionException
 
@@ -331,8 +331,7 @@ def run_cmd(args, timer=None, timeout=None):
             "status": "SUCCESS"
         }
         if args.output is not None:
-            with open(args.output, encoding="utf-8", mode="w") as fo:
-                fo.write(yaml.dump(result))
+            write_output_file(args.output, yaml.dump(result))
         print(yaml.dump(result))
         sys.exit(0)
 
@@ -344,8 +343,7 @@ def run_cmd(args, timer=None, timeout=None):
         result["inputs"]["duration"] = duration
 
         if output_file is not None:
-            with open(output_file, encoding="utf-8", mode="w") as fo:
-                fo.write(yaml.dump(result))
+            write_output_file(output_file, yaml.dump(result))
         print(yaml.dump(result))
         sys.exit(0)
 
@@ -355,8 +353,7 @@ def run_cmd(args, timer=None, timeout=None):
         result["status"] = "FAIL"
         result["error"] = str(e)
         if output_file is not None:
-            with open(output_file, encoding="utf-8", mode="w") as fo:
-                fo.write(yaml.dump(result))
+            write_output_file(output_file, yaml.dump(result))
         print(yaml.dump(result))
         sys.exit(0)
 
@@ -376,8 +373,7 @@ def on_timeout():
     result["inputs"]["duration"] = duration
 
     if output_file is not None:
-        with open(output_file, encoding="utf-8", mode="w") as fo:
-            fo.write(yaml.dump(result))
+        write_output_file(output_file, yaml.dump(result))
     print(yaml.dump(result))
 
     #os._exit(0)
