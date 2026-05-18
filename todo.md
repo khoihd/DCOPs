@@ -10,20 +10,21 @@
   - GDBA
   - NCBB
   - SyncBB
+  - PulP with multi-threading HiGHS backend
 
 - (DONE) Fix TODO and FIXME
 
 - (DONE) Add multi-threading support for exact algorithms
-  - Pulp: highs
+  - Pulp: HiGHS
   - No need to further optimize join / util functions from DPOP
 
-- (DONE) Two ways to terminate the algorithms:
+- (DONE) Two ways to terminate the algorithms
   - '--timeout' from solve
   - '-p stop_cycle:30' from the algorithm
 
-- (WIP) Review instance generators:
-  - (DONE) Add seed value
-  - (DONE) Add random graph
+- (WIP) Review instance generators
+  - (DONE) Add optional seed value for reproducibility
+  - (DONE) Add random graph generator
   - Add support to generate multiple instances
     - How should we name instances?
       - Provide prefix ?
