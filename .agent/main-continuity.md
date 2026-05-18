@@ -93,6 +93,10 @@
     local thread/process runners own the default `float("inf")`
     (`9aa370d`).
   - Recent CLI/generator/runtime TODO/FIXME cleanup commits on `main`:
+    - `c40c0a4` makes generator `--seed` argparse definitions explicitly
+      optional (`required=False`) for `ising`, `meetingscheduling`,
+      `randomgraph`, and `secp`, matching existing `graphcoloring` and `iot`
+      behavior. This is behavior-preserving; all seed defaults remain `None`.
     - `43a867b` adds intentional PEAV meeting constraints.
     - `32939f1` validates command module loading.
     - `d424b91` exposes hosted replicas in UI agent data.
@@ -124,6 +128,10 @@
   code cleanup request was the `pydcop/infrastructure/communication.py` FIXME
   removal in `2fa1ee5`; `todo.md` was committed afterward in `7968194`.
 - Recent targeted checks:
+  - `ruff check pydcop/commands/generators/ising.py
+    pydcop/commands/generators/meetingscheduling.py
+    pydcop/commands/generators/randomgraph.py
+    pydcop/commands/generators/secp.py`
   - `pytest tests/unit/test_infra_agents.py`
   - `ruff check pydcop/infrastructure/agents.py tests/unit/test_infra_agents.py`
   - `pytest tests/unit/test_infra_orchestrator.py`
