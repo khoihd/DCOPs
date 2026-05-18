@@ -22,12 +22,28 @@
   - '--timeout' from solve
   - '-p stop_cycle:30' from the algorithm
 
-- (WIP) Review instance generators
-  - (DONE) Add optional seed value for reproducibility
-  - (DONE) Add random graph generator
-  - Add support to generate multiple instances
-    - How should we name instances?
-      - Provide prefix ?
+- (DONE) Support checking and creating folders / subfolders for output
+  python -m pydcop.dcop_cli --output folder/file.yaml generate random_graph
+  python -m pydcop.dcop_cli --output folder/file.yaml solve -alg mgm instance.yaml
+
+- (DONE) Review instance generators
+  - Add optional seed value for reproducibility
+  - Add random graph generator
+  - Generate multiple instances via a script with --output
+
+- (TODO) Support PD-DCOPs
+  - Instance file format
+  - Multi-step DCOPs:
+    - DCOP at every step
+    - Solution at every step
+  - PD-DCOP model
+  - PD-DCOP algorithms
+  - Reactive D-DCOP model
+  - Reactive D-DCOP algorithms
+  - Hybrid D-DCOP (or General D-DCOPs)
+    - Reusing algorthms
+
+    - Experiment setting
 
 - CLI:
     python -m pydcop.dcop_cli -v 3 solve -a dpop random20.yaml
@@ -38,3 +54,5 @@
     pip install -e .
     pytest
     ruff check .
+
+    python -m pydcop.dcop_cli --output test.yaml generate random_graph --variables_count 40 --domain_size 10 --p_edge 0.4 --objective max
