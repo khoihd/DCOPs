@@ -31,8 +31,8 @@
   - Add random graph generator
   - Generate multiple instances via a script with --output
 
-- (TODO) Support PD-DCOPs
-  - Instance file format
+- (TODO) Implement PD-DCOPs and algorithms
+  - Input / output file format
   - Multi-step DCOPs:
     - DCOP at every step
     - Solution at every step
@@ -41,9 +41,12 @@
   - Reactive D-DCOP model
   - Reactive D-DCOP algorithms
   - Hybrid D-DCOP (or General D-DCOPs)
-    - Reusing algorthms
+    - TBD
 
-    - Experiment setting
+- Continuous DCOPs:
+  - Input / output files 
+  - Variable domains
+  - Constraint functional forms
 
 - CLI:
     python -m pydcop.dcop_cli -v 3 solve -a dpop random20.yaml
