@@ -80,7 +80,6 @@ target/
 *pulp.lp
 *pulp.sol
 *pulp.out
-/.python-version
 /.vscode/settings.json
 /docs/_figures_src/*.aux
 /docs/_figures_src/factor_graph.pdf

@@ -1,5 +1,26 @@
+[project]
+name = "dcops"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.11.2",
+    "networkx>=3.7",
+    "numpy>=2.5.4",
+    "pulp==2.9.0",
+    "pyyaml>=6.0.3",
+    "requests>=2.34.2",
+    "tqdm>=4.70.1",
+    "websocket-server>=0.6.4",
+]
+
 [tool.ruff]
-target-version = "py311"
+target-version = "py313"
 
 [tool.ruff.lint]
 extend-select = ["UP"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.0",
+]
